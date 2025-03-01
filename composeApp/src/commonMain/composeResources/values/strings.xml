@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">EIMusic</string>
+    <string name="app_description">Music Player</string>
+    <string name="app_version">1.0.0</string>
+</resources>

@@ -1,5 +1,6 @@
 package com.eimsound.eimusic
 
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
 import kotlinx.browser.document
@@ -10,3 +11,6 @@ fun main() {
         App()
     }
 }
+
+
+actual fun navigationLayoutType(): NavigationSuiteType = NavigationSuiteType.NavigationDrawer

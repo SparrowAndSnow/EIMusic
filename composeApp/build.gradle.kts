@@ -66,6 +66,7 @@ kotlin {
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
+            implementation(libs.compose.navigation)
             implementation(libs.androidx.navigation)
 //            implementation(libs.androidx.material.icons.extended)
             implementation(compose.ui)
@@ -75,6 +76,8 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(projects.shared)
             implementation(libs.kotlinx.serialization.json)
+            implementation(compose.materialIconsExtended)
+            implementation(compose.material3AdaptiveNavigationSuite)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
