@@ -263,4 +263,5 @@ fun EIMusicTheme(
   )
 }
 
+@Composable
 expect fun colorScheme(darkTheme: Boolean): ColorScheme

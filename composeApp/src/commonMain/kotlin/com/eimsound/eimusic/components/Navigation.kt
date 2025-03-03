@@ -1,53 +1,37 @@
 package com.eimsound.eimusic.components
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
-import com.eimsound.eimusic.views.ProfileRoute
-import com.eimsound.eimusic.views.ProfileView
-import com.eimsound.eimusic.views.WelcomeRoute
-import com.eimsound.eimusic.views.WelcomeView
-
-
-data class  Route<T : Any>(val name: String, val route: T, val icon: ImageVector)
-
-val routes = listOf(
-    Route("WelcomeRoute", WelcomeRoute, Icons.Filled.Home),
-    Route("ProfileRoute", ProfileRoute, Icons.Filled.Add),
-)
-
+import com.eimsound.eimusic.route.routes
 
 @Composable
-fun Navigation(navigationLayoutType: NavigationSuiteType) {
-    val navController = rememberNavController()
+fun Navigation(
+    navController: NavController,
+    navigationLayoutType: NavigationSuiteType, content: @Composable () -> Unit = {}
+) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     NavigationSuiteScaffold(
         layoutType = navigationLayoutType,
         navigationSuiteItems = {
-            routes.forEach { topLevelRoute ->
+            routes.forEach { route ->
                 item(
-                    icon = { Icon(topLevelRoute.icon, contentDescription = topLevelRoute.name) },
-                    label = { Text(topLevelRoute.name) },
+                    icon = { Icon(route.icon, contentDescription = route.name) },
+                    label = { Text(route.name) },
                     selected = currentDestination?.hierarchy?.any {
-                        it.hasRoute(topLevelRoute.route::class)
+                        it.hasRoute(route.route::class)
                     } == true,
                     onClick = {
-                        navController.navigate(topLevelRoute.route) {
+                        navController.navigate(route.route) {
                             // Pop up to the start destination of the graph to
                             // avoid building up a large stack of destinations
                             // on the back stack as users select items
@@ -66,9 +50,8 @@ fun Navigation(navigationLayoutType: NavigationSuiteType) {
         }
 
     ) {
-        NavHost(navController, startDestination = WelcomeRoute) {
-            composable<WelcomeRoute> { WelcomeView() }
-            composable<ProfileRoute> { ProfileView() }
-        }
+        content()
     }
 }
+
+expect fun navigationLayoutType(): NavigationSuiteType

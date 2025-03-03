@@ -55,7 +55,6 @@ fun main() = application {
     }
 }
 
-actual fun navigationLayoutType(): NavigationSuiteType = NavigationSuiteType.NavigationDrawer
 
 
 @Composable

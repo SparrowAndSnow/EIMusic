@@ -11,6 +11,3 @@ fun main() {
         App()
     }
 }
-
-
-actual fun navigationLayoutType(): NavigationSuiteType = NavigationSuiteType.NavigationDrawer

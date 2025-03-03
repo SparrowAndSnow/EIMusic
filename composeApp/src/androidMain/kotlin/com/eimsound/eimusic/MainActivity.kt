@@ -24,4 +24,3 @@ fun AppAndroidPreview() {
     App()
 }
 
-actual fun navigationLayoutType(): NavigationSuiteType = NavigationSuiteType.NavigationBar
