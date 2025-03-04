@@ -1,5 +1,6 @@
 package com.eimsound.eimusic.media
 
+import com.eimsound.eimusic.Duration
 import javafx.scene.media.Media
 import javafx.scene.media.MediaPlayer
 
@@ -12,22 +13,11 @@ fun createMediaPlayer(source: String, listener: MediaPlayerListener): MediaPlaye
         setOnEndOfMedia {
             listener.onAudioCompleted()
         }
+        currentTimeProperty().addListener { _, _, newValue -> listener.timer(Duration(newValue.toSeconds().toLong())) }
         setOnError {
             listener.onError()
         }
     }
-    return mediaPlayer;
+    return mediaPlayer
 }
 
-fun formatTime(seconds: Double): String {
-    val totalSeconds = seconds.toLong()
-    val hours = totalSeconds / 3600
-    val minutes = (totalSeconds % 3600) / 60
-    val secs = totalSeconds % 60
-
-    return if (hours > 0) {
-        String.format("%02d:%02d:%02d", hours, minutes, secs)
-    } else {
-        String.format("%02d:%02d", minutes, secs)
-    }
-}

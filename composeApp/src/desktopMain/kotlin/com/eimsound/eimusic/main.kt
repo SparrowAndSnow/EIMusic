@@ -15,9 +15,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
-import com.eimsound.eimusic.media.MediaPlayerController
 import eimusic.composeapp.generated.resources.Res
 import eimusic.composeapp.generated.resources.app_name
+import javafx.application.Platform
 import org.jetbrains.compose.reload.DevelopmentEntryPoint
 import org.jetbrains.compose.resources.stringResource
 import java.awt.Dimension
@@ -25,13 +25,13 @@ import java.awt.Dimension
 fun main() = application {
     val state = rememberWindowState()
 //    var canDraggable = rememberSaveable { mutableStateOf(true) }
+    Platform.startup {}
     Window(
         onCloseRequest = ::exitApplication,
         title = stringResource(Res.string.app_name),
         state = state
     ) {
         window.minimumSize = Dimension(720, 480)
-
         DevelopmentEntryPoint {
 //            Corner(state) {
 //                Column {
@@ -49,11 +49,10 @@ fun main() = application {
 //                    App()
 //                }
 //            }
-            App(MediaPlayerController())
+            App()
         }
     }
 }
-
 
 
 @Composable

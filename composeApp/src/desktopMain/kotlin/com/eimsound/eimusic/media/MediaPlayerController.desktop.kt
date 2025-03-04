@@ -1,7 +1,9 @@
 package com.eimsound.eimusic.media
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.saveable.rememberSaveable
+import com.eimsound.eimusic.Duration
 import javafx.scene.media.MediaPlayer
-import javafx.util.Duration
 
 actual class MediaPlayerController {
     private var mediaPlayer: MediaPlayer? = null
@@ -22,10 +24,10 @@ actual class MediaPlayerController {
         mediaPlayer?.stop()
     }
 
-    actual val currentPosition: Long?
-        get() = mediaPlayer?.currentTime?.toSeconds()?.toLong() ?: 0
-    actual val duration: Long?
-        get() = mediaPlayer?.totalDuration?.toSeconds()?.toLong() ?: 0
+    actual val currentPosition: Duration?
+        get() = Duration(mediaPlayer?.currentTime?.toSeconds()?.toLong() ?: 0)
+    actual val duration: Duration?
+        get() = Duration(mediaPlayer?.totalDuration?.toSeconds()?.toLong() ?: 0)
     actual val isPlaying: Boolean
         get() = mediaPlayer?.status == MediaPlayer.Status.PLAYING
     actual var volume: Double
@@ -34,11 +36,18 @@ actual class MediaPlayerController {
             mediaPlayer?.volume = value
         }
 
-    actual fun seek(seconds: Long) {
-        mediaPlayer?.seek(Duration(seconds.toDouble() * 1000))
+    actual fun seek(seconds: Duration) {
+        mediaPlayer?.seek(javafx.util.Duration.seconds(seconds.seconds.toDouble()))
     }
 
     actual fun release() {
         mediaPlayer?.dispose()
+        mediaPlayer = null
     }
 }
+
+@Composable
+actual fun rememberMediaPlayerController(): MediaPlayerController {
+    return rememberSaveable { MediaPlayerController() }
+}
+

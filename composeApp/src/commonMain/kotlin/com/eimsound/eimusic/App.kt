@@ -8,6 +8,7 @@ import com.eimsound.eimusic.layout.BottomBar
 import com.eimsound.eimusic.layout.DefaultLayout
 import com.eimsound.eimusic.layout.TopBar
 import com.eimsound.eimusic.media.MediaPlayerController
+import com.eimsound.eimusic.media.rememberMediaPlayerController
 import com.eimsound.eimusic.theme.EIMusicTheme
 import com.eimsound.eimusic.views.ProfileRoute
 import com.eimsound.eimusic.views.ProfileView
@@ -16,12 +17,13 @@ import com.eimsound.eimusic.views.WelcomeView
 
 @Composable
 @Preview
-fun App(mediaPlayerController: MediaPlayerController) {
+fun App() {
     EIMusicTheme {
         val navController = rememberNavController()
+        val rememberMediaPlayerController = rememberMediaPlayerController()
         DefaultLayout(
             topBar = { TopBar() },
-            bottomBar = { BottomBar(mediaPlayerController) },
+            bottomBar = { BottomBar(rememberMediaPlayerController) },
             navController = navController
         ) {
             composable<WelcomeRoute> { WelcomeView() }

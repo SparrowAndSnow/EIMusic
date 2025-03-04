@@ -1,5 +1,8 @@
 package com.eimsound.eimusic.media
 
+import androidx.compose.runtime.Composable
+import com.eimsound.eimusic.Duration
+
 
 expect class MediaPlayerController {
     fun prepare(source: String, listener: MediaPlayerListener)
@@ -10,15 +13,18 @@ expect class MediaPlayerController {
 
     fun stop()
 
-    val currentPosition: Long?
+    val currentPosition: Duration?
 
-    val duration: Long?
+    val duration: Duration?
 
     val isPlaying: Boolean
 
     var volume: Double
 
-    fun seek(seconds: Long)
+    fun seek(seconds: Duration)
 
     fun release()
 }
+
+@Composable
+expect fun rememberMediaPlayerController(): MediaPlayerController
