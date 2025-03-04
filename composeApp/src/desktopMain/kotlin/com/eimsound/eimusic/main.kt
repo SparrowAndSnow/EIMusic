@@ -8,7 +8,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.window.WindowDraggableArea
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -16,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
+import com.eimsound.eimusic.media.MediaPlayerController
 import eimusic.composeapp.generated.resources.Res
 import eimusic.composeapp.generated.resources.app_name
 import org.jetbrains.compose.reload.DevelopmentEntryPoint
@@ -49,8 +49,7 @@ fun main() = application {
 //                    App()
 //                }
 //            }
-            App()
-
+            App(MediaPlayerController())
         }
     }
 }

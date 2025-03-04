@@ -68,7 +68,6 @@ kotlin {
             implementation(compose.material3)
             implementation(libs.compose.navigation)
             implementation(libs.androidx.navigation)
-//            implementation(libs.androidx.material.icons.extended)
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
@@ -78,6 +77,8 @@ kotlin {
             implementation(libs.kotlinx.serialization.json)
             implementation(compose.materialIconsExtended)
             implementation(compose.material3AdaptiveNavigationSuite)
+            implementation(libs.coil.compose.image.loader)
+            implementation(libs.coil.compose.image.loader.network.ktor)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
