@@ -1,6 +1,7 @@
 package com.eimsound.eimusic.components
 
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
@@ -22,6 +23,8 @@ fun Navigation(
     val currentDestination = navBackStackEntry?.destination
     NavigationSuiteScaffold(
         layoutType = navigationLayoutType,
+        containerColor = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
         navigationSuiteItems = {
             routes.forEach { route ->
                 item(
