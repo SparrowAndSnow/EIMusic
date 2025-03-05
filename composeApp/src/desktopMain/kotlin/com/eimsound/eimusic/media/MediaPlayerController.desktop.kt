@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.eimsound.eimusic.Duration
 import javafx.scene.media.MediaPlayer
+import java.util.concurrent.CompletableFuture
 
 actual class MediaPlayerController {
     private var mediaPlayer: MediaPlayer? = null
@@ -35,9 +36,16 @@ actual class MediaPlayerController {
         set(value) {
             mediaPlayer?.volume = value
         }
+    actual var isMuted: Boolean
+        get() = mediaPlayer?.isMute ?: false
+        set(value) {
+            mediaPlayer?.isMute = value
+        }
 
     actual fun seek(seconds: Duration) {
-        mediaPlayer?.seek(javafx.util.Duration.seconds(seconds.seconds.toDouble()))
+        CompletableFuture.runAsync {
+            mediaPlayer?.seek(javafx.util.Duration.seconds(seconds.seconds.toDouble()))
+        }
     }
 
     actual fun release() {

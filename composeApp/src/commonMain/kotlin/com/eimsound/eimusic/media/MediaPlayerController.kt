@@ -21,6 +21,8 @@ expect class MediaPlayerController {
 
     var volume: Double
 
+    var isMuted: Boolean
+
     fun seek(seconds: Duration)
 
     fun release()

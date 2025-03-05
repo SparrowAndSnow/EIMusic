@@ -33,6 +33,10 @@ actual class MediaPlayerController {
     actual fun seek(seconds: Duration) {
     }
 
+    actual var isMuted: Boolean
+        get() = TODO("Not yet implemented")
+        set(value) {}
+
 }
 
 @Composable
