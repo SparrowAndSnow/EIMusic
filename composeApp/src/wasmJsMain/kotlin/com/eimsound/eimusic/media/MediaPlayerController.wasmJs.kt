@@ -30,7 +30,7 @@ actual class MediaPlayerController {
     actual fun release() {
     }
 
-    actual fun seek(seconds: Duration) {
+    actual fun seek(seconds: Duration, seekOver: () -> Unit) {
     }
 
     actual var isMuted: Boolean

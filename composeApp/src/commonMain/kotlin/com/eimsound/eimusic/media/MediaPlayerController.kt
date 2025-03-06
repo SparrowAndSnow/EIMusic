@@ -23,7 +23,7 @@ expect class MediaPlayerController {
 
     var isMuted: Boolean
 
-    fun seek(seconds: Duration)
+    fun seek(seconds: Duration, seekOver: () -> Unit = {})
 
     fun release()
 }

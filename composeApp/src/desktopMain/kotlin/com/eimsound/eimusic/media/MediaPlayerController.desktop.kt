@@ -42,9 +42,11 @@ actual class MediaPlayerController {
             mediaPlayer?.isMute = value
         }
 
-    actual fun seek(seconds: Duration) {
+    actual fun seek(seconds: Duration, seekOver: () -> Unit) {
         CompletableFuture.runAsync {
             mediaPlayer?.seek(javafx.util.Duration.seconds(seconds.seconds.toDouble()))
+        }.thenRun {
+            seekOver()
         }
     }
 

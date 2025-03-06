@@ -17,6 +17,13 @@ fun createMediaPlayer(source: String, listener: MediaPlayerListener): MediaPlaye
         setOnError {
             listener.onError()
         }
+        statusProperty().addListener {
+            _, _, newValue ->
+            when(newValue){
+                MediaPlayer.Status.STALLED -> listener.onLoading()
+                else -> { listener.onLoaded() }
+            }
+        }
     }
     return mediaPlayer
 }

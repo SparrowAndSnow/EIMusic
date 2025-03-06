@@ -21,6 +21,9 @@ class PlayingListViewModel : ViewModel() {
             val index = selectedIndex.value + 1
             selectedIndex.value = index
             selectedTrack.value = list.toList()[index]
+        }else{
+            selectedIndex.value = 0
+            selectedTrack.value = list.toList()[0]
         }
     }
 
@@ -34,6 +37,9 @@ class PlayingListViewModel : ViewModel() {
             val index = selectedIndex.value - 1
             selectedIndex.value = index
             selectedTrack.value = list.toList()[index]
+        }else{
+            selectedIndex.value = list.size - 1
+            selectedTrack.value = list.toList()[list.size - 1]
         }
     }
 }

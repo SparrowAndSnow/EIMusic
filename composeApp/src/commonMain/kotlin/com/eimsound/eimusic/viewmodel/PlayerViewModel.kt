@@ -15,24 +15,16 @@ class PlayerViewModel : ViewModel() {
     )
     val state: StateFlow<PlayerUiState> = _state
 
-    fun loading(isLoading: Boolean) {
+    fun isLoading(isLoading: Boolean) {
         _state.update {
             state.value.copy(isLoading = isLoading)
         }
     }
-
-    fun play() {
+    fun isPlay(isPlay: Boolean) {
         _state.update {
-            state.value.copy(isPlaying = true)
+            state.value.copy(isPlaying = isPlay)
         }
     }
-
-    fun pause() {
-        _state.update {
-            state.value.copy(isPlaying = false)
-        }
-    }
-
     fun seek(position: Duration) {
         _state.update {
             state.value.copy(position = position)

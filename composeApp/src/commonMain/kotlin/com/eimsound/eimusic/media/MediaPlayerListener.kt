@@ -7,4 +7,6 @@ interface MediaPlayerListener {
     fun onAudioCompleted()
     fun onError()
     fun timer(duration: Duration)
+    fun onLoading()
+    fun onLoaded()
 }

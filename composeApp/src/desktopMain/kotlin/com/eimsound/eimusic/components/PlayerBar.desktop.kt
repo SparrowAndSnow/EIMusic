@@ -93,7 +93,10 @@ actual fun PlayerBar(mediaPlayerController: MediaPlayerController) {
                 position = state.value.position,
                 onPositionChanged = { position ->
                     mediaPlayerController.duration?.let {
-                        mediaPlayerController.seek(position)
+                        playerViewModel.isLoading(true)
+                        mediaPlayerController.seek(position, {
+                            playerViewModel.isLoading(false)
+                        })
                     }
                 },
                 duration = mediaPlayerController.duration ?: Duration(0),
@@ -103,10 +106,10 @@ actual fun PlayerBar(mediaPlayerController: MediaPlayerController) {
                 onIsPlayingChanged = {
                     if (it) {
                         mediaPlayerController.start()
-                        playerViewModel.play()
+                        playerViewModel.isPlay(true)
                     } else {
                         mediaPlayerController.pause()
-                        playerViewModel.pause()
+                        playerViewModel.isPlay(false)
                     }
                 },
                 onPreviousClick = { playingListViewModel.previous(state.value.playMode) },
@@ -268,8 +271,14 @@ fun RowScope.PlayerControl(
                 )
             }
         }
-        Slider(value = duration.toPercent(position), onValueChange = {
-            onPositionChanged(duration.percentOf(it))
+        val progress = remember { mutableStateOf<Float?>(null) }
+        Slider(value = progress.value ?: duration.toPercent(position), onValueChange = {
+            progress.value = it
+        }, onValueChangeFinished = {
+            progress.value?.let {
+                onPositionChanged(duration.percentOf(it))
+                progress.value = null
+            }
         }, modifier = Modifier.height(32.dp))
     }
 }
@@ -296,14 +305,14 @@ private fun playTrack(
     mediaPlayerController: MediaPlayerController
 ) {
     playingListViewModel.selectedTrack.value?.track?.previewUrl?.let {
-        playerViewModel.loading(true)
+        playerViewModel.isLoading(true)
         mediaPlayerController.prepare(it, listener = object : MediaPlayerListener {
             override fun onReady() {
-                playerViewModel.loading(false)
+                playerViewModel.isLoading(false)
                 mediaPlayerController.volume = playerViewModel.state.value.volume
                 mediaPlayerController.isMuted = playerViewModel.state.value.isMute
                 mediaPlayerController.start()
-                playerViewModel.play()
+                playerViewModel.isPlay(true)
             }
 
             override fun onAudioCompleted() {
@@ -328,6 +337,14 @@ private fun playTrack(
 
             override fun timer(duration: Duration) {
                 playerViewModel.seek(duration)
+            }
+
+            override fun onLoading() {
+                playerViewModel.isLoading(true)
+            }
+
+            override fun onLoaded() {
+                playerViewModel.isLoading(false)
             }
         })
     } ?: run {
