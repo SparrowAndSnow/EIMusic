@@ -80,6 +80,7 @@ kotlin {
             implementation(compose.material3AdaptiveNavigationSuite)
             implementation(libs.coil.compose.image.loader)
             implementation(libs.coil.compose.image.loader.network.ktor)
+            implementation(libs.bundles.koin)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)

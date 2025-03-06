@@ -9,7 +9,6 @@ import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,49 +22,50 @@ import com.eimsound.eimusic.media.MediaPlayerListener
 import com.eimsound.eimusic.media.PlayMode
 import com.eimsound.eimusic.network.SpotifyApiImpl
 import com.eimsound.eimusic.network.models.topfiftycharts.Item
+import com.eimsound.eimusic.viewmodel.PlayerViewModel
+import com.eimsound.eimusic.viewmodel.PlayingListViewModel
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 actual fun PlayerBar(mediaPlayerController: MediaPlayerController) {
-    val trackList = remember { mutableStateOf<List<Item>>(emptyList()) }
-    val shuffleList = remember { mutableStateOf<MutableSet<Item>>(mutableSetOf()) }
-    val selectedIndex = remember { mutableStateOf(0) }
-    val isLoading = remember { mutableStateOf(false) }
-    val position = rememberSaveable { mutableStateOf(0.0f) }
-    val playMode = remember { mutableStateOf(PlayMode.LOOP) }
-    val volume = rememberSaveable { mutableStateOf(mediaPlayerController.volume) }
-    val isMute = rememberSaveable { mutableStateOf(mediaPlayerController.isMuted) }
-    val isPlaying = rememberSaveable { mutableStateOf(mediaPlayerController.isPlaying) }
-    val selectedTrack = remember { mutableStateOf(trackList.value.getOrNull(selectedIndex.value)) }
+    val playerViewModel = koinViewModel<PlayerViewModel>()
+    val state = playerViewModel.state.collectAsState()
+    val playingListViewModel = koinViewModel<PlayingListViewModel>()
 
-    DisposableEffect(selectedTrack.value) {
-        playTrack(
-            selectedTrack,
-            mediaPlayerController,
-            isLoading,
-            selectedIndex,
-            position,
-            trackList,
-            shuffleList,
-            playMode,
-            volume,
-            isMute,
-            isPlaying
-        )
+//    val trackList = remember { mutableStateOf<List<Item>>(emptyList()) }
+//    val shuffleList = remember { mutableStateOf<MutableSet<Item>>(mutableSetOf()) }
+//    val selectedIndex = remember { mutableStateOf(0) }
+//    val isLoading = remember { mutableStateOf(false) }
+//    val position = rememberSaveable { mutableStateOf(0.0f) }
+//    val playMode = remember { mutableStateOf(PlayMode.LOOP) }
+//    val volume = rememberSaveable { mutableStateOf(mediaPlayerController.volume) }
+//    val isMute = rememberSaveable { mutableStateOf(mediaPlayerController.isMuted) }
+//    val isPlaying = rememberSaveable { mutableStateOf(mediaPlayerController.isPlaying) }
+//    val selectedTrack = remember { mutableStateOf(trackList.value.getOrNull(selectedIndex.value)) }
+
+    DisposableEffect(playingListViewModel.selectedTrack.value) {
+        playTrack(playingListViewModel, playerViewModel, mediaPlayerController)
         onDispose {
             mediaPlayerController.release()
         }
     }
 
-    LaunchedEffect(playMode.value) {
-        if (playMode.value == PlayMode.SHUFFLE && shuffleList.value.isEmpty()) {
-            shuffleList.value.addAll(trackList.value.shuffled().toMutableSet())
+    LaunchedEffect(state.value.playMode) {
+        if (state.value.playMode == PlayMode.SHUFFLE && playingListViewModel.shuffleList.value.isEmpty()) {
+            playingListViewModel.shuffleList.value.addAll(
+                playingListViewModel.trackList.value.shuffled().toMutableSet()
+            )
         }
     }
 
-    LaunchedEffect(trackList.value) {
-        trackList.value = SpotifyApiImpl().getTopFiftyChart().tracks?.items.orEmpty()
-        selectedTrack.value = trackList.value.getOrNull(selectedIndex.value)
+    LaunchedEffect(playingListViewModel.trackList.value) {
+        val trackList = SpotifyApiImpl().getTopFiftyChart().tracks?.items.orEmpty()
+        playingListViewModel.trackList.value = trackList
+//        selectedTrack.value = trackList.value.getOrNull(selectedIndex.value)
     }
+
+    LaunchedEffect(state.value.volume) { mediaPlayerController.volume = state.value.volume }
+    LaunchedEffect(state.value.isMute) { mediaPlayerController.isMuted = state.value.isMute }
 
     Box(
         modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surfaceContainer)
@@ -74,31 +74,51 @@ actual fun PlayerBar(mediaPlayerController: MediaPlayerController) {
         Row(
             modifier = Modifier.fillMaxWidth().align(Alignment.Center), verticalAlignment = Alignment.CenterVertically
         ) {
-            TrackImage(selectedTrack = selectedTrack.value, isLoading = isLoading)
+            TrackImage(selectedTrack = playingListViewModel.selectedTrack.value, isLoading = state.value.isLoading)
             Column(Modifier.weight(1f).padding(start = 8.dp)) {
                 Text(
-                    text = selectedTrack.value?.track?.name.orEmpty(),
+                    text = playingListViewModel.selectedTrack.value?.track?.name.orEmpty(),
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.basicMarquee(animationMode = MarqueeAnimationMode.Immediately)
                 )
                 Text(
-                    text = selectedTrack.value?.track?.artists?.map { it.name }?.joinToString(",").orEmpty(),
+                    text = playingListViewModel.selectedTrack.value?.track?.artists?.map { it.name }?.joinToString(",")
+                        .orEmpty(),
                     modifier = Modifier.padding(top = 8.dp)
                         .basicMarquee(animationMode = MarqueeAnimationMode.Immediately)
                 )
             }
             PlayerControl(
                 modifier = Modifier.padding(horizontal = 8.dp).weight(2f),
-                mediaPlayerController,
-                selectedIndex,
-                selectedTrack,
-                trackList,
-                shuffleList,
-                position,
-                playMode,
-                isPlaying
+                position = state.value.position,
+                onPositionChanged = { position ->
+                    mediaPlayerController.duration?.let {
+                        mediaPlayerController.seek(position)
+                    }
+                },
+                duration = mediaPlayerController.duration ?: Duration(0),
+                playMode = state.value.playMode,
+                onPlayModeChanged = playerViewModel::onPlayModeChanged,
+                isPlaying = state.value.isPlaying,
+                onIsPlayingChanged = {
+                    if (it) {
+                        mediaPlayerController.start()
+                        playerViewModel.play()
+                    } else {
+                        mediaPlayerController.pause()
+                        playerViewModel.pause()
+                    }
+                },
+                onPreviousClick = { playingListViewModel.previous(state.value.playMode) },
+                onNextClick = { playingListViewModel.next(state.value.playMode) }
             )
-            Volume(volume, isMute, modifier = Modifier.weight(1f).padding(start = 8.dp), mediaPlayerController)
+            Volume(
+                state.value.volume,
+                state.value.isMute,
+                onVolumeChanged = playerViewModel::onVolumeChanged,
+                onIsMuteChanged = playerViewModel::onIsMuteChanged,
+                modifier = Modifier.weight(1f).padding(start = 8.dp)
+            )
         }
     }
 }
@@ -106,34 +126,31 @@ actual fun PlayerBar(mediaPlayerController: MediaPlayerController) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RowScope.Volume(
-    volume: MutableState<Double>,
-    isMute: MutableState<Boolean>,
-    modifier: Modifier = Modifier,
-    mediaPlayerController: MediaPlayerController
+    volume: Double,
+    isMute: Boolean,
+    onVolumeChanged: (Double) -> Unit = {},
+    onIsMuteChanged: (Boolean) -> Unit = {},
+    modifier: Modifier = Modifier
 ) {
-
-    LaunchedEffect(volume.value) { mediaPlayerController.volume = volume.value }
-    LaunchedEffect(isMute.value) { mediaPlayerController.isMuted = isMute.value }
-
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
     ) {
 
-        if (isMute.value) IconButton(
+        if (isMute) IconButton(
             onClick = {
-                isMute.value = false
+                onIsMuteChanged(false)
             }) {
             Icon(
                 Icons.AutoMirrored.Default.VolumeOff, contentDescription = null
             )
         } else IconButton(onClick = {
-            isMute.value = true
+            onIsMuteChanged(true)
         }) {
             Icon(
-                imageVector = if (volume.value > 0.8) {
+                imageVector = if (volume > 0.8) {
                     Icons.AutoMirrored.Default.VolumeUp
-                } else if (volume.value > 0.4) {
+                } else if (volume > 0.4) {
                     Icons.AutoMirrored.Default.VolumeDown
                 } else {
                     Icons.AutoMirrored.Default.VolumeMute
@@ -141,9 +158,9 @@ fun RowScope.Volume(
                 contentDescription = null,
             )
         }
-        Slider(value = volume.value.toFloat(), onValueChange = {
-            volume.value = it.toDouble()
-            isMute.value = it.toDouble() == 0.0
+        Slider(value = volume.toFloat(), onValueChange = {
+            onIsMuteChanged(it.toDouble() == 0.0)
+            onVolumeChanged(it.toDouble())
         }, modifier = Modifier.height(16.dp).width(64.dp), track = { sliderState ->
             SliderDefaults.Track(sliderState = sliderState, modifier = Modifier.height(8.dp))
         })
@@ -152,20 +169,18 @@ fun RowScope.Volume(
 
 @Composable
 fun PlayPauseButton(
-    isPlaying: MutableState<Boolean>,
+    isPlaying: Boolean,
+    onIsPlayingChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
-    mediaPlayerController: MediaPlayerController,
 ) {
-    if (isPlaying.value) IconButton(onClick = {
-        mediaPlayerController.pause()
-        isPlaying.value = false
+    if (isPlaying) IconButton(onClick = {
+        onIsPlayingChanged(false)
     }) {
         Icon(
             modifier = modifier, imageVector = Icons.Default.PauseCircle, contentDescription = null
         )
     } else IconButton(onClick = {
-        mediaPlayerController.start()
-        isPlaying.value = true
+        onIsPlayingChanged(true)
     }) {
         Icon(
             modifier = modifier, imageVector = Icons.Default.PlayCircle, contentDescription = null
@@ -174,7 +189,7 @@ fun PlayPauseButton(
 }
 
 @Composable
-fun RowScope.TrackImage(modifier: Modifier = Modifier, selectedTrack: Item?, isLoading: MutableState<Boolean>) {
+fun RowScope.TrackImage(modifier: Modifier = Modifier, selectedTrack: Item?, isLoading: Boolean) {
     val painter = rememberAsyncImagePainter(
         selectedTrack?.track?.album?.images?.first()?.url.orEmpty()
     )
@@ -185,7 +200,7 @@ fun RowScope.TrackImage(modifier: Modifier = Modifier, selectedTrack: Item?, isL
             modifier = Modifier.clip(RoundedCornerShape(4.dp)).width(64.dp).height(64.dp),
             contentScale = ContentScale.Crop
         )
-        if (isLoading.value) {
+        if (isLoading) {
             Box(modifier = Modifier.fillMaxSize()) {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center).padding(8.dp),
@@ -199,22 +214,21 @@ fun RowScope.TrackImage(modifier: Modifier = Modifier, selectedTrack: Item?, isL
 @Composable
 fun RowScope.PlayerControl(
     modifier: Modifier = Modifier,
-    mediaPlayerController: MediaPlayerController,
-    selectedIndex: MutableState<Int>,
-    selectedTrack: MutableState<Item?>,
-    trackList: State<List<Item>>,
-    shuffleList: MutableState<MutableSet<Item>>,
-    position: MutableState<Float>,
-    playMode: MutableState<PlayMode>,
-    isPlaying: MutableState<Boolean>
+    position: Duration,
+    onPositionChanged: (Duration) -> Unit = {},
+    playMode: PlayMode,
+    onPlayModeChanged: (PlayMode) -> Unit = {},
+    isPlaying: Boolean,
+    onIsPlayingChanged: (Boolean) -> Unit = {},
+    onPreviousClick: () -> Unit = {},
+    onNextClick: () -> Unit = {},
+    duration: Duration
 ) {
     Column(modifier.align(Alignment.CenterVertically)) {
         Box(Modifier.fillMaxWidth()) {
             Row(Modifier.align(Alignment.Center), verticalAlignment = Alignment.CenterVertically) {
-                PlayMode(playMode)
-                IconButton(modifier = Modifier.padding(horizontal = 4.dp).size(32.dp), onClick = {
-                    previousTrack(selectedIndex, selectedTrack, playMode, trackList, shuffleList)
-                }) {
+                PlayModeButton(playMode, onPlayModeChanged)
+                IconButton(modifier = Modifier.padding(horizontal = 4.dp).size(32.dp), onClick = onPreviousClick) {
                     Icon(
                         imageVector = Icons.Default.SkipPrevious,
                         contentDescription = null,
@@ -222,12 +236,10 @@ fun RowScope.PlayerControl(
                 }
                 PlayPauseButton(
                     isPlaying = isPlaying,
+                    onIsPlayingChanged = onIsPlayingChanged,
                     modifier = Modifier.size(48.dp).padding(horizontal = 4.dp),
-                    mediaPlayerController = mediaPlayerController,
                 )
-                IconButton(modifier = Modifier.padding(horizontal = 4.dp).size(32.dp), onClick = {
-                    nextTrack(selectedIndex, selectedTrack, playMode, trackList, shuffleList)
-                }) {
+                IconButton(modifier = Modifier.padding(horizontal = 4.dp).size(32.dp), onClick = onNextClick) {
                     Icon(
                         imageVector = Icons.Default.SkipNext,
                         contentDescription = null,
@@ -239,8 +251,8 @@ fun RowScope.PlayerControl(
                 Text(
                     text = String.format(
                         "%02d:%02d",
-                        mediaPlayerController.currentPosition?.minutesPart,
-                        mediaPlayerController.currentPosition?.secondsPart
+                        position?.minutesPart,
+                        position?.secondsPart
                     ),
                     style = MaterialTheme.typography.labelMedium,
 
@@ -249,29 +261,26 @@ fun RowScope.PlayerControl(
                 Text(
                     text = String.format(
                         "%02d:%02d",
-                        mediaPlayerController.duration?.minutesPart,
-                        mediaPlayerController.duration?.secondsPart
+                        duration?.minutesPart,
+                        duration?.secondsPart
                     ),
                     style = MaterialTheme.typography.labelMedium,
                 )
             }
         }
-        Slider(value = position.value, onValueChange = { value ->
-//            position.value = value
-            mediaPlayerController.duration?.let {
-                mediaPlayerController.seek(it.percentOf(value))
-            }
+        Slider(value = duration.toPercent(position), onValueChange = {
+            onPositionChanged(duration.percentOf(it))
         }, modifier = Modifier.height(32.dp))
     }
 }
 
 @Composable
-fun PlayMode(playMode: MutableState<PlayMode>) {
+fun PlayModeButton(playMode: PlayMode, onPlayModelChange: (playMode: PlayMode) -> Unit) {
     IconButton(modifier = Modifier.padding(horizontal = 4.dp).size(32.dp), onClick = {
-        playMode.value = playMode.value.change()
+        onPlayModelChange(playMode.change())
     }) {
         Icon(
-            imageVector = when (playMode.value) {
+            imageVector = when (playMode) {
                 PlayMode.LOOP -> Icons.Default.Repeat
                 PlayMode.REPEAT_ONE -> Icons.Default.RepeatOne
                 PlayMode.SHUFFLE -> Icons.Default.Shuffle
@@ -281,81 +290,48 @@ fun PlayMode(playMode: MutableState<PlayMode>) {
     }
 }
 
-private fun nextTrack(
-    selectedIndex: MutableState<Int>,
-    selectedTrack: MutableState<Item?>,
-    playMode: State<PlayMode>,
-    trackList: State<List<Item>>,
-    shuffleList: State<MutableSet<Item>>
-) {
-    val list = if (playMode.value == PlayMode.SHUFFLE) shuffleList.value else trackList.value
-    if (selectedIndex.value < list.size - 1) {
-        selectedIndex.value += 1
-        selectedTrack.value = list.toList()[selectedIndex.value]
-    }
-}
-
-private fun previousTrack(
-    selectedIndex: MutableState<Int>,
-    selectedTrack: MutableState<Item?>,
-    playMode: State<PlayMode>,
-    trackList: State<List<Item>>,
-    shuffleList: State<MutableSet<Item>>
-) {
-    val list = if (playMode.value == PlayMode.SHUFFLE) shuffleList.value else trackList.value
-    if (selectedIndex.value - 1 >= 0) {
-        selectedIndex.value -= 1
-        selectedTrack.value = list.toList()[selectedIndex.value]
-    }
-}
-
 private fun playTrack(
-    selectedTrack: MutableState<Item?>,
-    mediaPlayerController: MediaPlayerController,
-    isLoading: MutableState<Boolean>,
-    selectedIndex: MutableState<Int>,
-    position: MutableState<Float>,
-    trackList: State<List<Item>>,
-    shuffleList: MutableState<MutableSet<Item>>,
-    playMode: MutableState<PlayMode>,
-    volume: State<Double>,
-    isMute: State<Boolean>,
-    isPlaying: MutableState<Boolean>
-) = selectedTrack.value?.track?.previewUrl?.let {
-    isLoading.value = true
-    mediaPlayerController.prepare(it, listener = object : MediaPlayerListener {
-        override fun onReady() {
-            isLoading.value = false
-            mediaPlayerController.volume = volume.value
-            mediaPlayerController.isMuted = isMute.value
-            mediaPlayerController.start()
-            isPlaying.value = true
-        }
-
-        override fun onAudioCompleted() {
-            when (playMode.value) {
-                PlayMode.LOOP -> nextTrack(selectedIndex, selectedTrack, playMode, trackList, shuffleList)
-                PlayMode.REPEAT_ONE -> {
-                    mediaPlayerController.seek(Duration(0))
-                    mediaPlayerController.start()
-                }
-
-                PlayMode.SHUFFLE -> {
-                    shuffleList.value.removeIf { shuffleList.value.contains(selectedTrack.value) }
-                    nextTrack(selectedIndex, selectedTrack, playMode, trackList, shuffleList)
-                }
+    playingListViewModel: PlayingListViewModel,
+    playerViewModel: PlayerViewModel,
+    mediaPlayerController: MediaPlayerController
+) {
+    playingListViewModel.selectedTrack.value?.track?.previewUrl?.let {
+        playerViewModel.loading(true)
+        mediaPlayerController.prepare(it, listener = object : MediaPlayerListener {
+            override fun onReady() {
+                playerViewModel.loading(false)
+                mediaPlayerController.volume = playerViewModel.state.value.volume
+                mediaPlayerController.isMuted = playerViewModel.state.value.isMute
+                mediaPlayerController.start()
+                playerViewModel.play()
             }
 
-        }
+            override fun onAudioCompleted() {
+                when (playerViewModel.state.value.playMode) {
+                    PlayMode.LOOP -> playingListViewModel.next(playerViewModel.state.value.playMode)
+                    PlayMode.REPEAT_ONE -> {
+                        mediaPlayerController.seek(Duration(0))
+                        mediaPlayerController.start()
+                    }
 
-        override fun onError() {
-            nextTrack(selectedIndex, selectedTrack, playMode, trackList, shuffleList)
-        }
+                    PlayMode.SHUFFLE -> {
+//                        vm.state.value.shuffleList.removeIf { shuffleList.value.contains(selectedTrack.value) }
+                        playingListViewModel.next(playerViewModel.state.value.playMode)
+                    }
+                }
 
-        override fun timer(duration: Duration) {
-            position.value = mediaPlayerController.duration?.parsePercent(duration.seconds) ?: 0f
-        }
-    })
-} ?: run {
-    nextTrack(selectedIndex, selectedTrack, playMode, trackList, shuffleList)
+            }
+
+            override fun onError() {
+                playingListViewModel.next(playerViewModel.state.value.playMode)
+            }
+
+            override fun timer(duration: Duration) {
+                playerViewModel.seek(duration)
+            }
+        })
+    } ?: run {
+        playingListViewModel.next(playerViewModel.state.value.playMode)
+    }
 }
+

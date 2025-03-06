@@ -6,9 +6,9 @@ data class Duration(val seconds: Long) {
         return Duration((seconds * percent).toLong())
     }
 
-    fun parsePercent(current: Long): Float {
-        if (seconds == 0L || current > seconds) return 0f
-        return current.toFloat() / seconds
+    fun toPercent(current: Duration): Float {
+        if (seconds <= 0L || current.seconds > seconds) return 0F
+        return current.seconds.toFloat() / seconds
     }
 
     val hoursPart

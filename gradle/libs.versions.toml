@@ -25,7 +25,7 @@ compose-material3-adaptive = "1.0.0-alpha03"
 compose-navigation = "1.7.0-beta02"
 ktor = "3.1.0"
 coil-compose = "3.1.0"
-
+koin = "4.0.1"
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
@@ -67,6 +67,10 @@ ktor-client-cio= {module ="io.ktor:ktor-client-cio", version.ref = "ktor"}
 ktor-client-android = { module = "io.ktor:ktor-client-android", version.ref = "ktor" }
 ktor-client-js = { module = "io.ktor:ktor-client-js", version.ref = "ktor" }
 
+# Koin
+koin-compose = { group = "io.insert-koin", name = "koin-compose", version.ref = "koin" }
+koin-compose-viewmodel = { group = "io.insert-koin", name = "koin-compose-viewmodel", version.ref = "koin" }
+
 coil-compose-image-loader = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil-compose" }
 coil-compose-image-loader-network-ktor = { group = "io.coil-kt.coil3", name = "coil-network-ktor3", version.ref = "coil-compose" }
 
@@ -89,4 +93,9 @@ ktor = [
     "ktor-serialization",
     "ktor-client-serialization",
     "ktor-content-negotiation",
+]
+
+koin = [
+    "koin-compose",
+    "koin-compose-viewmodel",
 ]
