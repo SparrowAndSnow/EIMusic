@@ -118,7 +118,7 @@ actual fun PlayerBar(mediaPlayerController: MediaPlayerController) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RowScope.Volume(
+fun Volume(
     volume: Double,
     isMute: Boolean,
     onVolumeChanged: (Double) -> Unit = {},
@@ -182,7 +182,7 @@ fun PlayPauseButton(
 }
 
 @Composable
-fun RowScope.TrackImage(modifier: Modifier = Modifier, selectedTrack: Item?, isLoading: Boolean) {
+fun TrackImage(modifier: Modifier = Modifier, selectedTrack: Item?, isLoading: Boolean) {
     val painter = rememberAsyncImagePainter(
         selectedTrack?.track?.album?.images?.first()?.url.orEmpty()
     )
@@ -217,13 +217,13 @@ fun RowScope.PlayerControl(
     onNextClick: () -> Unit = {},
     duration: Duration,
 ) {
-    var daggingPosition by remember { mutableStateOf<Duration>(position) }
+    var draggingPosition by remember { mutableStateOf<Duration>(position) }
     var isDragging by remember { mutableStateOf(false) }
 
     Column(modifier.align(Alignment.CenterVertically)) {
         Box(Modifier.fillMaxWidth()) {
             Row(Modifier.align(Alignment.Center), verticalAlignment = Alignment.CenterVertically) {
-                PlayModeButton(playMode, onPlayModeChanged)
+                PlayModeButton(playMode = playMode, onPlayModeChanged = onPlayModeChanged)
                 IconButton(modifier = Modifier.padding(horizontal = 4.dp).size(32.dp), onClick = onPreviousClick) {
                     Icon(
                         imageVector = Icons.Default.SkipPrevious,
@@ -242,11 +242,10 @@ fun RowScope.PlayerControl(
                     )
                 }
             }
-//            Spacer(modifier = Modifier.weight(1f))
             TimeDisplay(
                 modifier = Modifier.align(Alignment.BottomEnd), position, duration,
                 isDragging,
-                daggingPosition
+                draggingPosition
             )
         }
 
@@ -255,7 +254,7 @@ fun RowScope.PlayerControl(
             onPositionChanged(duration.percentOf(it))
         }, onValueChange = {
             isDragging = true
-            daggingPosition = duration.percentOf(it)
+            draggingPosition = duration.percentOf(it)
         })
     }
 }
@@ -291,36 +290,38 @@ fun TimeDisplay(
 
 @Composable
 fun PlayerSlider(
-    position: Float,
+    value: Float,
     onValueChangeFinished: (Float) -> Unit,
     onValueChange: (Float) -> Unit = {},
 ) {
-    var progress by remember { mutableStateOf<Float>(position) }
+    var progress by remember { mutableStateOf<Float>(value) }
     var isDragging by remember { mutableStateOf(false) }
 
-    val animatedPosition by animateFloatAsState(
-        targetValue = if (isDragging) progress else position,
-        animationSpec = tween(100)
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress,
+        animationSpec = tween(if (isDragging) 0 else 200),
     )
-    LaunchedEffect(position) {
-        if (!isDragging) progress = position
+    LaunchedEffect(value) {
+        if (!isDragging) progress = value
     }
-    Slider(value = animatedPosition, onValueChange = {
+    Slider(value = animatedProgress, onValueChange = {
         progress = it
         isDragging = true
         onValueChange(it)
     }, onValueChangeFinished = {
-        progress?.let {
-            onValueChangeFinished(it)
-        }
         isDragging = false
+        onValueChangeFinished(progress)
     }, modifier = Modifier.height(32.dp))
 }
 
 @Composable
-fun PlayModeButton(playMode: PlayMode, onPlayModelChange: (playMode: PlayMode) -> Unit) {
-    IconButton(modifier = Modifier.padding(horizontal = 4.dp).size(32.dp), onClick = {
-        onPlayModelChange(playMode.change())
+fun PlayModeButton(
+    modifier: Modifier = Modifier.padding(horizontal = 4.dp).size(32.dp),
+    playMode: PlayMode,
+    onPlayModeChanged: (playMode: PlayMode) -> Unit
+) {
+    IconButton(modifier = modifier, onClick = {
+        onPlayModeChanged(playMode.change())
     }) {
         Icon(
             imageVector = when (playMode) {

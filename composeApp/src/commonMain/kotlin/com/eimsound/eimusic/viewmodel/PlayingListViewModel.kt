@@ -19,6 +19,8 @@ class PlayingListViewModel : ViewModel() {
 
     fun load(list: List<Item>) {
         trackList = list
+        selectedIndex = 0
+        selectedTrack = list.firstOrNull()
     }
 
     fun next(playMode: PlayMode) {
