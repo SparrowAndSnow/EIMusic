@@ -1,5 +1,7 @@
 package com.eimsound.eimusic.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -29,43 +31,31 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 actual fun PlayerBar(mediaPlayerController: MediaPlayerController) {
     val playerViewModel = koinViewModel<PlayerViewModel>()
-    val state = playerViewModel.state.collectAsState()
     val playingListViewModel = koinViewModel<PlayingListViewModel>()
 
-//    val trackList = remember { mutableStateOf<List<Item>>(emptyList()) }
-//    val shuffleList = remember { mutableStateOf<MutableSet<Item>>(mutableSetOf()) }
-//    val selectedIndex = remember { mutableStateOf(0) }
-//    val isLoading = remember { mutableStateOf(false) }
-//    val position = rememberSaveable { mutableStateOf(0.0f) }
-//    val playMode = remember { mutableStateOf(PlayMode.LOOP) }
-//    val volume = rememberSaveable { mutableStateOf(mediaPlayerController.volume) }
-//    val isMute = rememberSaveable { mutableStateOf(mediaPlayerController.isMuted) }
-//    val isPlaying = rememberSaveable { mutableStateOf(mediaPlayerController.isPlaying) }
-//    val selectedTrack = remember { mutableStateOf(trackList.value.getOrNull(selectedIndex.value)) }
-
-    DisposableEffect(playingListViewModel.selectedTrack.value) {
+    DisposableEffect(playingListViewModel.selectedTrack) {
         playTrack(playingListViewModel, playerViewModel, mediaPlayerController)
         onDispose {
             mediaPlayerController.release()
         }
     }
 
-    LaunchedEffect(state.value.playMode) {
-        if (state.value.playMode == PlayMode.SHUFFLE && playingListViewModel.shuffleList.value.isEmpty()) {
-            playingListViewModel.shuffleList.value.addAll(
-                playingListViewModel.trackList.value.shuffled().toMutableSet()
+    LaunchedEffect(playerViewModel.playMode) {
+        if (playerViewModel.playMode == PlayMode.SHUFFLE && playingListViewModel.shuffleList.isEmpty()) {
+            playingListViewModel.shuffleList.addAll(
+                playingListViewModel.trackList.shuffled().toMutableSet()
             )
         }
     }
 
-    LaunchedEffect(playingListViewModel.trackList.value) {
+    LaunchedEffect(playingListViewModel.trackList) {
         val trackList = SpotifyApiImpl().getTopFiftyChart().tracks?.items.orEmpty()
-        playingListViewModel.trackList.value = trackList
+        playingListViewModel.load(trackList)
 //        selectedTrack.value = trackList.value.getOrNull(selectedIndex.value)
     }
 
-    LaunchedEffect(state.value.volume) { mediaPlayerController.volume = state.value.volume }
-    LaunchedEffect(state.value.isMute) { mediaPlayerController.isMuted = state.value.isMute }
+    LaunchedEffect(playerViewModel.volume) { mediaPlayerController.volume = playerViewModel.volume }
+    LaunchedEffect(playerViewModel.isMute) { mediaPlayerController.isMuted = playerViewModel.isMute }
 
     Box(
         modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surfaceContainer)
@@ -74,15 +64,15 @@ actual fun PlayerBar(mediaPlayerController: MediaPlayerController) {
         Row(
             modifier = Modifier.fillMaxWidth().align(Alignment.Center), verticalAlignment = Alignment.CenterVertically
         ) {
-            TrackImage(selectedTrack = playingListViewModel.selectedTrack.value, isLoading = state.value.isLoading)
+            TrackImage(selectedTrack = playingListViewModel.selectedTrack, isLoading = playerViewModel.isLoading)
             Column(Modifier.weight(1f).padding(start = 8.dp)) {
                 Text(
-                    text = playingListViewModel.selectedTrack.value?.track?.name.orEmpty(),
+                    text = playingListViewModel.selectedTrack?.track?.name.orEmpty(),
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.basicMarquee(animationMode = MarqueeAnimationMode.Immediately)
                 )
                 Text(
-                    text = playingListViewModel.selectedTrack.value?.track?.artists?.map { it.name }?.joinToString(",")
+                    text = playingListViewModel.selectedTrack?.track?.artists?.map { it.name }?.joinToString(",")
                         .orEmpty(),
                     modifier = Modifier.padding(top = 8.dp)
                         .basicMarquee(animationMode = MarqueeAnimationMode.Immediately)
@@ -90,7 +80,7 @@ actual fun PlayerBar(mediaPlayerController: MediaPlayerController) {
             }
             PlayerControl(
                 modifier = Modifier.padding(horizontal = 8.dp).weight(2f),
-                position = state.value.position,
+                position = playerViewModel.position,
                 onPositionChanged = { position ->
                     mediaPlayerController.duration?.let {
                         playerViewModel.isLoading(true)
@@ -100,9 +90,9 @@ actual fun PlayerBar(mediaPlayerController: MediaPlayerController) {
                     }
                 },
                 duration = mediaPlayerController.duration ?: Duration(0),
-                playMode = state.value.playMode,
+                playMode = playerViewModel.playMode,
                 onPlayModeChanged = playerViewModel::onPlayModeChanged,
-                isPlaying = state.value.isPlaying,
+                isPlaying = playerViewModel.isPlaying,
                 onIsPlayingChanged = {
                     if (it) {
                         mediaPlayerController.start()
@@ -112,12 +102,12 @@ actual fun PlayerBar(mediaPlayerController: MediaPlayerController) {
                         playerViewModel.isPlay(false)
                     }
                 },
-                onPreviousClick = { playingListViewModel.previous(state.value.playMode) },
-                onNextClick = { playingListViewModel.next(state.value.playMode) }
+                onPreviousClick = { playingListViewModel.previous(playerViewModel.playMode) },
+                onNextClick = { playingListViewModel.next(playerViewModel.playMode) },
             )
             Volume(
-                state.value.volume,
-                state.value.isMute,
+                playerViewModel.volume,
+                playerViewModel.isMute,
                 onVolumeChanged = playerViewModel::onVolumeChanged,
                 onIsMuteChanged = playerViewModel::onIsMuteChanged,
                 modifier = Modifier.weight(1f).padding(start = 8.dp)
@@ -225,8 +215,11 @@ fun RowScope.PlayerControl(
     onIsPlayingChanged: (Boolean) -> Unit = {},
     onPreviousClick: () -> Unit = {},
     onNextClick: () -> Unit = {},
-    duration: Duration
+    duration: Duration,
 ) {
+    var daggingPosition by remember { mutableStateOf<Duration>(position) }
+    var isDragging by remember { mutableStateOf(false) }
+
     Column(modifier.align(Alignment.CenterVertically)) {
         Box(Modifier.fillMaxWidth()) {
             Row(Modifier.align(Alignment.Center), verticalAlignment = Alignment.CenterVertically) {
@@ -250,37 +243,78 @@ fun RowScope.PlayerControl(
                 }
             }
 //            Spacer(modifier = Modifier.weight(1f))
-            Row(modifier = Modifier.align(Alignment.BottomEnd)) {
-                Text(
-                    text = String.format(
-                        "%02d:%02d",
-                        position?.minutesPart,
-                        position?.secondsPart
-                    ),
-                    style = MaterialTheme.typography.labelMedium,
-
-                    )
-                Text(text = " / ", style = MaterialTheme.typography.labelMedium)
-                Text(
-                    text = String.format(
-                        "%02d:%02d",
-                        duration?.minutesPart,
-                        duration?.secondsPart
-                    ),
-                    style = MaterialTheme.typography.labelMedium,
-                )
-            }
+            TimeDisplay(
+                modifier = Modifier.align(Alignment.BottomEnd), position, duration,
+                isDragging,
+                daggingPosition
+            )
         }
-        val progress = remember { mutableStateOf<Float?>(null) }
-        Slider(value = progress.value ?: duration.toPercent(position), onValueChange = {
-            progress.value = it
-        }, onValueChangeFinished = {
-            progress.value?.let {
-                onPositionChanged(duration.percentOf(it))
-                progress.value = null
-            }
-        }, modifier = Modifier.height(32.dp))
+
+        PlayerSlider(duration.toPercent(position), onValueChangeFinished = {
+            isDragging = false
+            onPositionChanged(duration.percentOf(it))
+        }, onValueChange = {
+            isDragging = true
+            daggingPosition = duration.percentOf(it)
+        })
     }
+}
+
+@Composable
+fun TimeDisplay(
+    modifier: Modifier = Modifier,
+    position: Duration,
+    duration: Duration,
+    isDragging: Boolean,
+    daggingPosition: Duration
+) {
+    Row(modifier = modifier) {
+        Text(
+            text = String.format(
+                "%02d:%02d",
+                if (isDragging) daggingPosition.minutesPart else position?.minutesPart,
+                if (isDragging) daggingPosition.secondsPart else position?.secondsPart
+            ),
+            style = MaterialTheme.typography.labelMedium,
+        )
+        Text(text = " / ", style = MaterialTheme.typography.labelMedium)
+        Text(
+            text = String.format(
+                "%02d:%02d",
+                duration?.minutesPart,
+                duration?.secondsPart
+            ),
+            style = MaterialTheme.typography.labelMedium,
+        )
+    }
+}
+
+@Composable
+fun PlayerSlider(
+    position: Float,
+    onValueChangeFinished: (Float) -> Unit,
+    onValueChange: (Float) -> Unit = {},
+) {
+    var progress by remember { mutableStateOf<Float>(position) }
+    var isDragging by remember { mutableStateOf(false) }
+
+    val animatedPosition by animateFloatAsState(
+        targetValue = if (isDragging) progress else position,
+        animationSpec = tween(100)
+    )
+    LaunchedEffect(position) {
+        if (!isDragging) progress = position
+    }
+    Slider(value = animatedPosition, onValueChange = {
+        progress = it
+        isDragging = true
+        onValueChange(it)
+    }, onValueChangeFinished = {
+        progress?.let {
+            onValueChangeFinished(it)
+        }
+        isDragging = false
+    }, modifier = Modifier.height(32.dp))
 }
 
 @Composable
@@ -304,20 +338,20 @@ private fun playTrack(
     playerViewModel: PlayerViewModel,
     mediaPlayerController: MediaPlayerController
 ) {
-    playingListViewModel.selectedTrack.value?.track?.previewUrl?.let {
+    playingListViewModel.selectedTrack?.track?.previewUrl?.let {
         playerViewModel.isLoading(true)
         mediaPlayerController.prepare(it, listener = object : MediaPlayerListener {
             override fun onReady() {
                 playerViewModel.isLoading(false)
-                mediaPlayerController.volume = playerViewModel.state.value.volume
-                mediaPlayerController.isMuted = playerViewModel.state.value.isMute
+                mediaPlayerController.volume = playerViewModel.volume
+                mediaPlayerController.isMuted = playerViewModel.isMute
                 mediaPlayerController.start()
                 playerViewModel.isPlay(true)
             }
 
             override fun onAudioCompleted() {
-                when (playerViewModel.state.value.playMode) {
-                    PlayMode.LOOP -> playingListViewModel.next(playerViewModel.state.value.playMode)
+                when (playerViewModel.playMode) {
+                    PlayMode.LOOP -> playingListViewModel.next(playerViewModel.playMode)
                     PlayMode.REPEAT_ONE -> {
                         mediaPlayerController.seek(Duration(0))
                         mediaPlayerController.start()
@@ -325,14 +359,14 @@ private fun playTrack(
 
                     PlayMode.SHUFFLE -> {
 //                        vm.state.value.shuffleList.removeIf { shuffleList.value.contains(selectedTrack.value) }
-                        playingListViewModel.next(playerViewModel.state.value.playMode)
+                        playingListViewModel.next(playerViewModel.playMode)
                     }
                 }
 
             }
 
             override fun onError() {
-                playingListViewModel.next(playerViewModel.state.value.playMode)
+                playingListViewModel.next(playerViewModel.playMode)
             }
 
             override fun timer(duration: Duration) {
@@ -348,7 +382,7 @@ private fun playTrack(
             }
         })
     } ?: run {
-        playingListViewModel.next(playerViewModel.state.value.playMode)
+        playingListViewModel.next(playerViewModel.playMode)
     }
 }
 

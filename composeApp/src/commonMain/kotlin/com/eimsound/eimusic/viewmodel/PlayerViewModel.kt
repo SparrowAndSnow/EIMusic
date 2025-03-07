@@ -1,52 +1,49 @@
 package com.eimsound.eimusic.viewmodel
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.eimsound.eimusic.Duration
-import com.eimsound.eimusic.data.PlayerUiState
 import com.eimsound.eimusic.media.PlayMode
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.update
 
 
 class PlayerViewModel : ViewModel() {
-    private val _state = MutableStateFlow(
-        PlayerUiState()
-    )
-    val state: StateFlow<PlayerUiState> = _state
+    var isLoading by mutableStateOf(false)
+        private set
+    var position by mutableStateOf(Duration(0))
+        private set
+    var playMode by mutableStateOf(PlayMode.LOOP)
+        private set
+    var volume by mutableStateOf(1.0)
+        private set
+    var isMute by mutableStateOf(false)
+        private set
+    var isPlaying by mutableStateOf(false)
+        private set
 
-    fun isLoading(isLoading: Boolean) {
-        _state.update {
-            state.value.copy(isLoading = isLoading)
-        }
-    }
-    fun isPlay(isPlay: Boolean) {
-        _state.update {
-            state.value.copy(isPlaying = isPlay)
-        }
-    }
-    fun seek(position: Duration) {
-        _state.update {
-            state.value.copy(position = position)
-        }
+    fun isLoading(value: Boolean) {
+        isLoading = value
     }
 
-    fun onPlayModeChanged(playMode: PlayMode) {
-        _state.update {
-            state.value.copy(playMode = playMode)
-        }
+    fun isPlay(value: Boolean) {
+        isPlaying = value
     }
 
-    fun onVolumeChanged(volume: Double) {
-        _state.update {
-            state.value.copy(volume = volume)
-        }
+    fun seek(value: Duration) {
+        position = value
     }
 
-    fun onIsMuteChanged(isMute: Boolean) {
-        _state.update {
-            state.value.copy(isMute = isMute)
-        }
+    fun onPlayModeChanged(value: PlayMode) {
+        playMode = value
+    }
+
+    fun onVolumeChanged(value: Double) {
+        volume = value
+    }
+
+    fun onIsMuteChanged(value: Boolean) {
+        isMute = value
     }
 
 //    val state: StateFlow<PlayerState> = _state
