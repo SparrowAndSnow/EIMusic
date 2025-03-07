@@ -25,7 +25,7 @@ actual class MediaPlayerController {
         mediaPlayer?.stop()
     }
 
-    actual val currentPosition: Duration?
+    actual val position: Duration?
         get() = Duration(mediaPlayer?.currentTime?.toSeconds()?.toLong() ?: 0)
     actual val duration: Duration?
         get() = Duration(mediaPlayer?.totalDuration?.toSeconds()?.toLong() ?: 0)
@@ -54,10 +54,5 @@ actual class MediaPlayerController {
         mediaPlayer?.dispose()
         mediaPlayer = null
     }
-}
-
-@Composable
-actual fun rememberMediaPlayerController(): MediaPlayerController {
-    return rememberSaveable { MediaPlayerController() }
 }
 

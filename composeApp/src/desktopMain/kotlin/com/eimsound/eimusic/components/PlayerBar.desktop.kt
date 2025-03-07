@@ -19,24 +19,27 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.rememberAsyncImagePainter
 import com.eimsound.eimusic.Duration
-import com.eimsound.eimusic.media.MediaPlayerController
-import com.eimsound.eimusic.media.MediaPlayerListener
 import com.eimsound.eimusic.media.PlayMode
 import com.eimsound.eimusic.network.SpotifyApiImpl
 import com.eimsound.eimusic.network.models.topfiftycharts.Item
+import com.eimsound.eimusic.viewmodel.DefaultLayoutViewModel
 import com.eimsound.eimusic.viewmodel.PlayerViewModel
 import com.eimsound.eimusic.viewmodel.PlayingListViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-actual fun PlayerBar(mediaPlayerController: MediaPlayerController) {
+actual fun PlayerBar() {
     val playerViewModel = koinViewModel<PlayerViewModel>()
     val playingListViewModel = koinViewModel<PlayingListViewModel>()
-
+    val defaultLayoutViewModel = koinViewModel<DefaultLayoutViewModel>()
     DisposableEffect(playingListViewModel.selectedTrack) {
-        playTrack(playingListViewModel, playerViewModel, mediaPlayerController)
+        playingListViewModel.selectedTrack?.track?.previewUrl?.let {
+            playerViewModel.play(it, playingListViewModel)
+        } ?: run {
+            playingListViewModel.next(playerViewModel.playMode)
+        }
         onDispose {
-            mediaPlayerController.release()
+            playerViewModel.release()
         }
     }
 
@@ -54,11 +57,9 @@ actual fun PlayerBar(mediaPlayerController: MediaPlayerController) {
 //        selectedTrack.value = trackList.value.getOrNull(selectedIndex.value)
     }
 
-    LaunchedEffect(playerViewModel.volume) { mediaPlayerController.volume = playerViewModel.volume }
-    LaunchedEffect(playerViewModel.isMute) { mediaPlayerController.isMuted = playerViewModel.isMute }
 
     Box(
-        modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surfaceContainer)
+        modifier = Modifier.clip(RoundedCornerShape(8.dp))
             .padding(16.dp).fillMaxWidth()
             .clickable(indication = null, interactionSource = remember { MutableInteractionSource() }) { }) {
         Row(
@@ -82,26 +83,18 @@ actual fun PlayerBar(mediaPlayerController: MediaPlayerController) {
                 modifier = Modifier.padding(horizontal = 8.dp).weight(2f),
                 position = playerViewModel.position,
                 onPositionChanged = { position ->
-                    mediaPlayerController.duration?.let {
+                    playerViewModel.duration?.let {
                         playerViewModel.isLoading(true)
-                        mediaPlayerController.seek(position, {
+                        playerViewModel.seek(position, {
                             playerViewModel.isLoading(false)
                         })
                     }
                 },
-                duration = mediaPlayerController.duration ?: Duration(0),
+                duration = playerViewModel.duration ?: Duration(0),
                 playMode = playerViewModel.playMode,
                 onPlayModeChanged = playerViewModel::onPlayModeChanged,
                 isPlaying = playerViewModel.isPlaying,
-                onIsPlayingChanged = {
-                    if (it) {
-                        mediaPlayerController.start()
-                        playerViewModel.isPlay(true)
-                    } else {
-                        mediaPlayerController.pause()
-                        playerViewModel.isPlay(false)
-                    }
-                },
+                onIsPlayingChanged = playerViewModel::isPlaying,
                 onPreviousClick = { playingListViewModel.previous(playerViewModel.playMode) },
                 onNextClick = { playingListViewModel.next(playerViewModel.playMode) },
             )
@@ -112,7 +105,24 @@ actual fun PlayerBar(mediaPlayerController: MediaPlayerController) {
                 onIsMuteChanged = playerViewModel::onIsMuteChanged,
                 modifier = Modifier.weight(1f).padding(start = 8.dp)
             )
+            TrackListButton(showTrackList = defaultLayoutViewModel.showSideBar, onShowTrackListChanged = {
+                defaultLayoutViewModel.showSideBar(it)
+            })
         }
+    }
+}
+
+@Composable
+fun TrackListButton(modifier: Modifier = Modifier, showTrackList: Boolean, onShowTrackListChanged: (Boolean) -> Unit) {
+    IconButton(
+        modifier = modifier,
+        onClick = {
+            onShowTrackListChanged(!showTrackList)
+        }) {
+        Icon(
+            tint = if (showTrackList) MaterialTheme.colorScheme.primary else LocalContentColor.current,
+            imageVector = Icons.AutoMirrored.Default.QueueMusic, contentDescription = null
+        )
     }
 }
 
@@ -331,59 +341,6 @@ fun PlayModeButton(
             },
             contentDescription = null,
         )
-    }
-}
-
-private fun playTrack(
-    playingListViewModel: PlayingListViewModel,
-    playerViewModel: PlayerViewModel,
-    mediaPlayerController: MediaPlayerController
-) {
-    playingListViewModel.selectedTrack?.track?.previewUrl?.let {
-        playerViewModel.isLoading(true)
-        mediaPlayerController.prepare(it, listener = object : MediaPlayerListener {
-            override fun onReady() {
-                playerViewModel.isLoading(false)
-                mediaPlayerController.volume = playerViewModel.volume
-                mediaPlayerController.isMuted = playerViewModel.isMute
-                mediaPlayerController.start()
-                playerViewModel.isPlay(true)
-            }
-
-            override fun onAudioCompleted() {
-                when (playerViewModel.playMode) {
-                    PlayMode.LOOP -> playingListViewModel.next(playerViewModel.playMode)
-                    PlayMode.REPEAT_ONE -> {
-                        mediaPlayerController.seek(Duration(0))
-                        mediaPlayerController.start()
-                    }
-
-                    PlayMode.SHUFFLE -> {
-//                        vm.state.value.shuffleList.removeIf { shuffleList.value.contains(selectedTrack.value) }
-                        playingListViewModel.next(playerViewModel.playMode)
-                    }
-                }
-
-            }
-
-            override fun onError() {
-                playingListViewModel.next(playerViewModel.playMode)
-            }
-
-            override fun timer(duration: Duration) {
-                playerViewModel.seek(duration)
-            }
-
-            override fun onLoading() {
-                playerViewModel.isLoading(true)
-            }
-
-            override fun onLoaded() {
-                playerViewModel.isLoading(false)
-            }
-        })
-    } ?: run {
-        playingListViewModel.next(playerViewModel.playMode)
     }
 }
 

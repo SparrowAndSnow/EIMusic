@@ -6,4 +6,4 @@ import com.eimsound.eimusic.media.MediaPlayerController
 
 
 @Composable
-expect fun PlayerBar(mediaPlayerController: MediaPlayerController)
+expect fun PlayerBar()

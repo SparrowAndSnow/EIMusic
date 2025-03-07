@@ -22,7 +22,7 @@ actual class MediaPlayerController {
     actual var volume: Double
         get() = TODO("Not yet implemented")
         set(value) {}
-    actual val currentPosition: Duration?
+    actual val position: Duration?
         get() = TODO("Not yet implemented")
     actual val duration: Duration?
         get() = TODO("Not yet implemented")
@@ -37,9 +37,4 @@ actual class MediaPlayerController {
         get() = TODO("Not yet implemented")
         set(value) {}
 
-}
-
-@Composable
-actual fun rememberMediaPlayerController(): MediaPlayerController {
-    return rememberSaveable { MediaPlayerController() }
 }
