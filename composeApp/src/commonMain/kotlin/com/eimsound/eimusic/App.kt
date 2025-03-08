@@ -3,7 +3,6 @@ package com.eimsound.eimusic
 import androidx.compose.runtime.*
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.eimsound.eimusic.layout.BottomBar
 import com.eimsound.eimusic.layout.DefaultLayout
 import com.eimsound.eimusic.layout.SideBar
@@ -23,7 +22,6 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 @Composable
-@Preview
 fun App() {
     KoinApplication(application = {
         modules(systemModule, viewModelModule)
@@ -34,8 +32,8 @@ fun App() {
             DefaultLayout(
                 topBar = { TopBar() },
                 bottomBar = { BottomBar() },
-                showSideBar = defaultLayoutViewModel.showSideBar,
-                sideBar = { SideBar() },
+                showSideBar = defaultLayoutViewModel.sideBarState.showSideBar,
+                sideBar = { SideBar(defaultLayoutViewModel.sideBarState.sidebarComponent) },
                 navController = navController
             ) {
                 composable<WelcomeRoute> { WelcomeView() }

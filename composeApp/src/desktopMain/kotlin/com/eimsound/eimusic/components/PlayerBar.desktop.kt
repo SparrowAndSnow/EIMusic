@@ -19,9 +19,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.rememberAsyncImagePainter
 import com.eimsound.eimusic.Duration
+import com.eimsound.eimusic.layout.SidebarComponent
 import com.eimsound.eimusic.media.PlayMode
+import com.eimsound.eimusic.music.Album
+import com.eimsound.eimusic.music.Artist
+import com.eimsound.eimusic.music.Track
 import com.eimsound.eimusic.network.SpotifyApiImpl
-import com.eimsound.eimusic.network.models.topfiftycharts.Item
 import com.eimsound.eimusic.viewmodel.DefaultLayoutViewModel
 import com.eimsound.eimusic.viewmodel.PlayerViewModel
 import com.eimsound.eimusic.viewmodel.PlayingListViewModel
@@ -33,7 +36,7 @@ actual fun PlayerBar() {
     val playingListViewModel = koinViewModel<PlayingListViewModel>()
     val defaultLayoutViewModel = koinViewModel<DefaultLayoutViewModel>()
     DisposableEffect(playingListViewModel.selectedTrack) {
-        playingListViewModel.selectedTrack?.track?.previewUrl?.let {
+        playingListViewModel.selectedTrack?.previewUrl?.let {
             playerViewModel.play(it, playingListViewModel)
         } ?: run {
             playingListViewModel.next(playerViewModel.playMode)
@@ -52,7 +55,33 @@ actual fun PlayerBar() {
     }
 
     LaunchedEffect(playingListViewModel.trackList) {
-        val trackList = SpotifyApiImpl().getTopFiftyChart().tracks?.items.orEmpty()
+        val trackList = SpotifyApiImpl().getTopFiftyChart().tracks?.items.orEmpty().map {
+            val track = it.track
+            val artists = track?.album?.artists?.map {
+                Artist(
+                    name = it.name,
+                    id = it.id,
+                    image = it.uri
+                )
+            }
+            Track(
+                album = Album(
+                    name = track?.album?.name,
+                    image = track?.album?.images?.firstOrNull()?.url.orEmpty(),
+                    releaseDate = track?.album?.releaseDate,
+                    id = track?.album?.id,
+                    totalTracks = track?.album?.totalTracks,
+                    artists = artists
+                ),
+                artists = artists,
+                name = track?.name,
+                uri = track?.uri,
+                duration = Duration(track?.durationMs?.toLong()?.div(1000) ?: 0),
+                id = track?.id,
+                previewUrl = track?.previewUrl,
+                isLocal = track?.isLocal ?: false,
+            )
+        }
         playingListViewModel.load(trackList)
 //        selectedTrack.value = trackList.value.getOrNull(selectedIndex.value)
     }
@@ -68,12 +97,12 @@ actual fun PlayerBar() {
             TrackImage(selectedTrack = playingListViewModel.selectedTrack, isLoading = playerViewModel.isLoading)
             Column(Modifier.weight(1f).padding(start = 8.dp)) {
                 Text(
-                    text = playingListViewModel.selectedTrack?.track?.name.orEmpty(),
+                    text = playingListViewModel.selectedTrack?.name.orEmpty(),
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.basicMarquee(animationMode = MarqueeAnimationMode.Immediately)
                 )
                 Text(
-                    text = playingListViewModel.selectedTrack?.track?.artists?.map { it.name }?.joinToString(",")
+                    text = playingListViewModel.selectedTrack?.artists?.map { it.name }?.joinToString(",")
                         .orEmpty(),
                     modifier = Modifier.padding(top = 8.dp)
                         .basicMarquee(animationMode = MarqueeAnimationMode.Immediately)
@@ -105,8 +134,8 @@ actual fun PlayerBar() {
                 onIsMuteChanged = playerViewModel::onIsMuteChanged,
                 modifier = Modifier.weight(1f).padding(start = 8.dp)
             )
-            TrackListButton(showTrackList = defaultLayoutViewModel.showSideBar, onShowTrackListChanged = {
-                defaultLayoutViewModel.showSideBar(it)
+            TrackListButton(showTrackList = defaultLayoutViewModel.sideBarState.showSideBar, onShowTrackListChanged = {
+                defaultLayoutViewModel.sideBarState.showSideBar(it, SidebarComponent.PLAYLIST)
             })
         }
     }
@@ -192,14 +221,14 @@ fun PlayPauseButton(
 }
 
 @Composable
-fun TrackImage(modifier: Modifier = Modifier, selectedTrack: Item?, isLoading: Boolean) {
+fun TrackImage(modifier: Modifier = Modifier, selectedTrack: Track?, isLoading: Boolean) {
     val painter = rememberAsyncImagePainter(
-        selectedTrack?.track?.album?.images?.first()?.url.orEmpty()
+        selectedTrack?.album?.image?.orEmpty()
     )
     Box(modifier = modifier.clip(RoundedCornerShape(4.dp)).width(64.dp).height(64.dp)) {
         Image(
             painter,
-            selectedTrack?.track?.album?.images?.first()?.url.orEmpty(),
+            selectedTrack?.album?.image?.orEmpty(),
             modifier = Modifier.clip(RoundedCornerShape(4.dp)).width(64.dp).height(64.dp),
             contentScale = ContentScale.Crop
         )

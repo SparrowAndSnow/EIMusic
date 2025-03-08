@@ -5,19 +5,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.eimsound.eimusic.media.PlayMode
+import com.eimsound.eimusic.music.Track
 import com.eimsound.eimusic.network.models.topfiftycharts.Item
 
 class PlayingListViewModel : ViewModel() {
-    var trackList by mutableStateOf<List<Item>>(emptyList())
+    var trackList by mutableStateOf<List<Track>>(emptyList())
         private set
-    var shuffleList by mutableStateOf<MutableSet<Item>>(mutableSetOf())
+    var shuffleList by mutableStateOf<MutableSet<Track>>(mutableSetOf())
         private set
-    var selectedIndex by mutableStateOf<Int>(0)
+    var selectedIndex by mutableStateOf(0)
         private set
-    var selectedTrack by mutableStateOf<Item?>(null)
+    var selectedTrack by mutableStateOf<Track?>(null)
         private set
 
-    fun load(list: List<Item>) {
+    fun load(list: List<Track>) {
         trackList = list
         selectedIndex = 0
         selectedTrack = list.firstOrNull()
