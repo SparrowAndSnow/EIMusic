@@ -236,7 +236,7 @@ fun TrackImage(modifier: Modifier = Modifier, selectedTrack: Track?, isLoading: 
             Box(modifier = Modifier.fillMaxSize()) {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center).padding(8.dp),
-                    color = Color(0xFFFACD66),
+                    color = MaterialTheme.colorScheme.primary,
                 )
             }
         }

@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import kotlin.reflect.KProperty1
 
 @Composable
 expect fun <T> ColumnList(
@@ -23,5 +24,6 @@ expect fun <T> ColumnList(
     flingBehavior: FlingBehavior = ScrollableDefaults.flingBehavior(),
     userScrollEnabled: Boolean = true,
     list: List<T>,
+    key: KProperty1<T, *>,
     item: @Composable (T) -> Unit
 )

@@ -1,7 +1,5 @@
 package com.eimsound.eimusic.media
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.saveable.rememberSaveable
 import com.eimsound.eimusic.Duration
 import javafx.scene.media.MediaPlayer
 import java.util.concurrent.CompletableFuture

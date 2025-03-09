@@ -1,7 +1,5 @@
 package com.eimsound.eimusic.media
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.saveable.rememberSaveable
 import com.eimsound.eimusic.Duration
 
 actual class MediaPlayerController {

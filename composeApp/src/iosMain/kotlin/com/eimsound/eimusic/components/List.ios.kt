@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import kotlin.reflect.KProperty1
 
 @Composable
 actual fun <T> ColumnList(
@@ -20,6 +21,7 @@ actual fun <T> ColumnList(
     flingBehavior: FlingBehavior,
     userScrollEnabled: Boolean,
     list: List<T>,
+    key: KProperty1<T, *>,
     item: @Composable (T) -> Unit
 ){
     LazyColumn(

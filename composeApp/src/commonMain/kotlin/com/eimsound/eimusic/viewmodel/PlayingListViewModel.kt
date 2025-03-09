@@ -24,6 +24,11 @@ class PlayingListViewModel : ViewModel() {
         selectedTrack = list.firstOrNull()
     }
 
+    fun play(track: Track) {
+        selectedIndex = trackList.indexOf(track)
+        selectedTrack = track
+    }
+
     fun next(playMode: PlayMode) {
         val list = if (playMode == PlayMode.SHUFFLE)
             shuffleList
