@@ -5,21 +5,26 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.eimsound.eimusic.Duration
+import com.eimsound.eimusic.data.Storage
 import com.eimsound.eimusic.media.MediaPlayerController
 import com.eimsound.eimusic.media.MediaPlayerListener
 import com.eimsound.eimusic.media.PlayMode
+import com.eimsound.eimusic.settings.Settings
 
 
-class PlayerViewModel(private val controller: MediaPlayerController) : ViewModel() {
+class PlayerViewModel(
+    private val storage: Storage,
+    private val controller: MediaPlayerController
+) : ViewModel() {
     var isLoading by mutableStateOf(false)
         private set
-    var position by mutableStateOf(controller.position?: Duration(0))
+    var position by mutableStateOf(controller.position ?: Duration(0))
         private set
-    var playMode by mutableStateOf(PlayMode.LOOP)
+    var playMode by mutableStateOf(PlayMode.valueOf(storage.get(Settings::playMode, PlayMode.LOOP.name)))
         private set
-    var volume by mutableStateOf(controller.volume)
+    var volume by mutableStateOf(storage.get(Settings::volume, 1.0))
         private set
-    var isMute by mutableStateOf(controller.isMuted)
+    var isMute by mutableStateOf(storage.get(Settings::isMuted, false))
         private set
     var isPlaying by mutableStateOf(controller.isPlaying)
         private set
@@ -46,16 +51,19 @@ class PlayerViewModel(private val controller: MediaPlayerController) : ViewModel
 
     fun onPlayModeChanged(value: PlayMode) {
         playMode = value
+        storage.save(Settings::playMode, value.name)
     }
 
     fun onVolumeChanged(value: Double) {
         volume = value
         controller.volume = volume
+        storage.save(Settings::volume, value)
     }
 
     fun onIsMuteChanged(value: Boolean) {
         isMute = value
         controller.isMuted = value
+        storage.save(Settings::isMuted, value)
     }
 
     fun play(

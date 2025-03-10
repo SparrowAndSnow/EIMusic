@@ -3,6 +3,7 @@ package com.eimsound.eimusic
 import androidx.compose.runtime.*
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.eimsound.eimusic.data.Storage
 import com.eimsound.eimusic.layout.BottomBar
 import com.eimsound.eimusic.layout.DefaultLayout
 import com.eimsound.eimusic.layout.SideBar
@@ -10,8 +11,11 @@ import com.eimsound.eimusic.layout.TopBar
 import com.eimsound.eimusic.media.MediaPlayerController
 import com.eimsound.eimusic.theme.EIMusicTheme
 import com.eimsound.eimusic.viewmodel.DefaultLayoutViewModel
+import com.eimsound.eimusic.viewmodel.LocalViewModel
 import com.eimsound.eimusic.viewmodel.PlayerViewModel
 import com.eimsound.eimusic.viewmodel.PlayingListViewModel
+import com.eimsound.eimusic.views.LocalRoute
+import com.eimsound.eimusic.views.LocalView
 import com.eimsound.eimusic.views.ProfileRoute
 import com.eimsound.eimusic.views.ProfileView
 import com.eimsound.eimusic.views.WelcomeRoute
@@ -38,6 +42,7 @@ fun App() {
             ) {
                 composable<WelcomeRoute> { WelcomeView() }
                 composable<ProfileRoute> { ProfileView() }
+                composable<LocalRoute> { LocalView() }
             }
         }
     }
@@ -45,11 +50,13 @@ fun App() {
 }
 
 val systemModule = module {
+    single<Storage> { Storage() }
     single<MediaPlayerController> { MediaPlayerController() }
 }
 
 val viewModelModule = module {
     viewModel { DefaultLayoutViewModel() }
-    viewModel { PlayerViewModel(get()) }
+    viewModel { PlayerViewModel(get(),get()) }
     viewModel { PlayingListViewModel() }
+    viewModel { LocalViewModel(get()) }
 }
