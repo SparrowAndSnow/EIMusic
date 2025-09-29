@@ -9,6 +9,5 @@ data class Track(
     val id: String?,
     val isLocal: Boolean?,
     val name: String?,
-    val previewUrl: String?,
     val uri: String?
 )

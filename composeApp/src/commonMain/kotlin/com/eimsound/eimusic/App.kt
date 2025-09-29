@@ -32,12 +32,13 @@ fun App() {
     }) {
         EIMusicTheme {
             val defaultLayoutViewModel = koinViewModel<DefaultLayoutViewModel>()
+            val sideBarState by defaultLayoutViewModel.sideBarState.collectAsState()
             val navController = rememberNavController()
             DefaultLayout(
                 topBar = { TopBar() },
                 bottomBar = { BottomBar() },
-                showSideBar = defaultLayoutViewModel.sideBarState.showSideBar,
-                sideBar = { SideBar(defaultLayoutViewModel.sideBarState.sidebarComponent) },
+                showSideBar = sideBarState.showSideBar,
+                sideBar = { SideBar(sideBarState.sidebarComponent) },
                 navController = navController
             ) {
                 composable<WelcomeRoute> { WelcomeView() }

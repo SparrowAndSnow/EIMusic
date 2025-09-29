@@ -23,10 +23,11 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun PlayingList() {
     val trackListViewModel = koinViewModel<PlayingListViewModel>()
+    val playingListState by trackListViewModel.state.collectAsState()
     val lazyListState = rememberLazyListState()
 
-    ColumnList(state = lazyListState, list = trackListViewModel.trackList, key = Track::id) {
-        TrackItem(track = it, isPlaying = it == trackListViewModel.selectedTrack, onPlayClick = {
+    ColumnList(state = lazyListState, list = playingListState.trackList, key = Track::id) {
+        TrackItem(track = it, isPlaying = it == playingListState.selectedTrack, onPlayClick = {
             trackListViewModel.play(it)
         })
     }
@@ -51,11 +52,11 @@ fun TrackItem(
             .background(if (isHovered) MaterialTheme.colorScheme.surfaceVariant else Color.Unspecified)
             .padding(8.dp)
     ) {
-        TrackImage(image = track?.album?.image, isPlaying = isPlaying, onPlayClick = onPlayClick)
+        TrackImage(image = track.album?.image, isPlaying = isPlaying, onPlayClick = onPlayClick)
         Column(Modifier.padding(start = 8.dp)) {
-            TrackName(name = track?.name.orEmpty(), onClick = onTrackNameClick)
+            TrackName(name = track.name.orEmpty(), onClick = onTrackNameClick)
             ArtistList(
-                artists = track?.artists.orEmpty(),
+                artists = track.artists.orEmpty(),
                 onClick = onArtistClick
             ) {
                 Text(stringResource(Res.string.artists_divider), modifier = Modifier.padding(4.dp))

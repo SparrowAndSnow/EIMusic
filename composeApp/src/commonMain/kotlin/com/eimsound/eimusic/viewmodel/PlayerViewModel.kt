@@ -1,8 +1,5 @@
 package com.eimsound.eimusic.viewmodel
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.eimsound.eimusic.Duration
 import com.eimsound.eimusic.data.Storage
@@ -10,33 +7,42 @@ import com.eimsound.eimusic.media.MediaPlayerController
 import com.eimsound.eimusic.media.MediaPlayerListener
 import com.eimsound.eimusic.media.PlayMode
 import com.eimsound.eimusic.settings.Settings
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
+data class PlayerState(
+    val isLoading: Boolean = false,
+    val position: Duration = Duration(0),
+    val playMode: PlayMode = PlayMode.LOOP,
+    val volume: Double = 1.0,
+    val isMute: Boolean = false,
+    val isPlaying: Boolean = false,
+    val duration: Duration? = null
+)
 
 class PlayerViewModel(
     private val storage: Storage,
     private val controller: MediaPlayerController
 ) : ViewModel() {
-    var isLoading by mutableStateOf(false)
-        private set
-    var position by mutableStateOf(controller.position ?: Duration(0))
-        private set
-    var playMode by mutableStateOf(PlayMode.valueOf(storage.get(Settings::playMode, PlayMode.LOOP.name)))
-        private set
-    var volume by mutableStateOf(storage.get(Settings::volume, 1.0))
-        private set
-    var isMute by mutableStateOf(storage.get(Settings::isMuted, false))
-        private set
-    var isPlaying by mutableStateOf(controller.isPlaying)
-        private set
-    var duration by mutableStateOf(controller.duration)
-        private set
+    private val _state = MutableStateFlow(
+        PlayerState(
+            position = controller.position ?: Duration(0),
+            playMode = PlayMode.valueOf(storage.get(Settings::playMode, PlayMode.LOOP.name)),
+            volume = storage.get(Settings::volume, 1.0),
+            isMute = storage.get(Settings::isMuted, false),
+            isPlaying = controller.isPlaying,
+            duration = controller.duration
+        )
+    )
+    val state: StateFlow<PlayerState> = _state.asStateFlow()
 
     fun isLoading(value: Boolean) {
-        isLoading = value
+        _state.value = _state.value.copy(isLoading = value)
     }
 
     fun isPlaying(value: Boolean) {
-        isPlaying = value
+        _state.value = _state.value.copy(isPlaying = value)
         if (value) {
             controller.start()
         } else {
@@ -45,23 +51,23 @@ class PlayerViewModel(
     }
 
     fun seek(value: Duration, seekOver: () -> Unit = {}) {
-        position = value
+        _state.value = _state.value.copy(position = value)
         controller.seek(value, seekOver)
     }
 
     fun onPlayModeChanged(value: PlayMode) {
-        playMode = value
+        _state.value = _state.value.copy(playMode = value)
         storage.save(Settings::playMode, value.name)
     }
 
     fun onVolumeChanged(value: Double) {
-        volume = value
-        controller.volume = volume
+        _state.value = _state.value.copy(volume = value)
+        controller.volume = value
         storage.save(Settings::volume, value)
     }
 
     fun onIsMuteChanged(value: Boolean) {
-        isMute = value
+        _state.value = _state.value.copy(isMute = value)
         controller.isMuted = value
         storage.save(Settings::isMuted, value)
     }
@@ -70,47 +76,48 @@ class PlayerViewModel(
         trackUri: String,
         playingListViewModel: PlayingListViewModel,
     ) {
-        isLoading = true
+        _state.value = _state.value.copy(isLoading = true)
         controller.prepare(trackUri, listener = object : MediaPlayerListener {
             override fun onReady() {
-                isLoading = false
-                controller.volume = volume
-                controller.isMuted = isMute
-                duration = controller.duration
+                _state.value = _state.value.copy(isLoading = false)
+                controller.volume = _state.value.volume
+                controller.isMuted = _state.value.isMute
+                val newState = _state.value.copy(
+                    duration = controller.duration,
+                    isPlaying = true
+                )
+                _state.value = newState
                 controller.start()
-                isPlaying = true
             }
 
             override fun onAudioCompleted() {
-                when (playMode) {
-                    PlayMode.LOOP -> playingListViewModel.next(playMode)
+                when (_state.value.playMode) {
+                    PlayMode.LOOP -> playingListViewModel.next(_state.value.playMode)
                     PlayMode.REPEAT_ONE -> {
                         controller.seek(Duration(0))
                         controller.start()
                     }
 
                     PlayMode.SHUFFLE -> {
-//                        vm.state.value.shuffleList.removeIf { shuffleList.value.contains(selectedTrack.value) }
-                        playingListViewModel.next(playMode)
+                        playingListViewModel.next(_state.value.playMode)
                     }
                 }
-
             }
 
             override fun onError() {
-                playingListViewModel.next(playMode)
+                playingListViewModel.next(_state.value.playMode)
             }
 
-            override fun timer(value: Duration) {
-                position = value
+            override fun timer(duration: Duration) {
+                _state.value = _state.value.copy(position = duration)
             }
 
             override fun onLoading() {
-                isLoading = true
+                _state.value = _state.value.copy(isLoading = true)
             }
 
             override fun onLoaded() {
-                isLoading = false
+                _state.value = _state.value.copy(isLoading = false)
             }
         })
     }
@@ -118,19 +125,4 @@ class PlayerViewModel(
     fun release() {
         controller.release()
     }
-
-
-//    val state: StateFlow<PlayerState> = _state
-
-
-//    val trackList = mutableStateOf<List<Item>>(emptyList())
-//    val shuffleList = mutableStateOf<MutableSet<Item>>(mutableSetOf())
-//    val selectedIndex = mutableStateOf(0)
-//    val isLoading = mutableStateOf(false)
-//    val position = mutableStateOf(0.0f)
-//    val playMode = mutableStateOf(PlayMode.LOOP)
-//    val volume = mutableStateOf(mediaPlayerController.volume)
-//    val isMute = mutableStateOf(mediaPlayerController.isMuted)
-//    val isPlaying = mutableStateOf(mediaPlayerController.isPlaying)
-//    val selectedTrack = mutableStateOf(trackList.value.getOrNull(selectedIndex.value))
 }

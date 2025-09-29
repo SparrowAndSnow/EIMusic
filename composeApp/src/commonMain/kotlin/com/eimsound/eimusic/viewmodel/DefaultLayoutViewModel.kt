@@ -1,25 +1,24 @@
 package com.eimsound.eimusic.viewmodel
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.eimsound.eimusic.layout.SidebarComponent
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class DefaultLayoutViewModel : ViewModel() {
-    val sideBarState by mutableStateOf(SideBarState())
+    private val _sideBarState = MutableStateFlow(SideBarState())
+    val sideBarState: StateFlow<SideBarState> = _sideBarState.asStateFlow()
 
-
-}
-
-class SideBarState{
-    var showSideBar by mutableStateOf(false)
-        private set
-    var sidebarComponent by mutableStateOf(SidebarComponent.PLAYLIST)
-        private set
-
-    fun showSideBar(value: Boolean, component: SidebarComponent) {
-        showSideBar = value
-        sidebarComponent = component
+    fun updateSideBar(show: Boolean, component: SidebarComponent) {
+        _sideBarState.value = _sideBarState.value.copy(
+            showSideBar = show,
+            sidebarComponent = component
+        )
     }
 }
+
+data class SideBarState(
+    val showSideBar: Boolean = false,
+    val sidebarComponent: SidebarComponent = SidebarComponent.PLAYLIST
+)

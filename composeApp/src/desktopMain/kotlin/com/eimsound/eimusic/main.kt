@@ -18,7 +18,6 @@ import androidx.compose.ui.window.*
 import eimusic.composeapp.generated.resources.Res
 import eimusic.composeapp.generated.resources.app_name
 import javafx.application.Platform
-import org.jetbrains.compose.reload.DevelopmentEntryPoint
 import org.jetbrains.compose.resources.stringResource
 import java.awt.Dimension
 
@@ -32,7 +31,6 @@ fun main() = application {
         state = state
     ) {
         window.minimumSize = Dimension(720, 480)
-        DevelopmentEntryPoint {
 //            Corner(state) {
 //                Column {
 //                    WindowTitleBar(state, canDraggable.value, "EIMusic", onClose = ::exitApplication, onMaximize = {
@@ -49,8 +47,7 @@ fun main() = application {
 //                    App()
 //                }
 //            }
-            App()
-        }
+        App()
     }
 }
 

@@ -1,67 +1,142 @@
 package com.eimsound.eimusic.viewmodel
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.eimsound.eimusic.media.PlayMode
 import com.eimsound.eimusic.music.Track
-import com.eimsound.eimusic.network.models.topfiftycharts.Item
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlin.random.Random
+
+data class PlayingListState(
+    val trackList: List<Track> = emptyList(),
+    val shuffleList: List<Track> = emptyList(),
+    val selectedIndex: Int = 0,
+    val selectedTrack: Track? = null
+)
 
 class PlayingListViewModel : ViewModel() {
-    var trackList by mutableStateOf<List<Track>>(emptyList())
-        private set
-    var shuffleList by mutableStateOf<MutableSet<Track>>(mutableSetOf())
-        private set
-    var selectedIndex by mutableStateOf(0)
-        private set
-    var selectedTrack by mutableStateOf<Track?>(null)
-        private set
+    private val _state = MutableStateFlow(PlayingListState())
+    val state: StateFlow<PlayingListState> = _state.asStateFlow()
 
     fun load(list: List<Track>) {
-        trackList = list
-        selectedIndex = 0
-        selectedTrack = list.firstOrNull()
+        _state.value = PlayingListState(
+            trackList = list,
+            selectedIndex = 0,
+            selectedTrack = list.firstOrNull()
+        )
     }
 
     fun play(track: Track) {
-        selectedIndex = trackList.indexOf(track)
-        selectedTrack = track
+        val currentState = _state.value
+        val index = currentState.trackList.indexOf(track)
+        if (index != -1) {
+            _state.value = currentState.copy(
+                selectedIndex = index,
+                selectedTrack = track
+            )
+        }
+    }
+
+    fun addTrack(track: Track) {
+        val currentState = _state.value
+        val newList = currentState.trackList + track
+        _state.value = currentState.copy(
+            trackList = newList
+        )
+    }
+
+    fun removeTrack(track: Track) {
+        val currentState = _state.value
+        val newList = currentState.trackList.filter { it != track }
+        val newSelectedTrack = if (currentState.selectedTrack == track) {
+            newList.firstOrNull()
+        } else {
+            currentState.selectedTrack
+        }
+        val newIndex = if (newSelectedTrack != null) {
+            newList.indexOf(newSelectedTrack)
+        } else {
+            0
+        }
+        _state.value = currentState.copy(
+            trackList = newList,
+            selectedTrack = newSelectedTrack,
+            selectedIndex = newIndex
+        )
+    }
+
+    fun clear() {
+        _state.value = PlayingListState()
+    }
+
+    fun updateShuffleList() {
+        val currentState = _state.value
+        if (currentState.trackList.isNotEmpty()) {
+            val shuffled = currentState.trackList.shuffled(Random)
+            _state.value = currentState.copy(
+                shuffleList = shuffled
+            )
+        }
     }
 
     fun next(playMode: PlayMode) {
+        val currentState = _state.value
+        // 先检查并更新 shuffleList
+        if (playMode == PlayMode.SHUFFLE && currentState.shuffleList.isEmpty() && currentState.trackList.isNotEmpty()) {
+            updateShuffleList()
+        }
+
+        // 重新获取最新的状态
+        val updatedState = _state.value
         val list = if (playMode == PlayMode.SHUFFLE)
-            shuffleList
+            updatedState.shuffleList
         else
-            trackList
+            updatedState.trackList
 
         if (list.isEmpty()) return
 
-        if (selectedIndex < list.size - 1) {
-            val index = selectedIndex + 1
-            selectedIndex = index
-            selectedTrack = list.toList()[index]
+        val newIndex = if (updatedState.selectedIndex < list.size - 1) {
+            updatedState.selectedIndex + 1
         } else {
-            selectedIndex = 0
-            selectedTrack = list.toList()[0]
+            0
+        }
+
+        if (newIndex < list.size) {
+            _state.value = updatedState.copy(
+                selectedIndex = newIndex,
+                selectedTrack = list[newIndex]
+            )
         }
     }
 
     fun previous(playMode: PlayMode) {
+        val currentState = _state.value
+        // 先检查并更新 shuffleList
+        if (playMode == PlayMode.SHUFFLE && currentState.shuffleList.isEmpty() && currentState.trackList.isNotEmpty()) {
+            updateShuffleList()
+        }
+
+        // 重新获取最新的状态
+        val updatedState = _state.value
         val list = if (playMode == PlayMode.SHUFFLE)
-            shuffleList
+            updatedState.shuffleList
         else
-            trackList
+            updatedState.trackList
 
         if (list.isEmpty()) return
 
-        if (selectedIndex - 1 >= 0) {
-            val index = selectedIndex - 1
-            selectedIndex = index
-            selectedTrack = list.toList()[index]
+        val newIndex = if (updatedState.selectedIndex > 0) {
+            updatedState.selectedIndex - 1
         } else {
-            selectedIndex = list.size - 1
-            selectedTrack = list.toList()[list.size - 1]
+            list.size - 1
+        }
+
+        if (newIndex < list.size) {
+            _state.value = updatedState.copy(
+                selectedIndex = newIndex,
+                selectedTrack = list[newIndex]
+            )
         }
     }
 }

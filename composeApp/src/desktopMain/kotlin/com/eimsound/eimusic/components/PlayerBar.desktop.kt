@@ -35,29 +35,34 @@ actual fun PlayerBar() {
     val playerViewModel = koinViewModel<PlayerViewModel>()
     val playingListViewModel = koinViewModel<PlayingListViewModel>()
     val defaultLayoutViewModel = koinViewModel<DefaultLayoutViewModel>()
-    DisposableEffect(playingListViewModel.selectedTrack) {
-        playingListViewModel.selectedTrack?.previewUrl?.let {
+
+    val playerState by playerViewModel.state.collectAsState()
+    val playingListState by playingListViewModel.state.collectAsState()
+    val sideBarState by defaultLayoutViewModel.sideBarState.collectAsState()
+
+    DisposableEffect(playingListState.selectedTrack) {
+        playingListState.selectedTrack?.uri?.let {
             playerViewModel.play(it, playingListViewModel)
         } ?: run {
-            playingListViewModel.next(playerViewModel.playMode)
+            playingListViewModel.next(playerState.playMode)
         }
         onDispose {
             playerViewModel.release()
         }
     }
 
-    LaunchedEffect(playerViewModel.playMode) {
-        if (playerViewModel.playMode == PlayMode.SHUFFLE && playingListViewModel.shuffleList.isEmpty()) {
-            playingListViewModel.shuffleList.addAll(
-                playingListViewModel.trackList.shuffled().toMutableSet()
-            )
-        }
-    }
+//    LaunchedEffect(playerState.playMode) {
+//        if (playerState.playMode == PlayMode.SHUFFLE && playingListState.shuffleList.isEmpty()) {
+//            playingListViewModel.shuffleList.addAll(
+//                playingListViewModel.trackList.shuffled().toMutableSet()
+//            )
+//        }
+//    }
 
-    LaunchedEffect(playingListViewModel.trackList) {
+    LaunchedEffect(playingListState.trackList) {
         val trackList = SpotifyApiImpl().getTopFiftyChart().tracks?.items.orEmpty().map {
             val track = it.track
-            val artists = track?.album?.artists?.map {
+            val artists = track?.album?.artists?.map { it ->
                 Artist(
                     name = it.name,
                     id = it.id,
@@ -75,10 +80,9 @@ actual fun PlayerBar() {
                 ),
                 artists = artists,
                 name = track?.name,
-                uri = track?.uri,
+                uri = track?.previewUrl,
                 duration = Duration(track?.durationMs?.toLong()?.div(1000) ?: 0),
                 id = track?.id,
-                previewUrl = track?.previewUrl,
                 isLocal = track?.isLocal ?: false,
             )
         }
@@ -94,15 +98,15 @@ actual fun PlayerBar() {
         Row(
             modifier = Modifier.fillMaxWidth().align(Alignment.Center), verticalAlignment = Alignment.CenterVertically
         ) {
-            TrackImage(selectedTrack = playingListViewModel.selectedTrack, isLoading = playerViewModel.isLoading)
+            TrackImage(selectedTrack = playingListState.selectedTrack, isLoading = playerState.isLoading)
             Column(Modifier.weight(1f).padding(start = 8.dp)) {
                 Text(
-                    text = playingListViewModel.selectedTrack?.name.orEmpty(),
+                    text = playingListState.selectedTrack?.name.orEmpty(),
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.basicMarquee(animationMode = MarqueeAnimationMode.Immediately)
                 )
                 Text(
-                    text = playingListViewModel.selectedTrack?.artists?.map { it.name }?.joinToString(",")
+                    text = playingListState.selectedTrack?.artists?.joinToString(",") { it.name.toString() }
                         .orEmpty(),
                     modifier = Modifier.padding(top = 8.dp)
                         .basicMarquee(animationMode = MarqueeAnimationMode.Immediately)
@@ -110,32 +114,32 @@ actual fun PlayerBar() {
             }
             PlayerControl(
                 modifier = Modifier.padding(horizontal = 8.dp).weight(2f),
-                position = playerViewModel.position,
+                position = playerState.position,
                 onPositionChanged = { position ->
-                    playerViewModel.duration?.let {
+                    playerState.duration?.let {
                         playerViewModel.isLoading(true)
                         playerViewModel.seek(position, {
                             playerViewModel.isLoading(false)
                         })
                     }
                 },
-                duration = playerViewModel.duration ?: Duration(0),
-                playMode = playerViewModel.playMode,
+                duration = playerState.duration ?: Duration(0),
+                playMode = playerState.playMode,
                 onPlayModeChanged = playerViewModel::onPlayModeChanged,
-                isPlaying = playerViewModel.isPlaying,
+                isPlaying = playerState.isPlaying,
                 onIsPlayingChanged = playerViewModel::isPlaying,
-                onPreviousClick = { playingListViewModel.previous(playerViewModel.playMode) },
-                onNextClick = { playingListViewModel.next(playerViewModel.playMode) },
+                onPreviousClick = { playingListViewModel.previous(playerState.playMode) },
+                onNextClick = { playingListViewModel.next(playerState.playMode) },
             )
             Volume(
-                playerViewModel.volume,
-                playerViewModel.isMute,
+                playerState.volume,
+                playerState.isMute,
                 onVolumeChanged = playerViewModel::onVolumeChanged,
                 onIsMuteChanged = playerViewModel::onIsMuteChanged,
                 modifier = Modifier.weight(1f).padding(start = 8.dp)
             )
-            TrackListButton(showTrackList = defaultLayoutViewModel.sideBarState.showSideBar, onShowTrackListChanged = {
-                defaultLayoutViewModel.sideBarState.showSideBar(it, SidebarComponent.PLAYLIST)
+            TrackListButton(showTrackList = sideBarState.showSideBar, onShowTrackListChanged = {
+                defaultLayoutViewModel.updateSideBar(it, SidebarComponent.PLAYLIST)
             })
         }
     }
@@ -319,8 +323,8 @@ fun TimeDisplay(
         Text(
             text = String.format(
                 "%02d:%02d",
-                duration?.minutesPart,
-                duration?.secondsPart
+                duration.minutesPart,
+                duration.secondsPart
             ),
             style = MaterialTheme.typography.labelMedium,
         )
@@ -333,7 +337,7 @@ fun PlayerSlider(
     onValueChangeFinished: (Float) -> Unit,
     onValueChange: (Float) -> Unit = {},
 ) {
-    var progress by remember { mutableStateOf<Float>(value) }
+    var progress by remember { mutableStateOf(value) }
     var isDragging by remember { mutableStateOf(false) }
 
     val animatedProgress by animateFloatAsState(
@@ -344,8 +348,8 @@ fun PlayerSlider(
         if (!isDragging) progress = value
     }
     Slider(value = animatedProgress, onValueChange = {
-        progress = it
         isDragging = true
+        progress = it
         onValueChange(it)
     }, onValueChangeFinished = {
         isDragging = false
