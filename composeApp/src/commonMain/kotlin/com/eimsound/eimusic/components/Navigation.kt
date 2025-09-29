@@ -12,6 +12,7 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.eimsound.eimusic.route.localizedRouteName
 import com.eimsound.eimusic.route.routes
 
 @Composable
@@ -28,8 +29,8 @@ fun Navigation(
         navigationSuiteItems = {
             routes.forEach { route ->
                 item(
-                    icon = { Icon(route.icon, contentDescription = route.name) },
-                    label = { Text(route.name) },
+                    icon = { Icon(route.icon, contentDescription = route.localizedRouteName()) },
+                    label = { Text(route.localizedRouteName()) },
                     selected = currentDestination?.hierarchy?.any {
                         it.hasRoute(route.route::class)
                     } == true,

@@ -10,6 +10,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import kotlinx.serialization.Serializable
+import org.jetbrains.compose.resources.stringResource
+import eimusic.composeapp.generated.resources.Res
+import eimusic.composeapp.generated.resources.app_name
 
 @Serializable
 object WelcomeRoute

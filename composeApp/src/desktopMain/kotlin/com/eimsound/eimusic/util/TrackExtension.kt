@@ -1,7 +1,9 @@
 package com.eimsound.eimusic.util
 
+import com.eimsound.eimusic.Duration
 import com.eimsound.eimusic.music.Track
 import java.io.File
+import java.net.URI
 
 val audioExtensions = setOf("mp3", "wav", "ogg", "flac", "aac", "m4a", "wma")
 
@@ -12,10 +14,10 @@ actual suspend fun loadTrackFiles(dirs: List<String>): List<Track> {
             Track(
                 id = it.path,
                 name = it.name,
-                uri = it.path,
+                uri = it.toURI().toString(),
                 artists = null,
                 album = null,
-                duration = null,
+                duration = Duration(60),
                 isLocal = true,
             )
         }

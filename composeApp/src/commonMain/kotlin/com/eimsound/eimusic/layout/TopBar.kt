@@ -22,6 +22,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
+import eimusic.composeapp.generated.resources.Res
+import eimusic.composeapp.generated.resources.top_bar_search_hint
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,7 +42,7 @@ fun TopBar() {
                     onSearch = { expanded = false },
                     expanded = expanded,
                     onExpandedChange = { expanded = it },
-                    placeholder = { Text("Hinted search text") },
+                    placeholder = { Text(stringResource(Res.string.top_bar_search_hint)) },
                     leadingIcon = {
                         if (expanded) {
                             IconButton(

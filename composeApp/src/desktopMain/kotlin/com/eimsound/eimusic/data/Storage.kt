@@ -18,7 +18,10 @@ actual class Storage {
         playMode = PlayMode.LOOP.toString(),
         volume = 1.0,
         isMuted = false,
-        localPath = emptyList()
+        localPath = emptyList(),
+        darkMode = false,
+        themeFollowSystem = true,
+        language = "zh"
     )
 
     private fun load() {

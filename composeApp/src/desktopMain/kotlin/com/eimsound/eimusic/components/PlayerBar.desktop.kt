@@ -308,14 +308,14 @@ fun TimeDisplay(
     position: Duration,
     duration: Duration,
     isDragging: Boolean,
-    daggingPosition: Duration
+    draggingPosition: Duration
 ) {
     Row(modifier = modifier) {
         Text(
             text = String.format(
                 "%02d:%02d",
-                if (isDragging) daggingPosition.minutesPart else position?.minutesPart,
-                if (isDragging) daggingPosition.secondsPart else position?.secondsPart
+                if (isDragging) draggingPosition.minutesPart else position?.minutesPart,
+                if (isDragging) draggingPosition.secondsPart else position?.secondsPart
             ),
             style = MaterialTheme.typography.labelMedium,
         )
@@ -352,8 +352,8 @@ fun PlayerSlider(
         progress = it
         onValueChange(it)
     }, onValueChangeFinished = {
-        isDragging = false
         onValueChangeFinished(progress)
+        isDragging = false
     }, modifier = Modifier.height(32.dp))
 }
 

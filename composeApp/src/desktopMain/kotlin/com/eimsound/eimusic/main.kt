@@ -20,6 +20,7 @@ import eimusic.composeapp.generated.resources.app_name
 import javafx.application.Platform
 import org.jetbrains.compose.resources.stringResource
 import java.awt.Dimension
+import java.util.Locale
 
 fun main() = application {
     val state = rememberWindowState()

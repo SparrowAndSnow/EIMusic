@@ -7,6 +7,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ProvidedValue
 import androidx.compose.ui.graphics.Color
 
 val lightScheme = lightColorScheme(
@@ -251,17 +252,22 @@ val unspecified_scheme = ColorFamily(
 
 @Composable
 fun EIMusicTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-  val colorScheme = colorScheme(darkTheme)
+    val colorScheme = if (Theme.current) darkScheme else lightScheme
 
-  MaterialTheme(
-    colorScheme = colorScheme,
-    typography = typography(),
-    content = content
-  )
+    MaterialTheme(
+        colorScheme = colorScheme,
+        typography = typography(),
+        content = content
+    )
 }
 
-@Composable
-expect fun colorScheme(darkTheme: Boolean): ColorScheme
+
+expect object Theme {
+    val current: Boolean @Composable get
+    @Composable
+    infix fun provides(value: Boolean?): ProvidedValue<*>
+}
+
+

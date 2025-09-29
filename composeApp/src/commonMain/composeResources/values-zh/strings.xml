@@ -1,0 +1,42 @@
+<resources>
+    <string name="app_name">EIMusic</string>
+    <string name="app_description">音乐播放器</string>
+    <string name="app_version">1.0.0</string>
+    <string name="artists_divider">,</string>
+    
+    <!-- Navigation Routes -->
+    <string name="route_welcome">主页</string>
+    <string name="route_profile">个人资料</string>
+    <string name="route_local">本地</string>
+    <string name="route_setting">设置</string>
+    
+    <!-- Setting View -->
+    <string name="setting_title">设置</string>
+    <string name="setting_account">账户</string>
+    <string name="setting_dark_mode">深色模式</string>
+    <string name="setting_dark_mode_desc">使用深色主题</string>
+    <string name="setting_follow_system">跟随系统</string>
+    <string name="setting_follow_system_desc">根据系统设置自动切换深色模式</string>
+    <string name="setting_about">关于</string>
+    <string name="setting_about_title">关于 EIMusic</string>
+    <string name="setting_about_description">一个基于 Kotlin Multiplatform 的跨平台音乐播放器</string>
+    <string name="setting_about_copyright">© 2025 EIMusic 开发团队</string>
+    <string name="setting_about_confirm">确定</string>
+    <string name="setting_language">语言</string>
+    <string name="setting_language_desc">更改应用程序语言</string>
+    <string name="setting_language_cancel">取消</string>
+    
+    <!-- Top Bar -->
+    <string name="top_bar_search_hint">搜索提示文本</string>
+    
+    <!-- Welcome View -->
+    
+    <!-- Profile View -->
+    <string name="profile_title">个人资料</string>
+    
+    <!-- Local View -->
+    <string name="setting_local_paths">本地音乐路径</string>
+    <string name="setting_local_paths_desc">管理本地音乐库路径</string>
+    <string name="setting_add_local_path">添加路径</string>
+    <string name="setting_remove_local_path">移除</string>
+</resources>

@@ -8,4 +8,7 @@ data class Settings(
     var volume: Double,
     var isMuted: Boolean,
     var localPath: List<String>,
+    var darkMode: Boolean,
+    var themeFollowSystem: Boolean,
+    var language: String
 )

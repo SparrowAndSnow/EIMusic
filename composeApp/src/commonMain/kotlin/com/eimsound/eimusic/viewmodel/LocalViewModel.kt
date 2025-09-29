@@ -1,20 +1,44 @@
 package com.eimsound.eimusic.viewmodel
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.eimsound.eimusic.data.Storage
 import com.eimsound.eimusic.music.Track
 import com.eimsound.eimusic.settings.Settings
-import kotlin.time.ExperimentalTime
+import com.eimsound.eimusic.util.loadTrackFiles
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
-
-
-@OptIn(ExperimentalTime::class)
 class LocalViewModel(val storage: Storage) : ViewModel() {
-    var tracks by mutableStateOf<List<Track>>(emptyList())
-    val localPaths by mutableStateOf<List<String>>(storage.get(Settings::localPath, emptyList()))
+    private val _tracks = MutableStateFlow<List<Track>>(emptyList())
+    val tracks: StateFlow<List<Track>> = _tracks.asStateFlow()
+    
+    private val _localPaths = MutableStateFlow<List<String>>(storage.get(Settings::localPath, emptyList()))
+    val localPaths: StateFlow<List<String>> = _localPaths.asStateFlow()
 
+    init {
+        loadTracks()
+    }
 
+    fun refreshTracks() {
+        viewModelScope.launch {
+            _tracks.value = loadTrackFiles(_localPaths.value)
+        }
+    }
+    
+    fun updateLocalPaths(paths: List<String>) {
+        _localPaths.value = paths
+        viewModelScope.launch {
+            storage.save(Settings::localPath, paths)
+            _tracks.value = loadTrackFiles(paths)
+        }
+    }
+    
+    private fun loadTracks() {
+        viewModelScope.launch {
+            _tracks.value = loadTrackFiles(_localPaths.value)
+        }
+    }
 }
