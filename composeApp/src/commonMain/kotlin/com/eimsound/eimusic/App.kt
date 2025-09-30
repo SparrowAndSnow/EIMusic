@@ -5,12 +5,15 @@ import androidx.compose.runtime.*
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.eimsound.eimusic.data.Storage
+import com.eimsound.eimusic.events.EventBus
 import com.eimsound.eimusic.lang.Locale
 import com.eimsound.eimusic.layout.BottomBar
 import com.eimsound.eimusic.layout.DefaultLayout
 import com.eimsound.eimusic.layout.SideBar
 import com.eimsound.eimusic.layout.TopBar
 import com.eimsound.eimusic.media.MediaPlayerController
+import com.eimsound.eimusic.repository.SpotifyTrackRepository
+import com.eimsound.eimusic.repository.TrackRepository
 import com.eimsound.eimusic.theme.EIMusicTheme
 import com.eimsound.eimusic.theme.Theme
 import com.eimsound.eimusic.viewmodel.DefaultLayoutViewModel
@@ -18,6 +21,7 @@ import com.eimsound.eimusic.viewmodel.LocalViewModel
 import com.eimsound.eimusic.viewmodel.PlayerViewModel
 import com.eimsound.eimusic.viewmodel.PlayingListViewModel
 import com.eimsound.eimusic.viewmodel.SettingViewModel
+import com.eimsound.eimusic.viewmodel.WelcomeViewModel
 import com.eimsound.eimusic.views.LocalRoute
 import com.eimsound.eimusic.views.LocalView
 import com.eimsound.eimusic.views.ProfileRoute
@@ -41,6 +45,8 @@ fun App() {
                 val defaultLayoutViewModel = koinViewModel<DefaultLayoutViewModel>()
                 val sideBarState by defaultLayoutViewModel.sideBarState.collectAsState()
                 val navController = rememberNavController()
+                val playingListViewModel = koinViewModel<PlayingListViewModel>()
+
                 DefaultLayout(
                     topBar = { TopBar() },
                     bottomBar = { BottomBar() },
@@ -48,9 +54,9 @@ fun App() {
                     sideBar = { SideBar(sideBarState.sidebarComponent) },
                     navController = navController
                 ) {
-                    composable<WelcomeRoute> { WelcomeView() }
+                    composable<WelcomeRoute> { WelcomeView(playingListViewModel) }
                     composable<ProfileRoute> { ProfileView() }
-                    composable<LocalRoute> { LocalView() }
+                    composable<LocalRoute> { LocalView(playingListViewModel) }
                     composable<SettingRoute> { SettingView() }
                 }
             }
@@ -82,6 +88,9 @@ fun AppEnvironment(content: @Composable () -> Unit) {
 }
 
 val systemModule = module {
+    single<EventBus.PlaybackEventBus> { EventBus.PlaybackEventBus() }
+    single<EventBus.PlayingListEventBus> { EventBus.PlayingListEventBus() }
+
     single<Storage> { Storage() }
     single<MediaPlayerController> { MediaPlayerController() }
 }
@@ -90,8 +99,22 @@ val viewModelModule = module {
     single { SettingViewModel(get()) }
 
     single { DefaultLayoutViewModel() }
-    single { PlayerViewModel(get(), get()) }
-    single { PlayingListViewModel() }
+    single {
+        PlayingListViewModel(
+            get<EventBus.PlaybackEventBus>(),
+            get<EventBus.PlayingListEventBus>()
+        )
+    }
+    single {
+        PlayerViewModel(
+            get(),
+            get(),
+            get<EventBus.PlaybackEventBus>(),
+            get<EventBus.PlayingListEventBus>()
+        )
+    }
 
+    single<TrackRepository> { SpotifyTrackRepository() }
+    viewModel { WelcomeViewModel(get()) }
     viewModel { LocalViewModel(get()) }
 }

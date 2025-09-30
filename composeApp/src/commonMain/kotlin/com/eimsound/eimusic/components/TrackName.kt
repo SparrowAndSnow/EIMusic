@@ -7,10 +7,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
 @Composable
-fun TrackName(modifier: Modifier = Modifier,name: String, onClick: () -> Unit) {
+fun TrackName(modifier: Modifier = Modifier, name: String, onClick: () -> Unit) {
     LinkText(
         text = name,
-        modifier = modifier.basicMarquee(animationMode = MarqueeAnimationMode.Immediately)
+        modifier = modifier
+            .basicMarquee(animationMode = MarqueeAnimationMode.Immediately)
             .clickable {
                 onClick()
             }

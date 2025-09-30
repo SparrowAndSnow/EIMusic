@@ -14,82 +14,24 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.rememberAsyncImagePainter
 import com.eimsound.eimusic.Duration
 import com.eimsound.eimusic.layout.SidebarComponent
 import com.eimsound.eimusic.media.PlayMode
-import com.eimsound.eimusic.music.Album
-import com.eimsound.eimusic.music.Artist
 import com.eimsound.eimusic.music.Track
-import com.eimsound.eimusic.network.SpotifyApiImpl
 import com.eimsound.eimusic.viewmodel.DefaultLayoutViewModel
 import com.eimsound.eimusic.viewmodel.PlayerViewModel
-import com.eimsound.eimusic.viewmodel.PlayingListViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 actual fun PlayerBar() {
     val playerViewModel = koinViewModel<PlayerViewModel>()
-    val playingListViewModel = koinViewModel<PlayingListViewModel>()
     val defaultLayoutViewModel = koinViewModel<DefaultLayoutViewModel>()
 
     val playerState by playerViewModel.state.collectAsState()
-    val playingListState by playingListViewModel.state.collectAsState()
     val sideBarState by defaultLayoutViewModel.sideBarState.collectAsState()
-
-    DisposableEffect(playingListState.selectedTrack) {
-        playingListState.selectedTrack?.uri?.let {
-            playerViewModel.play(it, playingListViewModel)
-        } ?: run {
-            playingListViewModel.next(playerState.playMode)
-        }
-        onDispose {
-            playerViewModel.release()
-        }
-    }
-
-//    LaunchedEffect(playerState.playMode) {
-//        if (playerState.playMode == PlayMode.SHUFFLE && playingListState.shuffleList.isEmpty()) {
-//            playingListViewModel.shuffleList.addAll(
-//                playingListViewModel.trackList.shuffled().toMutableSet()
-//            )
-//        }
-//    }
-
-    LaunchedEffect(playingListState.trackList) {
-        val trackList = SpotifyApiImpl().getTopFiftyChart().tracks?.items.orEmpty().map {
-            val track = it.track
-            val artists = track?.album?.artists?.map { it ->
-                Artist(
-                    name = it.name,
-                    id = it.id,
-                    image = it.uri
-                )
-            }
-            Track(
-                album = Album(
-                    name = track?.album?.name,
-                    image = track?.album?.images?.firstOrNull()?.url.orEmpty(),
-                    releaseDate = track?.album?.releaseDate,
-                    id = track?.album?.id,
-                    totalTracks = track?.album?.totalTracks,
-                    artists = artists
-                ),
-                artists = artists,
-                name = track?.name,
-                uri = track?.previewUrl,
-                duration = Duration(track?.durationMs?.toLong()?.div(1000) ?: 0),
-                id = track?.id,
-                isLocal = track?.isLocal ?: false,
-            )
-        }
-        playingListViewModel.load(trackList)
-//        selectedTrack.value = trackList.value.getOrNull(selectedIndex.value)
-    }
-
 
     Box(
         modifier = Modifier.clip(RoundedCornerShape(8.dp))
@@ -98,15 +40,15 @@ actual fun PlayerBar() {
         Row(
             modifier = Modifier.fillMaxWidth().align(Alignment.Center), verticalAlignment = Alignment.CenterVertically
         ) {
-            TrackImage(selectedTrack = playingListState.selectedTrack, isLoading = playerState.isLoading)
+            TrackImage(selectedTrack = playerState.track, isLoading = playerState.isLoading)
             Column(Modifier.weight(1f).padding(start = 8.dp)) {
                 Text(
-                    text = playingListState.selectedTrack?.name.orEmpty(),
+                    text = playerState.track?.name.orEmpty(),
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.basicMarquee(animationMode = MarqueeAnimationMode.Immediately)
                 )
                 Text(
-                    text = playingListState.selectedTrack?.artists?.joinToString(",") { it.name.toString() }
+                    text = playerState.track?.artists?.joinToString(",") { it.name.toString() }
                         .orEmpty(),
                     modifier = Modifier.padding(top = 8.dp)
                         .basicMarquee(animationMode = MarqueeAnimationMode.Immediately)
@@ -128,8 +70,8 @@ actual fun PlayerBar() {
                 onPlayModeChanged = playerViewModel::onPlayModeChanged,
                 isPlaying = playerState.isPlaying,
                 onIsPlayingChanged = playerViewModel::isPlaying,
-                onPreviousClick = { playingListViewModel.previous(playerState.playMode) },
-                onNextClick = { playingListViewModel.next(playerState.playMode) },
+                onPreviousClick = playerViewModel::previous,
+                onNextClick = playerViewModel::next,
             )
             Volume(
                 playerState.volume,
@@ -220,6 +162,26 @@ fun PlayPauseButton(
     }) {
         Icon(
             modifier = modifier, imageVector = Icons.Default.PlayCircle, contentDescription = null
+        )
+    }
+}
+
+@Composable
+fun PlayModeButton(
+    modifier: Modifier = Modifier.padding(horizontal = 4.dp).size(32.dp),
+    playMode: PlayMode,
+    onPlayModeChanged: (playMode: PlayMode) -> Unit
+) {
+    IconButton(modifier = modifier, onClick = {
+        onPlayModeChanged(playMode.change())
+    }) {
+        Icon(
+            imageVector = when (playMode) {
+                PlayMode.LOOP -> Icons.Default.Repeat
+                PlayMode.REPEAT_ONE -> Icons.Default.RepeatOne
+                PlayMode.SHUFFLE -> Icons.Default.Shuffle
+            },
+            contentDescription = null,
         )
     }
 }
@@ -355,25 +317,5 @@ fun PlayerSlider(
         onValueChangeFinished(progress)
         isDragging = false
     }, modifier = Modifier.height(32.dp))
-}
-
-@Composable
-fun PlayModeButton(
-    modifier: Modifier = Modifier.padding(horizontal = 4.dp).size(32.dp),
-    playMode: PlayMode,
-    onPlayModeChanged: (playMode: PlayMode) -> Unit
-) {
-    IconButton(modifier = modifier, onClick = {
-        onPlayModeChanged(playMode.change())
-    }) {
-        Icon(
-            imageVector = when (playMode) {
-                PlayMode.LOOP -> Icons.Default.Repeat
-                PlayMode.REPEAT_ONE -> Icons.Default.RepeatOne
-                PlayMode.SHUFFLE -> Icons.Default.Shuffle
-            },
-            contentDescription = null,
-        )
-    }
 }
 

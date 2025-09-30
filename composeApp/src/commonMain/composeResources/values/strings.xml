@@ -39,4 +39,11 @@
     <string name="setting_local_paths_desc">Manage local music library paths</string>
     <string name="setting_add_local_path">Add Path</string>
     <string name="setting_remove_local_path">Remove</string>
+    
+    <!-- Track Item Menu -->
+    <string name="track_menu_more_options">More Options</string>
+    <string name="track_menu_add_to_playlist">Add to Playlist</string>
+    <string name="track_menu_favorite">Favorite</string>
+    <string name="track_menu_download">Download</string>
+    <string name="track_menu_share">Share</string>
 </resources>

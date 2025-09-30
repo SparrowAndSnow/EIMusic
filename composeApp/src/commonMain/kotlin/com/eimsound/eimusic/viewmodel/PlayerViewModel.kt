@@ -1,15 +1,21 @@
 package com.eimsound.eimusic.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.eimsound.eimusic.Duration
 import com.eimsound.eimusic.data.Storage
+import com.eimsound.eimusic.events.EventBus
+import com.eimsound.eimusic.events.PlaybackEvent
+import com.eimsound.eimusic.events.PlayingListEvent
 import com.eimsound.eimusic.media.MediaPlayerController
 import com.eimsound.eimusic.media.MediaPlayerListener
 import com.eimsound.eimusic.media.PlayMode
+import com.eimsound.eimusic.music.Track
 import com.eimsound.eimusic.settings.Settings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 data class PlayerState(
     val isLoading: Boolean = false,
@@ -18,13 +24,28 @@ data class PlayerState(
     val volume: Double = 1.0,
     val isMute: Boolean = false,
     val isPlaying: Boolean = false,
-    val duration: Duration? = null
+    val duration: Duration? = null,
+    val track: Track? = null
 )
 
 class PlayerViewModel(
     private val storage: Storage,
-    private val controller: MediaPlayerController
+    private val controller: MediaPlayerController,
+    private val playbackEventBus: EventBus.PlaybackEventBus,
+    private val playingListEventBus: EventBus.PlayingListEventBus
 ) : ViewModel() {
+
+    init {
+        viewModelScope.launch {
+            playingListEventBus.event.collect {
+                if (it is PlayingListEvent.TrackChanged) {
+                    release()
+                    play(it.track)
+                }
+            }
+        }
+    }
+
     private val _state = MutableStateFlow(
         PlayerState(
             position = controller.position ?: Duration(0),
@@ -73,10 +94,17 @@ class PlayerViewModel(
     }
 
     fun play(
-        trackUri: String,
-        playingListViewModel: PlayingListViewModel,
+        track: Track
     ) {
-        _state.value = _state.value.copy(isLoading = true)
+        track.uri?.let {
+            _state.value = _state.value.copy(isLoading = true, track = track)
+            prepare(it)
+        } ?: run {
+            next()
+        }
+    }
+
+    fun prepare(trackUri: String) {
         controller.prepare(trackUri, listener = object : MediaPlayerListener {
             override fun onReady() {
                 _state.value = _state.value.copy(isLoading = false)
@@ -92,20 +120,20 @@ class PlayerViewModel(
 
             override fun onAudioCompleted() {
                 when (_state.value.playMode) {
-                    PlayMode.LOOP -> playingListViewModel.next(_state.value.playMode)
+                    PlayMode.LOOP -> next()
                     PlayMode.REPEAT_ONE -> {
                         controller.seek(Duration(0))
                         controller.start()
                     }
 
                     PlayMode.SHUFFLE -> {
-                        playingListViewModel.next(_state.value.playMode)
+                        next()
                     }
                 }
             }
 
             override fun onError() {
-                playingListViewModel.next(_state.value.playMode)
+                next()
             }
 
             override fun timer(duration: Duration) {
@@ -124,5 +152,14 @@ class PlayerViewModel(
 
     fun release() {
         controller.release()
+    }
+
+    fun previous() {
+        playbackEventBus.send(PlaybackEvent.Previous(_state.value.playMode))
+
+    }
+
+    fun next() {
+        playbackEventBus.send(PlaybackEvent.Next(_state.value.playMode))
     }
 }

@@ -18,10 +18,9 @@ import org.koin.compose.viewmodel.koinViewModel
 object LocalRoute
 
 @Composable
-fun LocalView() {
+fun LocalView(playingListViewModel: PlayingListViewModel) {
     val localViewModel = koinViewModel<LocalViewModel>()
-    val trackListViewModel = koinViewModel<PlayingListViewModel>()
-    val playingListState by trackListViewModel.state.collectAsState()
+    val playingListState by playingListViewModel.state.collectAsState()
     val tracks by localViewModel.tracks.collectAsState()
     
     ColumnList(
@@ -31,9 +30,9 @@ fun LocalView() {
         TrackItem(track = it, isPlaying = it == playingListState.selectedTrack, onPlayClick = {
             // 如果点击的音乐不在当前播放列表中，则重新加载播放列表
             if (playingListState.trackList != tracks) {
-                trackListViewModel.load(tracks)
+                playingListViewModel.load(tracks)
             }
-            trackListViewModel.play(it)
+            playingListViewModel.play(it)
         })
     }
 }

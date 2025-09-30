@@ -39,4 +39,11 @@
     <string name="setting_local_paths_desc">管理本地音乐库路径</string>
     <string name="setting_add_local_path">添加路径</string>
     <string name="setting_remove_local_path">移除</string>
+    
+    <!-- Track Item Menu -->
+    <string name="track_menu_more_options">更多选项</string>
+    <string name="track_menu_add_to_playlist">添加到播放列表</string>
+    <string name="track_menu_favorite">收藏</string>
+    <string name="track_menu_download">下载</string>
+    <string name="track_menu_share">分享</string>
 </resources>
