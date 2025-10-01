@@ -30,6 +30,9 @@
     <string name="top_bar_search_hint">搜索提示文本</string>
     
     <!-- Welcome View -->
+    <string name="loading_text">加载中...</string>
+    <string name="error_text">错误: {0}</string>
+    <string name="no_tracks_text">暂无音轨</string>
     
     <!-- Profile View -->
     <string name="profile_title">个人资料</string>
@@ -39,6 +42,13 @@
     <string name="setting_local_paths_desc">管理本地音乐库路径</string>
     <string name="setting_add_local_path">添加路径</string>
     <string name="setting_remove_local_path">移除</string>
+    
+    <!-- Proxy Settings -->
+    <string name="setting_proxy">代理设置</string>
+    <string name="setting_proxy_desc">配置网络代理用于流媒体播放</string>
+    <string name="setting_proxy_host">代理主机</string>
+    <string name="setting_proxy_port">代理端口</string>
+    <string name="setting_proxy_enable">启用代理</string>
     
     <!-- Track Item Menu -->
     <string name="track_menu_more_options">更多选项</string>

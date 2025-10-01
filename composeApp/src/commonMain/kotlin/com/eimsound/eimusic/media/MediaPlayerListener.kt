@@ -9,4 +9,5 @@ interface MediaPlayerListener {
     fun timer(duration: Duration)
     fun onLoading()
     fun onLoaded()
+    fun onBufferProgress(progress: Float)
 }

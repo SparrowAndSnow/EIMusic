@@ -23,6 +23,13 @@ data class LocalPathsState(
     val paths: List<String> = emptyList()
 )
 
+// 添加代理设置状态数据类
+data class ProxyState(
+    val proxyHost: String? = null,
+    val proxyPort: Int = 8080,
+    val proxyEnabled: Boolean = false
+)
+
 class SettingViewModel(private val storage: Storage) : ViewModel() {
     private val _themeState = MutableStateFlow(
         ThemeState(
@@ -46,46 +53,72 @@ class SettingViewModel(private val storage: Storage) : ViewModel() {
         )
     )
     val localPathsState: StateFlow<LocalPathsState> = _localPathsState.asStateFlow()
+    
+    // 添加代理设置状态
+    private val _proxyState = MutableStateFlow(
+        ProxyState(
+            proxyHost = storage.get(Settings::proxyHost, null),
+            proxyPort = storage.get(Settings::proxyPort, 8080),
+            proxyEnabled = storage.get(Settings::proxyEnabled, false)
+        )
+    )
+    val proxyState: StateFlow<ProxyState> = _proxyState.asStateFlow()
 
-    fun setDarkMode(enabled: Boolean) {
-        _themeState.value = _themeState.value.copy(darkMode = enabled)
+    fun updateTheme(darkMode: Boolean, themeFollowSystem: Boolean) {
         viewModelScope.launch {
-            storage.save(Settings::darkMode, enabled)
+            storage.save(Settings::darkMode, darkMode)
+            storage.save(Settings::themeFollowSystem, themeFollowSystem)
+            _themeState.value = ThemeState(darkMode, themeFollowSystem)
         }
     }
-    
-    fun setThemeFollowSystem(follow: Boolean) {
-        _themeState.value = _themeState.value.copy(themeFollowSystem = follow)
-        viewModelScope.launch {
-            storage.save(Settings::themeFollowSystem, follow)
-        }
-    }
-    
-    fun setLanguage(language: String) {
-        _languageState.value = _languageState.value.copy(language = language)
+
+    fun updateLanguage(language: String) {
         viewModelScope.launch {
             storage.save(Settings::language, language)
+            _languageState.value = LanguageState(language)
         }
     }
-    
-    // 添加本地路径相关方法
-    fun addLocalPath(path: String) {
-        val currentPaths = _localPathsState.value.paths
-        if (!currentPaths.contains(path)) {
-            val newPaths = currentPaths + path
-            _localPathsState.value = LocalPathsState(newPaths)
-            viewModelScope.launch {
-                storage.save(Settings::localPath, newPaths)
-            }
-        }
-    }
-    
-    fun removeLocalPath(path: String) {
-        val currentPaths = _localPathsState.value.paths
-        val newPaths = currentPaths.filter { it != path }
-        _localPathsState.value = LocalPathsState(newPaths)
+
+    fun updateLocalPaths(paths: List<String>) {
         viewModelScope.launch {
-            storage.save(Settings::localPath, newPaths)
+            storage.save(Settings::localPath, paths)
+            _localPathsState.value = LocalPathsState(paths)
         }
+    }
+    
+    fun updateProxy(proxyHost: String?, proxyPort: Int, proxyEnabled: Boolean) {
+        viewModelScope.launch {
+            storage.save(Settings::proxyHost, proxyHost)
+            storage.save(Settings::proxyPort, proxyPort)
+            storage.save(Settings::proxyEnabled, proxyEnabled)
+            _proxyState.value = ProxyState(proxyHost, proxyPort, proxyEnabled)
+        }
+    }
+    
+    // 恢复被删除的方法
+    fun setThemeFollowSystem(followSystem: Boolean) {
+        updateTheme(_themeState.value.darkMode, followSystem)
+    }
+
+    fun setDarkMode(darkMode: Boolean) {
+        updateTheme(darkMode, _themeState.value.themeFollowSystem)
+    }
+
+    fun setLanguage(language: String) {
+        updateLanguage(language)
+    }
+
+    fun addLocalPath(path: String) {
+        val currentPaths = _localPathsState.value.paths.toMutableList()
+        if (!currentPaths.contains(path)) {
+            currentPaths.add(path)
+            updateLocalPaths(currentPaths)
+        }
+    }
+
+    fun removeLocalPath(path: String) {
+        val currentPaths = _localPathsState.value.paths.toMutableList()
+        currentPaths.remove(path)
+        updateLocalPaths(currentPaths)
     }
 }

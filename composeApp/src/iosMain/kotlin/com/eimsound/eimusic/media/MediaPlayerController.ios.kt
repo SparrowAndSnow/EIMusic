@@ -2,6 +2,10 @@ package com.eimsound.eimusic.media
 
 import com.eimsound.eimusic.Duration
 
+/**
+ * iOS平台的媒体播放控制器实现
+ * 目前仅作为占位符，待后续实现完整功能
+ */
 actual class MediaPlayerController {
     actual fun prepare(source: String, listener: MediaPlayerListener) {
     }

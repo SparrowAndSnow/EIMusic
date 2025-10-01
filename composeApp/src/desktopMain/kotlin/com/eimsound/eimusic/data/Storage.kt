@@ -21,7 +21,10 @@ actual class Storage {
         localPath = emptyList(),
         darkMode = false,
         themeFollowSystem = true,
-        language = "zh"
+        language = "zh",
+        proxyHost = null,
+        proxyPort = 8080,
+        proxyEnabled = false
     )
 
     private fun load() {

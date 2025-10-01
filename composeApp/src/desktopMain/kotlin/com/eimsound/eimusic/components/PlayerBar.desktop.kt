@@ -1,7 +1,12 @@
 package com.eimsound.eimusic.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -14,6 +19,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.rememberAsyncImagePainter
@@ -72,6 +78,8 @@ actual fun PlayerBar() {
                 onIsPlayingChanged = playerViewModel::isPlaying,
                 onPreviousClick = playerViewModel::previous,
                 onNextClick = playerViewModel::next,
+                bufferValue = playerState.bufferProgress,
+                showBufferProgress = playerState.track != null
             )
             Volume(
                 playerState.volume,
@@ -213,6 +221,8 @@ fun TrackImage(modifier: Modifier = Modifier, selectedTrack: Track?, isLoading: 
 fun RowScope.PlayerControl(
     modifier: Modifier = Modifier,
     position: Duration,
+    bufferValue: Float,
+    showBufferProgress: Boolean,
     onPositionChanged: (Duration) -> Unit = {},
     playMode: PlayMode,
     onPlayModeChanged: (PlayMode) -> Unit = {},
@@ -254,13 +264,19 @@ fun RowScope.PlayerControl(
             )
         }
 
-        PlayerSlider(duration.toPercent(position), onValueChangeFinished = {
-            isDragging = false
-            onPositionChanged(duration.percentOf(it))
-        }, onValueChange = {
-            isDragging = true
-            draggingPosition = duration.percentOf(it)
-        })
+        PlayerSlider(
+            value = duration.toPercent(position),
+            showBufferProgress = showBufferProgress,
+            bufferValue = bufferValue,
+            onValueChangeFinished = {
+                isDragging = false
+                onPositionChanged(duration.percentOf(it))
+            },
+            onValueChange = {
+                isDragging = true
+                draggingPosition = duration.percentOf(it)
+            }
+        )
     }
 }
 
@@ -296,6 +312,8 @@ fun TimeDisplay(
 @Composable
 fun PlayerSlider(
     value: Float,
+    bufferValue: Float,
+    showBufferProgress: Boolean,
     onValueChangeFinished: (Float) -> Unit,
     onValueChange: (Float) -> Unit = {},
 ) {
@@ -309,13 +327,55 @@ fun PlayerSlider(
     LaunchedEffect(value) {
         if (!isDragging) progress = value
     }
-    Slider(value = animatedProgress, onValueChange = {
-        isDragging = true
-        progress = it
-        onValueChange(it)
-    }, onValueChangeFinished = {
-        onValueChangeFinished(progress)
-        isDragging = false
-    }, modifier = Modifier.height(32.dp))
+
+    Column(modifier = Modifier.fillMaxWidth().height(36.dp)) {
+        Slider(
+            modifier = Modifier
+                .fillMaxWidth().height(32.dp),
+            value = animatedProgress,
+            onValueChange = {
+                isDragging = true
+                progress = it
+                onValueChange(it)
+            },
+            onValueChangeFinished = {
+                onValueChangeFinished(progress)
+                isDragging = false
+            },
+            colors = SliderDefaults.colors(
+                thumbColor = MaterialTheme.colorScheme.primary,
+                activeTrackColor = MaterialTheme.colorScheme.primary,
+                inactiveTrackColor = Color.Unspecified
+            )
+        )
+
+        // 缓冲进度条
+        AnimatedVisibility(
+            visible = showBufferProgress && bufferValue < 1.0f,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
+        ) {
+            val animatedProgress by animateFloatAsState(
+                targetValue = bufferValue,
+                animationSpec = tween(200),
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(4.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f))
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth(animatedProgress)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(MaterialTheme.colorScheme.secondary)
+                )
+            }
+        }
+
+    }
 }
 

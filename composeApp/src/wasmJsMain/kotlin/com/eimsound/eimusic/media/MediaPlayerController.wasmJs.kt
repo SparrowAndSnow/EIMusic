@@ -4,6 +4,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.eimsound.eimusic.Duration
 
+/**
+ * Web平台的媒体播放控制器实现
+ * 目前仅作为占位符，待后续实现完整功能
+ */
 actual class MediaPlayerController {
     actual fun prepare(source: String, listener: MediaPlayerListener) {
     }

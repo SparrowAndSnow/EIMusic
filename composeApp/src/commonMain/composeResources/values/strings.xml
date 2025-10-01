@@ -30,6 +30,9 @@
     <string name="top_bar_search_hint">Hinted search text</string>
     
     <!-- Welcome View -->
+    <string name="loading_text">Loading...</string>
+    <string name="error_text">Error: {0}</string>
+    <string name="no_tracks_text">No tracks available</string>
     
     <!-- Profile View -->
     <string name="profile_title">Profile</string>
@@ -39,6 +42,13 @@
     <string name="setting_local_paths_desc">Manage local music library paths</string>
     <string name="setting_add_local_path">Add Path</string>
     <string name="setting_remove_local_path">Remove</string>
+    
+    <!-- Proxy Settings -->
+    <string name="setting_proxy">Proxy Settings</string>
+    <string name="setting_proxy_desc">Configure network proxy for streaming music</string>
+    <string name="setting_proxy_host">Proxy Host</string>
+    <string name="setting_proxy_port">Proxy Port</string>
+    <string name="setting_proxy_enable">Enable Proxy</string>
     
     <!-- Track Item Menu -->
     <string name="track_menu_more_options">More Options</string>

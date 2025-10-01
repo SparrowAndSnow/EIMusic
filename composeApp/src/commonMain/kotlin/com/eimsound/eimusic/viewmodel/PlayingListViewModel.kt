@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.eimsound.eimusic.events.EventBus
 import com.eimsound.eimusic.events.PlaybackEvent
 import com.eimsound.eimusic.events.PlayingListEvent
+import com.eimsound.eimusic.events.TrackListEvent
 import com.eimsound.eimusic.media.PlayMode
 import com.eimsound.eimusic.media.PlaybackController
 import com.eimsound.eimusic.music.Track
@@ -21,16 +22,13 @@ data class PlayingListState(
     val selectedTrack: Track? = null
 )
 
-class PlayingListViewModel(
-    private val playbackEventBus: EventBus.PlaybackEventBus,
-    private val playingListEventBus: EventBus.PlayingListEventBus
-) : ViewModel(), PlaybackController {
+class PlayingListViewModel() : ViewModel(), PlaybackController {
     private val _state = MutableStateFlow(PlayingListState())
     val state: StateFlow<PlayingListState> = _state.asStateFlow()
 
     init {
         viewModelScope.launch {
-            playbackEventBus.event.collect {
+            EventBus.PlaybackEventBus.receive {
                 when (it) {
                     is PlaybackEvent.Previous -> {
                         previous(it.playMode)
@@ -39,20 +37,34 @@ class PlayingListViewModel(
                     is PlaybackEvent.Next -> {
                         next(it.playMode)
                     }
-
-                    is PlaybackEvent.Play -> {
-                        play(it.track)
-                    }
-
                     is PlaybackEvent.PlaybackModeChanged -> {}
                     is PlaybackEvent.TogglePlaybackPause -> {}
+                }
+            }
+        }
+        viewModelScope.launch {
+            EventBus.TrackListEventBus.receive {
+                when(it){
+                    is TrackListEvent.PlayTrackList -> {
+                        // 如果点击的音乐不在当前播放列表中，则重新加载播放列表
+                        if (_state.value.trackList != it.tracks) {
+                            loadAndPlay(it.tracks, it.track)
+                        } else {
+                            // 如果在当前播放列表中，直接播放
+                            play(it.track)
+                        }
+                    }
+                    is TrackListEvent.AddedToQueue -> {
+                        addTrack(it.track)
+                    }
+                    else -> {}
                 }
             }
         }
     }
 
     private fun onTrackChanged(track: Track) {
-        playingListEventBus.send(PlayingListEvent.TrackChanged(track))
+        EventBus.PlayingListEventBus.send(PlayingListEvent.TrackChanged(track))
     }
 
     override fun load(tracks: List<Track>) {
@@ -74,6 +86,16 @@ class PlayingListViewModel(
             // 发送播放事件而不是直接调用playbackController
             onTrackChanged(track)
         }
+    }
+
+    fun loadAndPlay(tracks: List<Track>, track: Track) {
+        _state.value = PlayingListState(
+            trackList = tracks,
+            selectedIndex = tracks.indexOf(track),
+            selectedTrack = track
+        )
+        // 发送播放事件而不是直接调用playbackController
+        onTrackChanged(track)
     }
 
     fun addTrack(track: Track) {

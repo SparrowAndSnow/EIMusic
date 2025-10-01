@@ -33,6 +33,11 @@ import eimusic.composeapp.generated.resources.setting_local_paths
 import eimusic.composeapp.generated.resources.setting_local_paths_desc
 import eimusic.composeapp.generated.resources.setting_add_local_path
 import eimusic.composeapp.generated.resources.setting_remove_local_path
+import eimusic.composeapp.generated.resources.setting_proxy
+import eimusic.composeapp.generated.resources.setting_proxy_desc
+import eimusic.composeapp.generated.resources.setting_proxy_host
+import eimusic.composeapp.generated.resources.setting_proxy_port
+import eimusic.composeapp.generated.resources.setting_proxy_enable
 import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
 import androidx.compose.runtime.collectAsState
@@ -50,6 +55,8 @@ fun SettingView() {
     val languageState by settingViewModel.languageState.collectAsState()
     // 获取本地路径状态
     val localPathsState by settingViewModel.localPathsState.collectAsState()
+    // 获取代理设置状态
+    val proxyState by settingViewModel.proxyState.collectAsState()
 
     var showAboutDialog by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
@@ -57,6 +64,11 @@ fun SettingView() {
     // 添加路径相关状态
     var showAddPathDialog by remember { mutableStateOf(false) }
     var newPath by remember { mutableStateOf("") }
+    // 代理设置相关状态
+    var showProxyDialog by remember { mutableStateOf(false) }
+    var proxyHost by remember { mutableStateOf(proxyState.proxyHost ?: "") }
+    var proxyPort by remember { mutableStateOf(proxyState.proxyPort.toString()) }
+    var proxyEnabled by remember { mutableStateOf(proxyState.proxyEnabled) }
 
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())
@@ -116,6 +128,31 @@ fun SettingView() {
             modifier = Modifier.clickable {
                 selectedLanguage = languageState.language
                 showLanguageDialog = true
+            }
+        )
+
+        // 代理设置
+        ListItem(
+            headlineContent = { Text(stringResource(Res.string.setting_proxy)) },
+            supportingContent = { Text(stringResource(Res.string.setting_proxy_desc)) },
+            trailingContent = {
+                Switch(
+                    checked = proxyState.proxyEnabled,
+                    onCheckedChange = { enabled ->
+                        proxyEnabled = enabled
+                        settingViewModel.updateProxy(
+                            if (proxyHost.isNotBlank()) proxyHost else null,
+                            proxyPort.toIntOrNull() ?: 8080,
+                            enabled
+                        )
+                    }
+                )
+            },
+            modifier = Modifier.clickable {
+                proxyHost = proxyState.proxyHost ?: ""
+                proxyPort = proxyState.proxyPort.toString()
+                proxyEnabled = proxyState.proxyEnabled
+                showProxyDialog = true
             }
         )
 
@@ -306,6 +343,70 @@ fun SettingView() {
             },
             dismissButton = {
                 TextButton(onClick = { showAddPathDialog = false }) {
+                    Text(stringResource(Res.string.setting_language_cancel))
+                }
+            }
+        )
+    }
+
+    // 代理设置对话框
+    if (showProxyDialog) {
+        AlertDialog(
+            onDismissRequest = { showProxyDialog = false },
+            title = { Text(stringResource(Res.string.setting_proxy)) },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    OutlinedTextField(
+                        value = proxyHost,
+                        onValueChange = { proxyHost = it },
+                        label = { Text(stringResource(Res.string.setting_proxy_host)) },
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                    )
+                    
+                    OutlinedTextField(
+                        value = proxyPort,
+                        onValueChange = { 
+                            if (it.isEmpty() || it.all { c -> c.isDigit() }) {
+                                proxyPort = it
+                            }
+                        },
+                        label = { Text(stringResource(Res.string.setting_proxy_port)) },
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                    )
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.setting_proxy_enable),
+                            modifier = Modifier.alignByBaseline()
+                        )
+                        
+                        Switch(
+                            checked = proxyEnabled,
+                            onCheckedChange = { proxyEnabled = it },
+                            modifier = Modifier.alignByBaseline()
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val host = if (proxyHost.isNotBlank()) proxyHost else null
+                        val port = proxyPort.toIntOrNull() ?: 8080
+                        settingViewModel.updateProxy(host, port, proxyEnabled)
+                        showProxyDialog = false
+                    }
+                ) {
+                    Text(stringResource(Res.string.setting_about_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showProxyDialog = false }) {
                     Text(stringResource(Res.string.setting_language_cancel))
                 }
             }

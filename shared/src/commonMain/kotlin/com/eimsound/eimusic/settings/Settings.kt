@@ -10,5 +10,8 @@ data class Settings(
     var localPath: List<String>,
     var darkMode: Boolean,
     var themeFollowSystem: Boolean,
-    var language: String
+    var language: String,
+    var proxyHost: String? = null,
+    var proxyPort: Int = 8080,
+    var proxyEnabled: Boolean = false
 )

@@ -25,22 +25,22 @@ data class PlayerState(
     val isMute: Boolean = false,
     val isPlaying: Boolean = false,
     val duration: Duration? = null,
-    val track: Track? = null
+    val track: Track? = null,
+    val bufferProgress: Float = 0.0f
 )
 
 class PlayerViewModel(
     private val storage: Storage,
     private val controller: MediaPlayerController,
-    private val playbackEventBus: EventBus.PlaybackEventBus,
-    private val playingListEventBus: EventBus.PlayingListEventBus
 ) : ViewModel() {
-
     init {
         viewModelScope.launch {
-            playingListEventBus.event.collect {
-                if (it is PlayingListEvent.TrackChanged) {
-                    release()
-                    play(it.track)
+            EventBus.PlayingListEventBus.receive {
+                when (it) {
+                    is PlayingListEvent.TrackChanged -> {
+                        release()
+                        play(it.track)
+                    }
                 }
             }
         }
@@ -147,6 +147,10 @@ class PlayerViewModel(
             override fun onLoaded() {
                 _state.value = _state.value.copy(isLoading = false)
             }
+
+            override fun onBufferProgress(progress: Float) {
+                _state.value = _state.value.copy(bufferProgress = progress)
+            }
         })
     }
 
@@ -154,12 +158,11 @@ class PlayerViewModel(
         controller.release()
     }
 
-    fun previous() {
-        playbackEventBus.send(PlaybackEvent.Previous(_state.value.playMode))
-
+    fun next() {
+        EventBus.PlaybackEventBus.send(PlaybackEvent.Next(_state.value.playMode))
     }
 
-    fun next() {
-        playbackEventBus.send(PlaybackEvent.Next(_state.value.playMode))
+    fun previous() {
+        EventBus.PlaybackEventBus.send(PlaybackEvent.Previous(_state.value.playMode))
     }
 }

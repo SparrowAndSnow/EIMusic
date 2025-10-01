@@ -1,10 +1,14 @@
 package com.eimsound.eimusic.components
 
+import TrackListViewModel
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.eimsound.eimusic.music.Artist
 import com.eimsound.eimusic.music.Track
+import org.koin.compose.viewmodel.koinViewModel
 import kotlin.reflect.KProperty1
 
 /**
@@ -34,7 +38,9 @@ fun TrackList(
     onShare: ((Track) -> Unit)? = null
 ) {
     val lazyListState = rememberLazyListState()
-    
+    val trackListViewModel = koinViewModel<TrackListViewModel>()
+    val state by trackListViewModel.state.collectAsState()
+
     ColumnList(
         modifier = modifier,
         state = lazyListState,
@@ -43,8 +49,9 @@ fun TrackList(
     ) { track ->
         TrackItem(
             track = track,
-            isPlaying = false, // TrackList 不显示当前播放状态
+            isPlaying = track == state.currentTrack, // TrackList 不显示当前播放状态
             onPlayClick = {
+                trackListViewModel.play(tracks, track)
                 onPlayTrack?.invoke(track)
             },
             onTrackNameClick = {
@@ -52,6 +59,7 @@ fun TrackList(
             },
             onArtistClick = onArtistClick ?: {},
             onAddToPlaylist = {
+                trackListViewModel.addToQueue(track)
                 onAddToPlaylist?.invoke(track)
             },
             onFavorite = {

@@ -9,13 +9,13 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun PlayingList() {
-    val trackListViewModel = koinViewModel<PlayingListViewModel>()
-    val playingListState by trackListViewModel.state.collectAsState()
+    val playingListViewModel = koinViewModel<PlayingListViewModel>()
+    val playingListState by playingListViewModel.state.collectAsState()
     val lazyListState = rememberLazyListState()
-
+    
     ColumnList(state = lazyListState, list = playingListState.trackList, key = Track::id) {
         TrackItem(track = it, isPlaying = it == playingListState.selectedTrack, onPlayClick = {
-            trackListViewModel.play(it)
+            playingListViewModel.play(it)
         })
     }
 }
