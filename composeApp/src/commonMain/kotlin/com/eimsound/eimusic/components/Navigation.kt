@@ -18,7 +18,8 @@ import com.eimsound.eimusic.route.routes
 @Composable
 fun Navigation(
     navController: NavController,
-    navigationLayoutType: NavigationSuiteType, content: @Composable () -> Unit = {}
+    navigationLayoutType: NavigationSuiteType,
+    content: @Composable () -> Unit = {}
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination

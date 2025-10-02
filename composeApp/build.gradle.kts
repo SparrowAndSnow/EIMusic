@@ -15,6 +15,14 @@ plugins {
     id("com.google.osdetector") version "1.7.3"
 }
 
+repositories {
+    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+    maven("https://packages.jetbrains.team/maven/p/firework/dev")
+    google()
+    mavenCentral()
+    gradlePluginPortal()
+}
+
 kotlin {
     androidTarget {
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
@@ -58,34 +66,44 @@ kotlin {
 
     sourceSets {
         val desktopMain by getting
-
-        androidMain.dependencies {
-            implementation(compose.preview)
-            implementation(libs.androidx.activity.compose)
-        }
+        val wasmJsMain by getting
         commonMain.dependencies {
+            implementation(projects.shared)
+
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
-            implementation(libs.compose.navigation)
-            implementation(libs.androidx.navigation)
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
-            implementation(libs.androidx.lifecycle.viewmodel)
-            implementation(libs.androidx.lifecycle.runtime.compose)
-            implementation(projects.shared)
-            implementation(libs.kotlinx.serialization.json)
             implementation(compose.materialIconsExtended)
             implementation(compose.material3AdaptiveNavigationSuite)
+            implementation(libs.kotlinx.serialization.json)
             implementation(libs.coil.compose.image.loader)
             implementation(libs.coil.compose.image.loader.network.ktor)
             implementation(libs.bundles.koin)
+
+            implementation(libs.bundles.navigation)
         }
+
+        wasmJsMain.dependencies{
+
+        }
+        
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+        }
+        
+        androidMain.dependencies {
+            implementation(compose.preview)
+            implementation(libs.androidx.activity.compose)
+            implementation(libs.androidx.media3.common)
+            implementation(libs.androidx.media3.exoplayer)
+        }
+        
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
-
 
             val javafxPlatform = when (osdetector.classifier) {
                 "linux-x86_64" -> "linux"
@@ -100,6 +118,10 @@ kotlin {
             implementation("org.openjfx:javafx-graphics:19:${javafxPlatform}")
             implementation("org.openjfx:javafx-controls:19:${javafxPlatform}")
             implementation("org.openjfx:javafx-swing:19:${javafxPlatform}")
+        }
+        
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
         }
     }
 }

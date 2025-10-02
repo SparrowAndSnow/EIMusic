@@ -41,24 +41,26 @@ kotlin {
     }
 
     sourceSets {
-        androidMain.dependencies{
-            implementation(libs.ktor.client.android)
-        }
-        wasmJsMain.dependencies{
-            implementation(libs.ktor.client.js)
-        }
         commonMain.dependencies {
             // put your Multiplatform dependencies here
-//            implementation(libs.bundles.ktor)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.bundles.ktor)
         }
+        
+        androidMain.dependencies{
+            implementation(libs.ktor.client.android)
+        }
+        
         jvmMain.dependencies{
             implementation(libs.ktor.client.cio)
-
         }
+        
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
+        }
+        
+        wasmJsMain.dependencies{
+            implementation(libs.ktor.client.js)
         }
     }
 }
@@ -74,4 +76,3 @@ android {
         minSdk = libs.versions.android.minSdk.get().toInt()
     }
 }
-
