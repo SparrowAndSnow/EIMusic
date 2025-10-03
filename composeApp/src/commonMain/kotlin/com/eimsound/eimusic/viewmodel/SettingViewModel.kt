@@ -20,7 +20,7 @@ data class LanguageState(
 
 // 添加本地路径状态数据类
 data class LocalPathsState(
-    val paths: List<String> = emptyList()
+    val paths: Set<String> = emptySet()
 )
 
 // 添加代理设置状态数据类
@@ -49,7 +49,7 @@ class SettingViewModel(private val storage: Storage) : ViewModel() {
     // 添加本地路径状态
     private val _localPathsState = MutableStateFlow(
         LocalPathsState(
-            paths = storage.get(Settings::localPath, emptyList())
+            paths = storage.get(Settings::localPath, emptySet())
         )
     )
     val localPathsState: StateFlow<LocalPathsState> = _localPathsState.asStateFlow()
@@ -79,7 +79,7 @@ class SettingViewModel(private val storage: Storage) : ViewModel() {
         }
     }
 
-    fun updateLocalPaths(paths: List<String>) {
+    fun updateLocalPaths(paths: Set<String>) {
         viewModelScope.launch {
             storage.save(Settings::localPath, paths)
             _localPathsState.value = LocalPathsState(paths)
@@ -109,7 +109,7 @@ class SettingViewModel(private val storage: Storage) : ViewModel() {
     }
 
     fun addLocalPath(path: String) {
-        val currentPaths = _localPathsState.value.paths.toMutableList()
+        val currentPaths = _localPathsState.value.paths.toMutableSet()
         if (!currentPaths.contains(path)) {
             currentPaths.add(path)
             updateLocalPaths(currentPaths)
@@ -117,7 +117,7 @@ class SettingViewModel(private val storage: Storage) : ViewModel() {
     }
 
     fun removeLocalPath(path: String) {
-        val currentPaths = _localPathsState.value.paths.toMutableList()
+        val currentPaths = _localPathsState.value.paths.toMutableSet()
         currentPaths.remove(path)
         updateLocalPaths(currentPaths)
     }

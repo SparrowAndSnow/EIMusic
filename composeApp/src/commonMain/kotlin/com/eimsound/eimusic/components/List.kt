@@ -24,6 +24,6 @@ expect fun <T> ColumnList(
     flingBehavior: FlingBehavior = ScrollableDefaults.flingBehavior(),
     userScrollEnabled: Boolean = true,
     list: List<T>,
-    key: KProperty1<T, *>,
+    key: KProperty1<T, *>? = null,
     item: @Composable (T) -> Unit
 )

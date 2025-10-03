@@ -126,13 +126,13 @@ actual class MediaPlayerController {
      * 获取当前播放位置
      */
     actual val position: Duration?
-        get() = Duration(mediaPlayer?.currentTime?.toSeconds()?.toLong() ?: 0)
+        get() = mediaPlayer?.currentTime?.toSeconds()?.toLong()?.let { Duration(it) }
 
     /**
      * 获取媒体总时长
      */
     actual val duration: Duration?
-        get() = Duration(mediaPlayer?.totalDuration?.toSeconds()?.toLong() ?: 0)
+        get() = mediaPlayer?.totalDuration?.toSeconds()?.toLong()?.let { Duration(it) }
 
     /**
      * 检查是否正在播放

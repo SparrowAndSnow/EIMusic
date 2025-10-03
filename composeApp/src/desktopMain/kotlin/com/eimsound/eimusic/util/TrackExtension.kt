@@ -7,7 +7,7 @@ import java.net.URI
 
 val audioExtensions = setOf("mp3", "wav", "ogg", "flac", "aac", "m4a", "wma")
 
-actual suspend fun loadTrackFiles(dirs: List<String>): List<Track> {
+actual suspend fun loadTrackFiles(dirs: Set<String>): List<Track> {
     return dirs.flatMap { dir ->
         
         getAudioFilesRecursively(dir).map { it ->

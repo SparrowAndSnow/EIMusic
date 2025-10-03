@@ -25,7 +25,7 @@ actual fun <T> ColumnList(
     flingBehavior: FlingBehavior,
     userScrollEnabled: Boolean,
     list: List<T>,
-    key: KProperty1<T, *>,
+    key: KProperty1<T, *>?,
     item: @Composable (T) -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
@@ -39,7 +39,7 @@ actual fun <T> ColumnList(
             flingBehavior,
             userScrollEnabled
         ) {
-            items(list, key = { key.get(it) ?: it.hashCode() }) {
+            items(list, key = { key?.get(it) ?: it.hashCode() }) {
                 item(it)
             }
         }

@@ -6,7 +6,7 @@
     
     <!-- Navigation Routes -->
     <string name="route_welcome">主页</string>
-    <string name="route_profile">个人资料</string>
+    <string name="route_my">我的</string>
     <string name="route_local">本地</string>
     <string name="route_setting">设置</string>
     

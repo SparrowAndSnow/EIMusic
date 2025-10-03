@@ -18,7 +18,7 @@ actual class Storage {
         playMode = PlayMode.LOOP.toString(),
         volume = 1.0,
         isMuted = false,
-        localPath = emptyList(),
+        localPath = emptySet(),
         darkMode = false,
         themeFollowSystem = true,
         language = "zh",

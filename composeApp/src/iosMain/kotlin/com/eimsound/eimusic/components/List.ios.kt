@@ -21,7 +21,7 @@ actual fun <T> ColumnList(
     flingBehavior: FlingBehavior,
     userScrollEnabled: Boolean,
     list: List<T>,
-    key: KProperty1<T, *>,
+    key: KProperty1<T, *>?,
     item: @Composable (T) -> Unit
 ){
     LazyColumn(

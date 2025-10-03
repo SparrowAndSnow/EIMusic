@@ -2,6 +2,7 @@ package com.eimsound.eimusic.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -37,7 +38,13 @@ fun TrackImage(
     val isHovered by interactionSource.collectIsHoveredAsState()
 
     val painter = rememberAsyncImagePainter(image)
-    Box(modifier = modifier.clip(RoundedCornerShape(4.dp)).width(64.dp).height(64.dp).hoverable(interactionSource)) {
+    Box(
+        modifier = modifier.clip(RoundedCornerShape(4.dp))
+            .width(64.dp).height(64.dp)
+            .hoverable(interactionSource)
+            .clickable {
+                onPlayClick()
+            }) {
         Image(
             painter,
             image,

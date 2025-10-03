@@ -25,8 +25,8 @@ import com.eimsound.eimusic.viewmodel.SettingViewModel
 import com.eimsound.eimusic.viewmodel.WelcomeViewModel
 import com.eimsound.eimusic.views.LocalRoute
 import com.eimsound.eimusic.views.LocalView
-import com.eimsound.eimusic.views.ProfileRoute
-import com.eimsound.eimusic.views.ProfileView
+import com.eimsound.eimusic.views.MyRoute
+import com.eimsound.eimusic.views.MyView
 import com.eimsound.eimusic.views.SettingRoute
 import com.eimsound.eimusic.views.SettingView
 import com.eimsound.eimusic.views.WelcomeRoute
@@ -55,7 +55,7 @@ fun App() {
                     navController = navController
                 ) {
                     composable<WelcomeRoute> { WelcomeView() }
-                    composable<ProfileRoute> { ProfileView() }
+                    composable<MyRoute> { MyView() }
                     composable<LocalRoute> { LocalView() }
                     composable<SettingRoute> { SettingView() }
                 }

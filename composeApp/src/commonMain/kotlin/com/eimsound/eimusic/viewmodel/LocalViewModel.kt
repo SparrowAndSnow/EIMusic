@@ -15,8 +15,8 @@ class LocalViewModel(val storage: Storage) : ViewModel() {
     private val _tracks = MutableStateFlow<List<Track>>(emptyList())
     val tracks: StateFlow<List<Track>> = _tracks.asStateFlow()
     
-    private val _localPaths = MutableStateFlow<List<String>>(storage.get(Settings::localPath, emptyList()))
-    val localPaths: StateFlow<List<String>> = _localPaths.asStateFlow()
+    private val _localPaths = MutableStateFlow<Set<String>>(storage.get(Settings::localPath, emptySet()))
+    val localPaths: StateFlow<Set<String>> = _localPaths.asStateFlow()
 
     init {
         loadTracks()
@@ -28,7 +28,7 @@ class LocalViewModel(val storage: Storage) : ViewModel() {
         }
     }
     
-    fun updateLocalPaths(paths: List<String>) {
+    fun updateLocalPaths(paths: Set<String>) {
         _localPaths.value = paths
         viewModelScope.launch {
             storage.save(Settings::localPath, paths)
