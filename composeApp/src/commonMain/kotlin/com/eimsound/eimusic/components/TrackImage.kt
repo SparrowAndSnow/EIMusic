@@ -25,6 +25,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import coil3.compose.rememberAsyncImagePainter
 
 @Composable
@@ -61,13 +64,19 @@ fun TrackImage(
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
-        } else if (isHovered) {
-            Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background.copy(alpha = 0.7f))) {
-                IconButton(
-                    onClick = onPlayClick,
-                    modifier = Modifier.align(Alignment.Center)
-                ) {
-                    Icon(Icons.Default.PlayArrow, contentDescription = null)
+        } else {
+            AnimatedVisibility(
+                visible = isHovered,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background.copy(alpha = 0.7f))) {
+                    IconButton(
+                        onClick = onPlayClick,
+                        modifier = Modifier.align(Alignment.Center)
+                    ) {
+                        Icon(Icons.Default.PlayArrow, contentDescription = null)
+                    }
                 }
             }
         }
