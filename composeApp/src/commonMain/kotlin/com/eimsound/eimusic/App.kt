@@ -1,7 +1,6 @@
 package com.eimsound.eimusic
 
 import TrackListViewModel
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.*
@@ -81,8 +80,7 @@ fun AppEnvironment(content: @Composable () -> Unit) {
     val themeState by settingViewModel.themeState.collectAsState()
     val languageState by settingViewModel.languageState.collectAsState()
     val proxyState by settingViewModel.proxyState.collectAsState()
-    val isSystemInDarkTheme = isSystemInDarkTheme()
-
+    val isSystemInDarkTheme = Theme.isSystemInDarkTheme
     val isDarkTheme = if (themeState.themeFollowSystem) {
         isSystemInDarkTheme
     } else {

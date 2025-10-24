@@ -18,7 +18,6 @@ fun main() = application {
     )
     Platform.startup {}
     Window(
-        undecorated = true,
         onCloseRequest = ::exitApplication,
         title = stringResource(Res.string.app_name),
         state = state

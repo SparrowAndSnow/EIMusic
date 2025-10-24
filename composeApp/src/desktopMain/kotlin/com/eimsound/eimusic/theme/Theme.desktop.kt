@@ -6,7 +6,6 @@ import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.LocalSystemTheme
 import androidx.compose.ui.SystemTheme
 
-
 @OptIn(InternalComposeUiApi::class)
 actual object Theme {
     actual val current: Boolean
@@ -14,11 +13,14 @@ actual object Theme {
 
     @Composable
     actual infix fun provides(value: Boolean?): ProvidedValue<*> {
-        val new = when(value) {
+        val new = when (value) {
             true -> SystemTheme.Dark
             false -> SystemTheme.Light
             null -> LocalSystemTheme.current
         }
         return LocalSystemTheme.provides(new)
     }
+
+    actual val isSystemInDarkTheme: Boolean
+        @Composable get() = DesktopThemeManager.isSystemInDarkTheme.value
 }

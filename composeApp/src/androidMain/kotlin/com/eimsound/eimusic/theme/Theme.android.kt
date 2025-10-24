@@ -4,15 +4,11 @@ import android.content.res.Configuration
 import android.content.res.Configuration.UI_MODE_NIGHT_MASK
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
-import android.os.Build
-import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ProvidedValue
 import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 
 
 //@Composable
@@ -45,4 +41,7 @@ actual object Theme {
         }
         return LocalConfiguration.provides(new)
     }
+
+    actual val isSystemInDarkTheme: Boolean
+        @Composable get() = isSystemInDarkTheme()
 }

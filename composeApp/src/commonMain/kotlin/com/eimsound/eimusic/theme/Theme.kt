@@ -266,6 +266,9 @@ fun EIMusicTheme(
 
 expect object Theme {
     val current: Boolean @Composable get
+
+    val isSystemInDarkTheme : Boolean @Composable get
+
     @Composable
     infix fun provides(value: Boolean?): ProvidedValue<*>
 }

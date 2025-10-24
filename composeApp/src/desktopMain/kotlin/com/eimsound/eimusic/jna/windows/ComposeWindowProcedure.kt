@@ -46,12 +46,14 @@ import com.sun.jna.platform.win32.WinUser.WM_SIZE
 import com.sun.jna.platform.win32.WinUser.WS_CAPTION
 import com.sun.jna.platform.win32.WinUser.WS_SYSMENU
 import com.sun.jna.ptr.IntByReference
+import org.jetbrains.skiko.SystemTheme
 import org.jetbrains.skiko.currentSystemTheme
 import java.awt.Window
 
 internal class ComposeWindowProcedure(
     private val window: Window,
     private val hitTest: (x: Float, y: Float) -> Int,
+    private val onWindowThemeUpdate: (Boolean) -> Unit,
     private val onWindowInsetUpdate: (WindowInsets) -> Unit
 ) : WindowProcedure {
     private val windowPointer = (this.window as? ComposeWindow)
@@ -246,6 +248,7 @@ internal class ComposeWindowProcedure(
                     windowFrameColor = currentAccentColor()
                     isWindowFrameAccentColorEnabled = isAccentColorWindowFrame()
                     // 处理主题变化
+                    onWindowThemeUpdate(windowTheme == SystemTheme.DARK)
 //                    handleThemeChange()
                 }
 

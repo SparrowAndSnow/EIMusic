@@ -1,5 +1,6 @@
 package com.eimsound.eimusic.theme
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ProvidedValue
 import androidx.compose.ui.InternalComposeUiApi
@@ -21,4 +22,7 @@ actual object Theme {
         }
         return LocalSystemTheme.provides(new)
     }
+
+    actual val isSystemInDarkTheme: Boolean
+        @Composable get() = isSystemInDarkTheme()
 }

@@ -108,6 +108,10 @@ fun FrameWindowScope.WindowsWindowFrame(
                     else -> HTCLIENT
                 }
             },
+            onWindowThemeUpdate = { isDark ->
+                // 更新系统主题状态
+                com.eimsound.eimusic.theme.DesktopThemeManager.updateSystemTheme(isDark)
+            },
             onWindowInsetUpdate = { paddingInset.insets = it }
         )
     }
