@@ -25,7 +25,7 @@ data class LocalPathsState(
 
 // 添加代理设置状态数据类
 data class ProxyState(
-    val proxyHost: String? = null,
+    val proxyHost: String = "127.0.0.1",
     val proxyPort: Int = 8080,
     val proxyEnabled: Boolean = false
 )
@@ -38,7 +38,7 @@ class SettingViewModel(private val storage: Storage) : ViewModel() {
         )
     )
     val themeState: StateFlow<ThemeState> = _themeState.asStateFlow()
-    
+
     private val _languageState = MutableStateFlow(
         LanguageState(
             language = storage.get(Settings::language, "zh")
@@ -53,11 +53,11 @@ class SettingViewModel(private val storage: Storage) : ViewModel() {
         )
     )
     val localPathsState: StateFlow<LocalPathsState> = _localPathsState.asStateFlow()
-    
+
     // 添加代理设置状态
     private val _proxyState = MutableStateFlow(
         ProxyState(
-            proxyHost = storage.get(Settings::proxyHost, null),
+            proxyHost = storage.get(Settings::proxyHost, "127.0.0.1"),
             proxyPort = storage.get(Settings::proxyPort, 8080),
             proxyEnabled = storage.get(Settings::proxyEnabled, false)
         )
@@ -85,8 +85,8 @@ class SettingViewModel(private val storage: Storage) : ViewModel() {
             _localPathsState.value = LocalPathsState(paths)
         }
     }
-    
-    fun updateProxy(proxyHost: String?, proxyPort: Int, proxyEnabled: Boolean) {
+
+    fun updateProxy(proxyHost: String, proxyPort: Int, proxyEnabled: Boolean) {
         viewModelScope.launch {
             storage.save(Settings::proxyHost, proxyHost)
             storage.save(Settings::proxyPort, proxyPort)
@@ -94,7 +94,7 @@ class SettingViewModel(private val storage: Storage) : ViewModel() {
             _proxyState.value = ProxyState(proxyHost, proxyPort, proxyEnabled)
         }
     }
-    
+
     // 恢复被删除的方法
     fun setThemeFollowSystem(followSystem: Boolean) {
         updateTheme(_themeState.value.darkMode, followSystem)

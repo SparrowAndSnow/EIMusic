@@ -9,7 +9,7 @@ actual object ProxyUtils {
      * @param host 代理主机地址，如果为null则清除代理设置
      * @param port 代理端口
      */
-    actual fun configureSystemProxy(enabled: Boolean, host: String?, port: Int) {
+    actual fun configureSystemProxy(enabled: Boolean, host: String, port: Int) {
         if (enabled) {
             System.setProperty("http.proxyHost", host)
             System.setProperty("http.proxyPort", port.toString())

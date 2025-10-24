@@ -23,6 +23,7 @@ ktor = "3.1.0"
 coil-compose = "3.1.0"
 koin = "4.0.1"
 media3 = "1.8.0"
+jna = "5.16.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -73,6 +74,9 @@ koin-compose-viewmodel = { group = "io.insert-koin", name = "koin-compose-viewmo
 #image loader
 coil-compose-image-loader = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil-compose" }
 coil-compose-image-loader-network-ktor = { group = "io.coil-kt.coil3", name = "coil-network-ktor3", version.ref = "coil-compose" }
+
+jna-platform = { module = "net.java.dev.jna:jna-platform-jpms", version.ref = "jna" }
+jna = { module = "net.java.dev.jna:jna-jpms", version.ref = "jna" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

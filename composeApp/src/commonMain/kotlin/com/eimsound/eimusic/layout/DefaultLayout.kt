@@ -27,6 +27,7 @@ import com.eimsound.eimusic.views.WelcomeRoute
 
 @Composable
 fun DefaultLayout(
+    modifier: Modifier = Modifier,
     topBar: @Composable () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
     showSideBar: Boolean = false,
@@ -36,7 +37,7 @@ fun DefaultLayout(
     defaultRoute: Any = WelcomeRoute,
     builder: NavGraphBuilder.() -> Unit
 ) {
-    Navigation(navController, navigationLayoutType()) {
+    Navigation(modifier = modifier, navController = navController, navigationLayoutType()) {
         ContentLayout(topBar, bottomBar, showSideBar, sideBar, floatingActionButton) {
             NavHost(
                 navController = navController,
@@ -72,8 +73,10 @@ private fun ContentLayout(
             floatingActionButton()
         }
     ) { innerPadding ->
-        Row(Modifier.padding(innerPadding).fillMaxWidth().padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            Modifier.padding(innerPadding).fillMaxWidth().padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             Surface(Modifier.widthIn(min = 500.dp).weight(1f).animateContentSize()) {
                 content()
             }

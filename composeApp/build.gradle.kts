@@ -86,21 +86,21 @@ kotlin {
             implementation(libs.bundles.navigation)
         }
 
-        wasmJsMain.dependencies{
+        wasmJsMain.dependencies {
 
         }
-        
+
         commonTest.dependencies {
             implementation(kotlin("test"))
         }
-        
+
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.media3.common)
             implementation(libs.androidx.media3.exoplayer)
         }
-        
+
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
@@ -118,8 +118,10 @@ kotlin {
             implementation("org.openjfx:javafx-graphics:19:${javafxPlatform}")
             implementation("org.openjfx:javafx-controls:19:${javafxPlatform}")
             implementation("org.openjfx:javafx-swing:19:${javafxPlatform}")
+            implementation(libs.jna.platform)
+            implementation(libs.jna)
         }
-        
+
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
         }
@@ -169,6 +171,7 @@ compose.desktop {
         buildTypes.release {
             proguard {
                 configurationFiles.from("proguard-config.pro")
+                configurationFiles.from("proguard-rules.desktop.pro")
             }
         }
 

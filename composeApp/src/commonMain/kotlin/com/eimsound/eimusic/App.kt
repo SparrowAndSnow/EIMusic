@@ -2,7 +2,10 @@ package com.eimsound.eimusic
 
 import TrackListViewModel
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.eimsound.eimusic.data.Storage
@@ -10,7 +13,6 @@ import com.eimsound.eimusic.lang.Locale
 import com.eimsound.eimusic.layout.BottomBar
 import com.eimsound.eimusic.layout.DefaultLayout
 import com.eimsound.eimusic.layout.SideBar
-import com.eimsound.eimusic.layout.TopBar
 import com.eimsound.eimusic.media.MediaPlayerController
 import com.eimsound.eimusic.repository.SpotifyTrackRepository
 import com.eimsound.eimusic.repository.TrackRepository
@@ -37,32 +39,39 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 @Composable
-fun App() {
+fun App(
+    windowFrame: @Composable (
+        content: @Composable (windowInset: WindowInsets, contentInset: WindowInsets) -> Unit
+    ) -> Unit = {},
+) {
     KoinApplication(application = {
         modules(systemModule, viewModelModule)
     }) {
         AppEnvironment {
             EIMusicTheme {
-                val defaultLayoutViewModel = koinViewModel<DefaultLayoutViewModel>()
-                val sideBarState by defaultLayoutViewModel.sideBarState.collectAsState()
-                val navController = rememberNavController()
+                windowFrame { windowInset, contentInset ->
+                    val defaultLayoutViewModel = koinViewModel<DefaultLayoutViewModel>()
+                    val sideBarState by defaultLayoutViewModel.sideBarState.collectAsState()
+                    val navController = rememberNavController()
 
-                DefaultLayout(
-                    topBar = { TopBar() },
-                    bottomBar = { BottomBar() },
-                    showSideBar = sideBarState.showSideBar,
-                    sideBar = { SideBar(sideBarState.sidebarComponent) },
-                    navController = navController
-                ) {
-                    composable<WelcomeRoute> { WelcomeView() }
-                    composable<MyRoute> { MyView() }
-                    composable<LocalRoute> { LocalView() }
-                    composable<SettingRoute> { SettingView() }
+                    DefaultLayout(
+                        modifier = Modifier
+                            .windowInsetsPadding(windowInset),
+                        topBar = { },
+                        bottomBar = { BottomBar() },
+                        showSideBar = sideBarState.showSideBar,
+                        sideBar = { SideBar(sideBarState.sidebarComponent) },
+                        navController = navController
+                    ) {
+                        composable<WelcomeRoute> { WelcomeView() }
+                        composable<MyRoute> { MyView() }
+                        composable<LocalRoute> { LocalView() }
+                        composable<SettingRoute> { SettingView() }
+                    }
                 }
             }
         }
     }
-
 }
 
 

@@ -66,7 +66,7 @@ fun SettingView() {
     var newPath by remember { mutableStateOf("") }
     // 代理设置相关状态
     var showProxyDialog by remember { mutableStateOf(false) }
-    var proxyHost by remember { mutableStateOf(proxyState.proxyHost ?: "") }
+    var proxyHost by remember { mutableStateOf(proxyState.proxyHost) }
     var proxyPort by remember { mutableStateOf(proxyState.proxyPort.toString()) }
     var proxyEnabled by remember { mutableStateOf(proxyState.proxyEnabled) }
 
@@ -141,7 +141,7 @@ fun SettingView() {
                     onCheckedChange = { enabled ->
                         proxyEnabled = enabled
                         settingViewModel.updateProxy(
-                            if (proxyHost.isNotBlank()) proxyHost else null,
+                            proxyHost,
                             proxyPort.toIntOrNull() ?: 8080,
                             enabled
                         )
@@ -149,7 +149,7 @@ fun SettingView() {
                 )
             },
             modifier = Modifier.clickable {
-                proxyHost = proxyState.proxyHost ?: ""
+                proxyHost = proxyState.proxyHost
                 proxyPort = proxyState.proxyPort.toString()
                 proxyEnabled = proxyState.proxyEnabled
                 showProxyDialog = true
@@ -364,10 +364,10 @@ fun SettingView() {
                         label = { Text(stringResource(Res.string.setting_proxy_host)) },
                         modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
                     )
-                    
+
                     OutlinedTextField(
                         value = proxyPort,
-                        onValueChange = { 
+                        onValueChange = {
                             if (it.isEmpty() || it.all { c -> c.isDigit() }) {
                                 proxyPort = it
                             }
@@ -375,7 +375,7 @@ fun SettingView() {
                         label = { Text(stringResource(Res.string.setting_proxy_port)) },
                         modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
                     )
-                    
+
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
@@ -384,7 +384,7 @@ fun SettingView() {
                             text = stringResource(Res.string.setting_proxy_enable),
                             modifier = Modifier.alignByBaseline()
                         )
-                        
+
                         Switch(
                             checked = proxyEnabled,
                             onCheckedChange = { proxyEnabled = it },
@@ -396,7 +396,7 @@ fun SettingView() {
             confirmButton = {
                 TextButton(
                     onClick = {
-                        val host = if (proxyHost.isNotBlank()) proxyHost else null
+                        val host = proxyHost
                         val port = proxyPort.toIntOrNull() ?: 8080
                         settingViewModel.updateProxy(host, port, proxyEnabled)
                         showProxyDialog = false

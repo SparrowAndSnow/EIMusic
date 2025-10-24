@@ -7,6 +7,7 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -17,6 +18,7 @@ import com.eimsound.eimusic.route.routes
 
 @Composable
 fun Navigation(
+    modifier: Modifier = Modifier,
     navController: NavController,
     navigationLayoutType: NavigationSuiteType,
     content: @Composable () -> Unit = {}
@@ -24,6 +26,7 @@ fun Navigation(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     NavigationSuiteScaffold(
+        modifier = modifier,
         layoutType = navigationLayoutType,
         containerColor = MaterialTheme.colorScheme.primary,
         contentColor = MaterialTheme.colorScheme.onPrimary,
