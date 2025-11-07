@@ -11,6 +11,7 @@ import com.eimsound.eimusic.data.Storage
 import com.eimsound.eimusic.lang.Locale
 import com.eimsound.eimusic.layout.BottomBar
 import com.eimsound.eimusic.layout.DefaultLayout
+import com.eimsound.eimusic.layout.FloatingActionButton
 import com.eimsound.eimusic.layout.SideBar
 import com.eimsound.eimusic.media.MediaPlayerController
 import com.eimsound.eimusic.repository.SpotifyTrackRepository
@@ -41,14 +42,14 @@ import org.koin.dsl.module
 fun App(
     windowFrame: @Composable (
         content: @Composable (windowInset: WindowInsets, contentInset: WindowInsets) -> Unit
-    ) -> Unit = {},
+    ) -> Unit = { it(WindowInsets(), WindowInsets()) },
 ) {
     KoinApplication(application = {
         modules(systemModule, viewModelModule)
     }) {
         AppEnvironment {
             EIMusicTheme {
-                windowFrame { windowInset, contentInset ->
+                windowFrame { windowInset, contentInset -> 
                     val defaultLayoutViewModel = koinViewModel<DefaultLayoutViewModel>()
                     val sideBarState by defaultLayoutViewModel.sideBarState.collectAsState()
                     val navController = rememberNavController()
@@ -60,6 +61,9 @@ fun App(
                         bottomBar = { BottomBar() },
                         showSideBar = sideBarState.showSideBar,
                         sideBar = { SideBar(sideBarState.sidebarComponent) },
+                        floatingActionButton = {
+                            FloatingActionButton()
+                        },
                         navController = navController
                     ) {
                         composable<WelcomeRoute> { WelcomeView() }

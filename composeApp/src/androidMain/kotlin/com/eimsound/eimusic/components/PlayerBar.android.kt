@@ -45,126 +45,126 @@ import org.koin.compose.viewmodel.koinViewModel
 @Preview
 @Composable
 actual fun PlayerBar() {
-    val playerViewModel = koinViewModel<PlayerViewModel>()
-    val defaultLayoutViewModel = koinViewModel<DefaultLayoutViewModel>()
-
-    val playerState by playerViewModel.state.collectAsState()
-    val sideBarState by defaultLayoutViewModel.sideBarState.collectAsState()
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(64.dp)
-            .clip(MaterialTheme.shapes.medium)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.Center)
-                .padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Track Info
-            Row(
-                modifier = Modifier.weight(1f),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TrackImage(
-                    modifier = Modifier
-                        .size(48.dp),
-                    selectedTrack = playerState.track, isLoading = playerState.isLoading
-                )
-                Column(
-                    modifier = Modifier
-                        .padding(start = 8.dp)
-                        .weight(1f)
-                ) {
-                    Text(
-                        text = playerState.track?.name.orEmpty(),
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text = playerState.track?.artists?.joinToString(",") { it.name.toString() }
-                            .orEmpty(),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
-
-            // Playback Controls
-            Row(
-                modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = playerViewModel::previous) {
-                    Icon(
-                        imageVector = Icons.Default.SkipPrevious,
-                        contentDescription = "Previous",
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-
-                IconButton(
-                    onClick = { playerViewModel.isPlaying(!playerState.isPlaying) },
-                    modifier = Modifier
-                        .padding(horizontal = 8.dp)
-                        .size(36.dp)
-                ) {
-                    Icon(
-                        imageVector = if (playerState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = if (playerState.isPlaying) "Pause" else "Play",
-                        modifier = Modifier.size(36.dp)
-                    )
-                }
-
-                IconButton(onClick = playerViewModel::next) {
-                    Icon(
-                        imageVector = Icons.Default.SkipNext,
-                        contentDescription = "Next",
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            }
-
-            // Playlist Button
-            Row(
-                modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(
-                    onClick = {
-                        defaultLayoutViewModel.updateSideBar(
-                            !sideBarState.showSideBar,
-                            SidebarComponent.PLAYLIST
-                        )
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Default.QueueMusic,
-                        contentDescription = "Playlist",
-                        tint = if (sideBarState.showSideBar) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                    )
-                }
-            }
-        }
-
-        // Progress bar at the bottom
-        LinearProgressIndicator(
-            progress = { playerState.duration?.toPercent(playerState.position) ?: 0f },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(2.dp)
-                .align(Alignment.BottomStart)
-        )
-    }
+//    val playerViewModel = koinViewModel<PlayerViewModel>()
+//    val defaultLayoutViewModel = koinViewModel<DefaultLayoutViewModel>()
+//
+//    val playerState by playerViewModel.state.collectAsState()
+//    val sideBarState by defaultLayoutViewModel.sideBarState.collectAsState()
+//
+//    Box(
+//        modifier = Modifier
+//            .fillMaxWidth()
+//            .height(64.dp)
+//            .clip(MaterialTheme.shapes.medium)
+//    ) {
+//        Row(
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .align(Alignment.Center)
+//                .padding(horizontal = 8.dp),
+//            horizontalArrangement = Arrangement.SpaceBetween,
+//            verticalAlignment = Alignment.CenterVertically
+//        ) {
+//            // Track Info
+//            Row(
+//                modifier = Modifier.weight(1f),
+//                verticalAlignment = Alignment.CenterVertically
+//            ) {
+//                TrackImage(
+//                    modifier = Modifier
+//                        .size(48.dp),
+//                    selectedTrack = playerState.track, isLoading = playerState.isLoading
+//                )
+//                Column(
+//                    modifier = Modifier
+//                        .padding(start = 8.dp)
+//                        .weight(1f)
+//                ) {
+//                    Text(
+//                        text = playerState.track?.name.orEmpty(),
+//                        style = MaterialTheme.typography.bodyMedium,
+//                        maxLines = 1,
+//                        overflow = TextOverflow.Ellipsis
+//                    )
+//                    Text(
+//                        text = playerState.track?.artists?.joinToString(",") { it.name.toString() }
+//                            .orEmpty(),
+//                        style = MaterialTheme.typography.bodySmall,
+//                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+//                        maxLines = 1,
+//                        overflow = TextOverflow.Ellipsis
+//                    )
+//                }
+//            }
+//
+//            // Playback Controls
+//            Row(
+//                modifier = Modifier.weight(1f),
+//                horizontalArrangement = Arrangement.Center,
+//                verticalAlignment = Alignment.CenterVertically
+//            ) {
+//                IconButton(onClick = playerViewModel::previous) {
+//                    Icon(
+//                        imageVector = Icons.Default.SkipPrevious,
+//                        contentDescription = "Previous",
+//                        modifier = Modifier.size(24.dp)
+//                    )
+//                }
+//
+//                IconButton(
+//                    onClick = { playerViewModel.isPlaying(!playerState.isPlaying) },
+//                    modifier = Modifier
+//                        .padding(horizontal = 8.dp)
+//                        .size(36.dp)
+//                ) {
+//                    Icon(
+//                        imageVector = if (playerState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+//                        contentDescription = if (playerState.isPlaying) "Pause" else "Play",
+//                        modifier = Modifier.size(36.dp)
+//                    )
+//                }
+//
+//                IconButton(onClick = playerViewModel::next) {
+//                    Icon(
+//                        imageVector = Icons.Default.SkipNext,
+//                        contentDescription = "Next",
+//                        modifier = Modifier.size(24.dp)
+//                    )
+//                }
+//            }
+//
+//            // Playlist Button
+//            Row(
+//                modifier = Modifier.weight(1f),
+//                horizontalArrangement = Arrangement.End,
+//                verticalAlignment = Alignment.CenterVertically
+//            ) {
+//                IconButton(
+//                    onClick = {
+//                        defaultLayoutViewModel.updateSideBar(
+//                            !sideBarState.showSideBar,
+//                            SidebarComponent.PLAYLIST
+//                        )
+//                    }
+//                ) {
+//                    Icon(
+//                        imageVector = Icons.AutoMirrored.Default.QueueMusic,
+//                        contentDescription = "Playlist",
+//                        tint = if (sideBarState.showSideBar) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+//                    )
+//                }
+//            }
+//        }
+//
+//        // Progress bar at the bottom
+//        LinearProgressIndicator(
+//            progress = { playerState.duration?.toPercent(playerState.position) ?: 0f },
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .height(2.dp)
+//                .align(Alignment.BottomStart)
+//        )
+//    }
 }
 
 @Composable
