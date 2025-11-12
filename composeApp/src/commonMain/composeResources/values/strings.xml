@@ -8,6 +8,7 @@
     <string name="route_welcome">Home</string>
     <string name="route_my">My</string>
     <string name="route_local">Local</string>
+    <string name="route_player">Player</string>
     <string name="route_setting">Settings</string>
     
     <!-- Setting View -->

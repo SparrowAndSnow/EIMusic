@@ -11,6 +11,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -50,6 +52,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import coil3.compose.rememberAsyncImagePainter
+import com.eimsound.eimusic.viewmodel.DefaultLayoutViewModel
 import com.eimsound.eimusic.viewmodel.PlayerState
 import com.eimsound.eimusic.viewmodel.PlayerViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -65,6 +68,7 @@ import kotlin.math.sqrt
 @Composable
 actual fun FloatingActionButton() {
     val playerViewModel = koinViewModel<PlayerViewModel>()
+    val defaultLayoutViewModel = koinViewModel<DefaultLayoutViewModel>()
     val playerState by playerViewModel.state.collectAsState()
     val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current
@@ -77,7 +81,6 @@ actual fun FloatingActionButton() {
     var isDragging by remember { mutableStateOf(false) }
     var dragTarget by remember { mutableStateOf<DragTarget?>(null) }
     var showIcons by remember { mutableStateOf(false) }
-    var isAdsorbed by remember { mutableStateOf(false) }
 
     // 获取主题颜色
     val primaryColor = MaterialTheme.colorScheme.primary
@@ -95,8 +98,6 @@ actual fun FloatingActionButton() {
     // 容器和拖拽参数
     val containerSizePx = iconDistancePx * 2 + fabSizePx
     val maxDragDistance = iconDistancePx
-    val adsorptionThreshold = with(density) { 30.dp.toPx() }
-    val desorptionDistance = with(density) { 30.dp.toPx() }
 
     // 旋转动画（播放时）
     val infiniteTransition = rememberInfiniteTransition()
@@ -118,8 +119,61 @@ actual fun FloatingActionButton() {
         val containerCenterXPx = containerSizePx / 2
         val containerCenterYPx = containerSizePx / 2
 
-        // 功能图标（拖拽时显示）
-        if (showIcons) {
+        DraggableFab(
+            playerState = playerState,
+            offsetX = offsetX,
+            offsetY = offsetY,
+            isDragging = isDragging,
+            containerCenterXPx = containerCenterXPx,
+            containerCenterYPx = containerCenterYPx,
+            fabSizePx = fabSizePx,
+            iconDistancePx = iconDistancePx,
+            maxDragDistance = maxDragDistance,
+            rotation = rotation,
+            coroutineScope = coroutineScope,
+            onDragStart = {
+                isDragging = true
+                showIcons = true
+                dragTarget = null
+            },
+            onDragEnd = { target ->
+                isDragging = false
+                dragTarget = target
+
+                // 根据拖拽目标执行相应操作
+                when (dragTarget) {
+                    DragTarget.PREVIOUS -> playerViewModel.previous()
+                    DragTarget.NEXT -> playerViewModel.next()
+                    DragTarget.PLAY_PAUSE -> playerViewModel.isPlaying(!playerState.isPlaying)
+                    DragTarget.PLAYER -> defaultLayoutViewModel.updateFullScreenPlayer(true)
+                    else -> { /* 没有明确目标，不执行操作 */
+                    }
+                }
+
+                // 回到中心位置
+                coroutineScope.launch {
+                    // 根据拖拽距离决定回归顺序，使动画更自然
+                    val distanceX = kotlin.math.abs(offsetX.value)
+                    val distanceY = kotlin.math.abs(offsetY.value)
+                    
+                    if (distanceX > distanceY) {
+                        offsetY.animateTo(0f, spring(stiffness = Spring.StiffnessMedium))
+                        offsetX.animateTo(0f, spring(stiffness = Spring.StiffnessMedium))
+                    } else {
+                        offsetX.animateTo(0f, spring(stiffness = Spring.StiffnessMedium))
+                        offsetY.animateTo(0f, spring(stiffness = Spring.StiffnessMedium))
+                    }
+
+                    // 延迟隐藏图标
+                    kotlinx.coroutines.delay(600)
+                    showIcons = false
+                    dragTarget = null
+                }
+            }
+        )
+
+
+        if (isDragging || showIcons) {
             FunctionIcons(
                 playerState = playerState,
                 dragTarget = dragTarget,
@@ -130,57 +184,6 @@ actual fun FloatingActionButton() {
                 primaryColor = primaryColor
             )
         }
-
-        // 主要的FloatingActionButton
-        DraggableFab(
-            playerState = playerState,
-            offsetX = offsetX,
-            offsetY = offsetY,
-            isDragging = isDragging,
-            isAdsorbed = isAdsorbed,
-            containerCenterXPx = containerCenterXPx,
-            containerCenterYPx = containerCenterYPx,
-            fabSizePx = fabSizePx,
-            iconDistancePx = iconDistancePx,
-            maxDragDistance = maxDragDistance,
-            adsorptionThreshold = adsorptionThreshold,
-            desorptionDistance = desorptionDistance,
-            rotation = rotation,
-            coroutineScope = coroutineScope,
-            onDragStart = {
-                isDragging = true
-                showIcons = true
-                dragTarget = null
-            },
-            onDragEnd = {
-                isDragging = false
-                isAdsorbed = false
-
-                // 根据拖拽目标执行相应操作
-                when (dragTarget) {
-                    DragTarget.PREVIOUS -> playerViewModel.previous()
-                    DragTarget.NEXT -> playerViewModel.next()
-                    DragTarget.PLAY_PAUSE -> playerViewModel.isPlaying(!playerState.isPlaying)
-                    else -> { /* 没有明确目标，不执行操作 */
-                    }
-                }
-
-                // 回到中心位置
-                coroutineScope.launch {
-                    offsetX.animateTo(0f, spring(stiffness = Spring.StiffnessMedium))
-                    offsetY.animateTo(0f, spring(stiffness = Spring.StiffnessMedium))
-
-                    // 延迟隐藏图标
-                    kotlinx.coroutines.delay(300)
-                    showIcons = false
-                    dragTarget = null
-                }
-            },
-            onAdsorbed = { target ->
-                dragTarget = target
-                isAdsorbed = true
-            }
-        )
     }
 }
 
@@ -198,12 +201,26 @@ private fun FunctionIcons(
     primaryColor: Color
 ) {
     val density = LocalDensity.current
+    val backgroundColor = MaterialTheme.colorScheme.secondaryContainer
+    val contentColor = MaterialTheme.colorScheme.onSecondaryContainer
 
     // 左侧图标 - 上一首
+    Box(
+        modifier = Modifier
+            .size(48.dp)
+            .offset(
+                x = with(density) { (containerCenterXPx - iconDistancePx - 24.dp.toPx()).toDp() },
+                y = with(density) { (containerCenterYPx - 24.dp.toPx()).toDp() }
+            )
+            .zIndex(14f)
+            .shadow(4.dp, CircleShape)
+            .clip(CircleShape)
+            .background(backgroundColor.copy(alpha = 0.9f))
+    )
     Icon(
         imageVector = Icons.Default.FastRewind,
         contentDescription = null,
-        tint = primaryColor,
+        tint = contentColor,
         modifier = Modifier
             .size(32.dp)
             .offset(
@@ -217,10 +234,22 @@ private fun FunctionIcons(
     )
 
     // 右侧图标 - 下一首
+    Box(
+        modifier = Modifier
+            .size(48.dp)
+            .offset(
+                x = with(density) { (containerCenterXPx + iconDistancePx - 24.dp.toPx()).toDp() },
+                y = with(density) { (containerCenterYPx - 24.dp.toPx()).toDp() }
+            )
+            .zIndex(14f)
+            .shadow(4.dp, CircleShape)
+            .clip(CircleShape)
+            .background(backgroundColor.copy(alpha = 0.9f))
+    )
     Icon(
         imageVector = Icons.Default.FastForward,
         contentDescription = null,
-        tint = primaryColor,
+        tint = contentColor,
         modifier = Modifier
             .size(32.dp)
             .offset(
@@ -233,11 +262,23 @@ private fun FunctionIcons(
             }
     )
 
-    // 顶部图标 - 播放/暂停
+    // 顶部图标 - 播放界面
+    Box(
+        modifier = Modifier
+            .size(48.dp)
+            .offset(
+                x = with(density) { (containerCenterXPx - 24.dp.toPx()).toDp() },
+                y = with(density) { (containerCenterYPx - iconDistancePx - 24.dp.toPx()).toDp() }
+            )
+            .zIndex(14f)
+            .shadow(4.dp, CircleShape)
+            .clip(CircleShape)
+            .background(backgroundColor.copy(alpha = 0.9f))
+    )
     Icon(
         imageVector = Icons.AutoMirrored.Filled.List,
         contentDescription = null,
-        tint = primaryColor,
+        tint = contentColor,
         modifier = Modifier
             .size(32.dp)
             .offset(
@@ -246,15 +287,27 @@ private fun FunctionIcons(
             )
             .zIndex(15f)
             .graphicsLayer {
-                alpha = if (dragTarget == DragTarget.OTHER) 1f else 0.7f
+                alpha = if (dragTarget == DragTarget.PLAYER) 1f else 0.7f
             }
     )
 
     // 底部图标 - 播放/暂停
+    Box(
+        modifier = Modifier
+            .size(48.dp)
+            .offset(
+                x = with(density) { (containerCenterXPx - 24.dp.toPx()).toDp() },
+                y = with(density) { (containerCenterYPx + iconDistancePx - 24.dp.toPx()).toDp() }
+            )
+            .zIndex(14f)
+            .shadow(4.dp, CircleShape)
+            .clip(CircleShape)
+            .background(backgroundColor.copy(alpha = 0.9f))
+    )
     Icon(
         imageVector = if (playerState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
         contentDescription = null,
-        tint = primaryColor,
+        tint = contentColor,
         modifier = Modifier
             .size(32.dp)
             .offset(
@@ -277,23 +330,20 @@ private fun DraggableFab(
     offsetX: Animatable<Float, AnimationVector1D>,
     offsetY: Animatable<Float, AnimationVector1D>,
     isDragging: Boolean,
-    isAdsorbed: Boolean,
     containerCenterXPx: Float,
     containerCenterYPx: Float,
     fabSizePx: Float,
     iconDistancePx: Float,
     maxDragDistance: Float,
-    adsorptionThreshold: Float,
-    desorptionDistance: Float,
     rotation: Float,
     coroutineScope: CoroutineScope,
     onDragStart: () -> Unit,
-    onDragEnd: () -> Unit,
-    onAdsorbed: (DragTarget) -> Unit
+    onDragEnd: (DragTarget?) -> Unit,
 ) {
     val density = LocalDensity.current
     val primaryColor = MaterialTheme.colorScheme.primary
-
+    var newOffsetX: Float by remember { mutableFloatStateOf(0f) }
+    var newOffsetY: Float by remember { mutableFloatStateOf(0f) }
     Card(
         modifier = Modifier
             .size(with(density) { fabSizePx.toDp() })
@@ -319,19 +369,11 @@ private fun DraggableFab(
                     onDrag = { change, dragAmount ->
                         change.consume()
 
-                        // 如果已经吸附，则需要拖拽足够远才能解除吸附
-                        if (isAdsorbed) {
-                            val dragDistance = sqrt(dragAmount.x * dragAmount.x + dragAmount.y * dragAmount.y)
-                            if (dragDistance < desorptionDistance) {
-                                return@detectDragGestures
-                            }
-                        }
-
                         // 计算新的偏移位置
-                        val newOffsetX = offsetX.value + dragAmount.x
-                        val newOffsetY = offsetY.value + dragAmount.y
+                        newOffsetX = offsetX.value + dragAmount.x
+                        newOffsetY = offsetY.value + dragAmount.y
 
-                        // 限制最大拖拽距离
+                        // 正常更新位置
                         val distanceFromCenter = sqrt(newOffsetX * newOffsetX + newOffsetY * newOffsetY)
                         if (distanceFromCenter > maxDragDistance) {
                             val ratio = maxDragDistance / distanceFromCenter
@@ -345,45 +387,33 @@ private fun DraggableFab(
                                 offsetY.snapTo(newOffsetY)
                             }
                         }
-
+                    },
+                    onDragEnd = {
                         // 定义目标吸附位置（图标中心位置）- 使用像素单位
-                        val targets = listOf(
-                            DragTargetPosition(DragTarget.PREVIOUS, -iconDistancePx, 0f),
-                            DragTargetPosition(DragTarget.NEXT, iconDistancePx, 0f),
-                            DragTargetPosition(DragTarget.OTHER, 0f, -iconDistancePx),
-                            DragTargetPosition(DragTarget.PLAY_PAUSE, 0f, iconDistancePx)
+                        val targets = mapOf(
+                            DragTarget.PREVIOUS to Pair(-iconDistancePx, 0f),
+                            DragTarget.NEXT to Pair(iconDistancePx, 0f),
+                            DragTarget.PLAYER to Pair(0f, -iconDistancePx),
+                            DragTarget.PLAY_PAUSE to Pair(0f, iconDistancePx),
                         )
 
                         // 检查是否接近某个目标点
                         var closestTarget: DragTarget? = null
                         var minDistance = Float.MAX_VALUE
 
-                        targets.forEach { target ->
+                        targets.forEach { (key, value) ->
+                            val (x, y) = value
                             val distance = sqrt(
-                                (newOffsetX - target.x) * (newOffsetX - target.x) +
-                                        (newOffsetY - target.y) * (newOffsetY - target.y)
+                                (newOffsetX - x) * (newOffsetX - x) +
+                                        (newOffsetY - y) * (newOffsetY - y)
                             )
                             if (distance < minDistance) {
                                 minDistance = distance
-                                closestTarget = target.target
+                                closestTarget = key
                             }
                         }
 
-                        // 如果足够接近某个目标，则吸附到该位置（仅在未吸附时）
-                        if (minDistance <= adsorptionThreshold && !isAdsorbed) {
-                            closestTarget?.let { onAdsorbed(it) }
-
-                            val targetPosition = targets.find { it.target == closestTarget }
-                            coroutineScope.launch {
-                                targetPosition?.let {
-                                    offsetX.animateTo(it.x, spring(stiffness = Spring.StiffnessMediumLow))
-                                    offsetY.animateTo(it.y, spring(stiffness = Spring.StiffnessMediumLow))
-                                }
-                            }
-                        }
-                    },
-                    onDragEnd = {
-                        onDragEnd()
+                        onDragEnd(closestTarget)
                     }
                 )
             }
@@ -462,13 +492,10 @@ private fun DraggableFab(
     }
 }
 
-// 拖拽目标位置数据类
-data class DragTargetPosition(val target: DragTarget, val x: Float, val y: Float)
-
 // 拖拽目标枚举
 enum class DragTarget {
     PREVIOUS,    // 上一首
     NEXT,        // 下一首
     PLAY_PAUSE,   // 播放/暂停
-    OTHER,       // 其他
+    PLAYER,      // 播放界面
 }

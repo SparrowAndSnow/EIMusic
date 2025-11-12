@@ -46,7 +46,9 @@ actual fun PlayerBar() {
         Row(
             modifier = Modifier.fillMaxWidth().align(Alignment.Center), verticalAlignment = Alignment.CenterVertically
         ) {
-            TrackImage(selectedTrack = playerState.track, isLoading = playerState.isLoading)
+            TrackImage(selectedTrack = playerState.track, isLoading = playerState.isLoading, onClick = {
+                defaultLayoutViewModel.updateFullScreenPlayer(true)
+            })
             Column(Modifier.weight(1f).padding(start = 8.dp)) {
                 Text(
                     text = playerState.track?.name.orEmpty(),
@@ -195,11 +197,13 @@ fun PlayModeButton(
 }
 
 @Composable
-fun TrackImage(modifier: Modifier = Modifier, selectedTrack: Track?, isLoading: Boolean) {
+fun TrackImage(modifier: Modifier = Modifier, selectedTrack: Track?, isLoading: Boolean, onClick: () -> Unit) {
     val painter = rememberAsyncImagePainter(
         selectedTrack?.album?.image?.orEmpty()
     )
-    Box(modifier = modifier.clip(RoundedCornerShape(4.dp)).width(64.dp).height(64.dp)) {
+    Box(modifier = modifier.clip(RoundedCornerShape(4.dp)).width(64.dp).height(64.dp).clickable(onClick = {
+        onClick()
+    })) {
         Image(
             painter,
             selectedTrack?.album?.image?.orEmpty(),

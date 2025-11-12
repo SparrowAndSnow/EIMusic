@@ -25,6 +25,7 @@ import com.eimsound.eimusic.viewmodel.PlayerViewModel
 import com.eimsound.eimusic.viewmodel.PlayingListViewModel
 import com.eimsound.eimusic.viewmodel.SettingViewModel
 import com.eimsound.eimusic.viewmodel.WelcomeViewModel
+import com.eimsound.eimusic.views.FullScreenPlayer
 import com.eimsound.eimusic.views.LocalRoute
 import com.eimsound.eimusic.views.LocalView
 import com.eimsound.eimusic.views.MyRoute
@@ -49,11 +50,13 @@ fun App(
     }) {
         AppEnvironment {
             EIMusicTheme {
-                windowFrame { windowInset, contentInset -> 
-                    val defaultLayoutViewModel = koinViewModel<DefaultLayoutViewModel>()
-                    val sideBarState by defaultLayoutViewModel.sideBarState.collectAsState()
-                    val navController = rememberNavController()
+                val defaultLayoutViewModel = koinViewModel<DefaultLayoutViewModel>()
+                val sideBarState by defaultLayoutViewModel.sideBarState.collectAsState()
+                val showFullScreenPlayer by defaultLayoutViewModel.fullScreenPlayerState.collectAsState()
+                val navController = rememberNavController()
 
+                windowFrame { windowInset, contentInset ->
+                    // 主界面
                     DefaultLayout(
                         modifier = Modifier
                             .windowInsetsPadding(windowInset),
@@ -71,6 +74,12 @@ fun App(
                         composable<LocalRoute> { LocalView() }
                         composable<SettingRoute> { SettingView() }
                     }
+                }
+                // 全屏播放界面
+                if (showFullScreenPlayer.isShow) {
+                    FullScreenPlayer(
+                        onDismiss = { defaultLayoutViewModel.updateFullScreenPlayer(false) }
+                    )
                 }
             }
         }

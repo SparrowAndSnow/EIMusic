@@ -10,6 +10,13 @@ class DefaultLayoutViewModel : ViewModel() {
     private val _sideBarState = MutableStateFlow(SideBarState())
     val sideBarState: StateFlow<SideBarState> = _sideBarState.asStateFlow()
 
+    private val _fullScreenPlayerState = MutableStateFlow(FullScreenPlayerState())
+    val fullScreenPlayerState: StateFlow<FullScreenPlayerState> = _fullScreenPlayerState.asStateFlow()
+    fun updateFullScreenPlayer(isShow: Boolean) {
+        _fullScreenPlayerState.value = _fullScreenPlayerState.value.copy(
+            isShow = isShow
+        )
+    }
     fun updateSideBar(show: Boolean, component: SidebarComponent) {
         _sideBarState.value = _sideBarState.value.copy(
             showSideBar = show,
@@ -21,4 +28,8 @@ class DefaultLayoutViewModel : ViewModel() {
 data class SideBarState(
     val showSideBar: Boolean = false,
     val sidebarComponent: SidebarComponent = SidebarComponent.PLAYLIST
+)
+
+data class FullScreenPlayerState(
+    val isShow: Boolean = false,
 )
