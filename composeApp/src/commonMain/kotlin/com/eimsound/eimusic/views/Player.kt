@@ -6,12 +6,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeDown
@@ -48,7 +51,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.eimsound.eimusic.Duration
-import com.eimsound.eimusic.components.TrackImage
+import com.eimsound.eimusic.components.*
 import com.eimsound.eimusic.media.PlayMode
 import com.eimsound.eimusic.viewmodel.PlayerViewModel
 import org.koin.compose.viewmodel.koinViewModel
@@ -70,6 +73,7 @@ fun FullScreenPlayer(
         IconButton(
             onClick = onDismiss,
             modifier = Modifier
+                .windowInsetsPadding(WindowInsets.statusBars)
                 .align(Alignment.TopEnd)
                 .padding(16.dp)
                 .size(48.dp)
@@ -195,17 +199,11 @@ fun FullScreenPlayer(
                 }
                 
                 // 播放/暂停
-                IconButton(
-                    onClick = { playerViewModel.isPlaying(!playerState.isPlaying) },
-                    modifier = Modifier
-                        .size(72.dp)
-                ) {
-                    Icon(
-                        imageVector = if (playerState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = if (playerState.isPlaying) "暂停" else "播放",
-                        modifier = Modifier.size(48.dp)
-                    )
-                }
+                PlayPauseButton(
+                    isPlaying = playerState.isPlaying,
+                    onIsPlayingChanged = playerViewModel::isPlaying,
+                    modifier = Modifier.size(48.dp).padding(horizontal = 4.dp),
+                )
                 
                 // 下一首
                 IconButton(
@@ -217,11 +215,10 @@ fun FullScreenPlayer(
                         contentDescription = "下一首"
                     )
                 }
-                
                 // 音量控制
-                VolumeControl(
+                Volume(
                     volume = playerState.volume,
-                    isMuted = playerState.isMute,
+                    isMute = playerState.isMute,
                     onVolumeChanged = playerViewModel::onVolumeChanged,
                     onIsMuteChanged = playerViewModel::onIsMuteChanged
                 )
@@ -230,120 +227,3 @@ fun FullScreenPlayer(
     }
 }
 
-@Composable
-fun PlayerSlider(
-    value: Float,
-    bufferValue: Float,
-    showBufferProgress: Boolean,
-    onValueChangeFinished: (Float) -> Unit,
-    onValueChange: (Float) -> Unit = {},
-) {
-    var progress by remember { mutableStateOf(value) }
-    var isDragging by remember { mutableStateOf(false) }
-
-    Column(modifier = Modifier.fillMaxWidth().height(36.dp)) {
-        Slider(
-            modifier = Modifier
-                .fillMaxWidth().height(32.dp),
-            value = progress,
-            onValueChange = {
-                isDragging = true
-                progress = it
-                onValueChange(it)
-            },
-            onValueChangeFinished = {
-                onValueChangeFinished(progress)
-                isDragging = false
-            },
-            colors = SliderDefaults.colors(
-                thumbColor = MaterialTheme.colorScheme.primary,
-                activeTrackColor = MaterialTheme.colorScheme.primary,
-                inactiveTrackColor = Color.Unspecified
-            )
-        )
-    }
-}
-
-@Composable
-fun TimeDisplay(
-    modifier: Modifier = Modifier,
-    position: Duration,
-    duration: Duration,
-    isDragging: Boolean,
-    draggingPosition: Duration
-) {
-    Row(modifier = modifier) {
-        Text(
-            text = if (isDragging) {
-                "${draggingPosition.minutesPart}:${draggingPosition.secondsPart}"
-            } else {
-                "${position.minutesPart}:${position.secondsPart}"
-            },
-            style = MaterialTheme.typography.labelMedium,
-        )
-        Text(text = " / ", style = MaterialTheme.typography.labelMedium)
-        Text(
-            text = "${duration.minutesPart}:${duration.secondsPart}",
-            style = MaterialTheme.typography.labelMedium,
-        )
-    }
-}
-
-@Composable
-fun PlayModeButton(
-    playMode: PlayMode,
-    onPlayModeChanged: (PlayMode) -> Unit
-) {
-    IconButton(
-        onClick = { onPlayModeChanged(playMode.change()) },
-        modifier = Modifier.size(48.dp)
-    ) {
-        Icon(
-            imageVector = when (playMode) {
-                PlayMode.LOOP -> Icons.Default.Repeat
-                PlayMode.REPEAT_ONE -> Icons.Default.RepeatOne
-                PlayMode.SHUFFLE -> Icons.Default.Shuffle
-            },
-            contentDescription = when (playMode) {
-                PlayMode.LOOP -> "列表循环"
-                PlayMode.REPEAT_ONE -> "单曲循环"
-                PlayMode.SHUFFLE -> "随机播放"
-            }
-        )
-    }
-}
-
-@Composable
-fun VolumeControl(
-    volume: Double,
-    isMuted: Boolean,
-    onVolumeChanged: (Double) -> Unit,
-    onIsMuteChanged: (Boolean) -> Unit
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(
-            onClick = { onIsMuteChanged(!isMuted) }
-        ) {
-            Icon(
-                imageVector = when {
-                    isMuted -> Icons.AutoMirrored.Filled.VolumeOff
-                    volume > 0.7 -> Icons.AutoMirrored.Filled.VolumeUp
-                    volume > 0.3 -> Icons.AutoMirrored.Filled.VolumeDown
-                    else -> Icons.AutoMirrored.Filled.VolumeOff
-                },
-                contentDescription = if (isMuted) "取消静音" else "静音"
-            )
-        }
-        
-        Slider(
-            value = volume.toFloat(),
-            onValueChange = { onVolumeChanged(it.toDouble()) },
-            modifier = Modifier
-                .width(100.dp)
-                .padding(start = 8.dp),
-            enabled = !isMuted
-        )
-    }
-}

@@ -167,33 +167,33 @@ actual fun PlayerBar() {
 //    }
 }
 
-@Composable
-fun TrackImage(modifier: Modifier = Modifier, selectedTrack: Track?, isLoading: Boolean) {
-    val painter = rememberAsyncImagePainter(
-        selectedTrack?.album?.image?.orEmpty()
-    )
-    Box(modifier = modifier
-        .clip(RoundedCornerShape(4.dp))
-        .width(64.dp)
-        .height(64.dp)) {
-        Image(
-            painter,
-            selectedTrack?.album?.image?.orEmpty(),
-            modifier = Modifier
-                .clip(RoundedCornerShape(4.dp))
-                .width(64.dp)
-                .height(64.dp),
-            contentScale = ContentScale.Crop
-        )
-        if (isLoading) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                CircularProgressIndicator(
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .padding(8.dp),
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
-        }
-    }
-}
+//@Composable
+//fun TrackImage(modifier: Modifier = Modifier, selectedTrack: Track?, isLoading: Boolean) {
+//    val painter = rememberAsyncImagePainter(
+//        selectedTrack?.album?.image?.orEmpty()
+//    )
+//    Box(modifier = modifier
+//        .clip(RoundedCornerShape(4.dp))
+//        .width(64.dp)
+//        .height(64.dp)) {
+//        Image(
+//            painter,
+//            selectedTrack?.album?.image?.orEmpty(),
+//            modifier = Modifier
+//                .clip(RoundedCornerShape(4.dp))
+//                .width(64.dp)
+//                .height(64.dp),
+//            contentScale = ContentScale.Crop
+//        )
+//        if (isLoading) {
+//            Box(modifier = Modifier.fillMaxSize()) {
+//                CircularProgressIndicator(
+//                    modifier = Modifier
+//                        .align(Alignment.Center)
+//                        .padding(8.dp),
+//                    color = MaterialTheme.colorScheme.primary,
+//                )
+//            }
+//        }
+//    }
+//}

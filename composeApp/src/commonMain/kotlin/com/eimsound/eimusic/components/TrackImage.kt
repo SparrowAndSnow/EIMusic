@@ -43,7 +43,6 @@ fun TrackImage(
     val painter = rememberAsyncImagePainter(image)
     Box(
         modifier = modifier.clip(RoundedCornerShape(4.dp))
-            .width(64.dp).height(64.dp)
             .hoverable(interactionSource)
             .clickable {
                 onPlayClick()
@@ -51,7 +50,7 @@ fun TrackImage(
         Image(
             painter,
             image,
-            modifier = Modifier.clip(RoundedCornerShape(4.dp)).width(64.dp).height(64.dp),
+            modifier = Modifier.clip(RoundedCornerShape(4.dp)),
             contentScale = ContentScale.Crop
         )
 

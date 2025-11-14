@@ -1,6 +1,11 @@
 package com.eimsound.eimusic
 
 import TrackListViewModel
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.*
@@ -76,7 +81,11 @@ fun App(
                     }
                 }
                 // 全屏播放界面
-                if (showFullScreenPlayer.isShow) {
+                AnimatedVisibility(
+                    visible = showFullScreenPlayer.isShow,
+                    enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                    exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+                ) {
                     FullScreenPlayer(
                         onDismiss = { defaultLayoutViewModel.updateFullScreenPlayer(false) }
                     )

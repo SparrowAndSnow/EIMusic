@@ -58,7 +58,7 @@ fun TrackItem(
         verticalAlignment = Alignment.CenterVertically
     ) {
         TrackImage(
-            modifier = Modifier.zIndex(1f),
+            modifier = Modifier.zIndex(1f).width(64.dp).height(64.dp),
             image = track.album?.image,
             isPlaying = isPlaying,
             onPlayClick = onPlayClick
