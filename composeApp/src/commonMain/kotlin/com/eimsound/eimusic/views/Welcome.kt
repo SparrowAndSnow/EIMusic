@@ -11,15 +11,11 @@ import androidx.compose.ui.Modifier
 import com.eimsound.eimusic.components.TrackList
 import com.eimsound.eimusic.viewmodel.WelcomeViewModel
 import org.koin.compose.viewmodel.koinViewModel
-import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.stringResource
 import eimusic.composeapp.generated.resources.Res
 import eimusic.composeapp.generated.resources.loading_text
 import eimusic.composeapp.generated.resources.error_text
 import eimusic.composeapp.generated.resources.no_tracks_text
-
-@Serializable
-object WelcomeRoute
 
 @Composable
 fun WelcomeView() {

@@ -39,10 +39,8 @@ import com.eimsound.eimusic.layout.SidebarComponent
 import com.eimsound.eimusic.music.Track
 import com.eimsound.eimusic.viewmodel.DefaultLayoutViewModel
 import com.eimsound.eimusic.viewmodel.PlayerViewModel
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 
-@Preview
 @Composable
 actual fun PlayerBar() {
 //    val playerViewModel = koinViewModel<PlayerViewModel>()

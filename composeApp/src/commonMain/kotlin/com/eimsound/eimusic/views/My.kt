@@ -2,10 +2,6 @@ package com.eimsound.eimusic.views
 
 import androidx.compose.runtime.Composable
 import com.eimsound.eimusic.components.ListDetail
-import kotlinx.serialization.Serializable
-
-@Serializable
-object MyRoute
 
 @Composable
 fun MyView() {

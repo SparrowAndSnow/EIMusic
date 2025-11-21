@@ -18,12 +18,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavGraphBuilder
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
+import androidx.navigation3.runtime.EntryProviderScope
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.ui.NavDisplay
 import com.eimsound.eimusic.components.Navigation
 import com.eimsound.eimusic.components.navigationLayoutType
-import com.eimsound.eimusic.views.WelcomeRoute
+import com.eimsound.eimusic.route.Route
 
 @Composable
 fun DefaultLayout(
@@ -33,18 +33,18 @@ fun DefaultLayout(
     showSideBar: Boolean = false,
     sideBar: @Composable () -> Unit = {},
     floatingActionButton: @Composable () -> Unit = {},
-    navController: NavHostController,
-    defaultRoute: Any = WelcomeRoute,
-    builder: NavGraphBuilder.() -> Unit
+    backStack: MutableList<Route>,
+    builder: EntryProviderScope<Route>.() -> Unit
 ) {
-    Navigation(modifier = modifier, navController = navController, navigationLayoutType()) {
+    Navigation(modifier = modifier, backStack = backStack, navigationLayoutType()) {
         ContentLayout(topBar, bottomBar, showSideBar, sideBar, floatingActionButton) {
-            NavHost(
-                navController = navController,
-                startDestination = defaultRoute
-            ) {
-                builder()
-            }
+            NavDisplay(
+                backStack = backStack,
+                onBack = { backStack.removeLastOrNull() },
+                entryProvider = entryProvider {
+                    builder()
+                }
+            )
         }
     }
 }

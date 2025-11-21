@@ -7,24 +7,24 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavController
-import androidx.navigation.NavDestination.Companion.hasRoute
-import androidx.navigation.NavDestination.Companion.hierarchy
-import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.compose.currentBackStackEntryAsState
+import com.eimsound.eimusic.route.Route
+import com.eimsound.eimusic.route.TopLevelRoute
+import com.eimsound.eimusic.route.WelcomeRoute
 import com.eimsound.eimusic.route.localizedRouteName
 import com.eimsound.eimusic.route.routes
 
 @Composable
 fun Navigation(
     modifier: Modifier = Modifier,
-    navController: NavController,
+    backStack: MutableList<Route>,
     navigationLayoutType: NavigationSuiteType,
     content: @Composable () -> Unit = {}
 ) {
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentDestination = navBackStackEntry?.destination
+    var selected by remember { mutableStateOf<TopLevelRoute>(WelcomeRoute) }
     NavigationSuiteScaffold(
         modifier = modifier,
         layoutType = navigationLayoutType,
@@ -35,23 +35,10 @@ fun Navigation(
                 item(
                     icon = { Icon(route.icon, contentDescription = route.localizedRouteName()) },
                     label = { Text(route.localizedRouteName()) },
-                    selected = currentDestination?.hierarchy?.any {
-                        it.hasRoute(route.route::class)
-                    } == true,
+                    selected = route == selected,
                     onClick = {
-                        navController.navigate(route.route) {
-                            // Pop up to the start destination of the graph to
-                            // avoid building up a large stack of destinations
-                            // on the back stack as users select items
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
-                            }
-                            // Avoid multiple copies of the same destination when
-                            // reselecting the same item
-                            launchSingleTop = true
-                            // Restore state when reselecting a previously selected item
-                            restoreState = true
-                        }
+                        selected = route
+                        backStack.add(route)
                     }
                 )
             }

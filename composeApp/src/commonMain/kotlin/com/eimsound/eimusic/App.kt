@@ -9,9 +9,9 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSerializable
 import androidx.compose.ui.Modifier
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.savedstate.compose.serialization.serializers.SnapshotStateListSerializer
 import com.eimsound.eimusic.data.Storage
 import com.eimsound.eimusic.lang.Locale
 import com.eimsound.eimusic.layout.BottomBar
@@ -21,6 +21,11 @@ import com.eimsound.eimusic.layout.SideBar
 import com.eimsound.eimusic.media.MediaPlayerController
 import com.eimsound.eimusic.repository.SpotifyTrackRepository
 import com.eimsound.eimusic.repository.TrackRepository
+import com.eimsound.eimusic.route.LocalRoute
+import com.eimsound.eimusic.route.MyRoute
+import com.eimsound.eimusic.route.Route
+import com.eimsound.eimusic.route.SettingRoute
+import com.eimsound.eimusic.route.WelcomeRoute
 import com.eimsound.eimusic.theme.EIMusicTheme
 import com.eimsound.eimusic.theme.Theme
 import com.eimsound.eimusic.util.ProxyUtils
@@ -31,13 +36,9 @@ import com.eimsound.eimusic.viewmodel.PlayingListViewModel
 import com.eimsound.eimusic.viewmodel.SettingViewModel
 import com.eimsound.eimusic.viewmodel.WelcomeViewModel
 import com.eimsound.eimusic.views.FullScreenPlayer
-import com.eimsound.eimusic.views.LocalRoute
 import com.eimsound.eimusic.views.LocalView
-import com.eimsound.eimusic.views.MyRoute
 import com.eimsound.eimusic.views.MyView
-import com.eimsound.eimusic.views.SettingRoute
 import com.eimsound.eimusic.views.SettingView
-import com.eimsound.eimusic.views.WelcomeRoute
 import com.eimsound.eimusic.views.WelcomeView
 import org.koin.compose.KoinApplication
 import org.koin.compose.viewmodel.koinViewModel
@@ -58,8 +59,9 @@ fun App(
                 val defaultLayoutViewModel = koinViewModel<DefaultLayoutViewModel>()
                 val sideBarState by defaultLayoutViewModel.sideBarState.collectAsState()
                 val showFullScreenPlayer by defaultLayoutViewModel.fullScreenPlayerState.collectAsState()
-                val navController = rememberNavController()
-
+                val backStack: MutableList<Route> = rememberSerializable(serializer = SnapshotStateListSerializer()) {
+                    mutableStateListOf(WelcomeRoute)
+                }
                 windowFrame { windowInset, contentInset ->
                     // 主界面
                     DefaultLayout(
@@ -72,12 +74,20 @@ fun App(
                         floatingActionButton = {
                             FloatingActionButton()
                         },
-                        navController = navController
+                        backStack = backStack
                     ) {
-                        composable<WelcomeRoute> { WelcomeView() }
-                        composable<MyRoute> { MyView() }
-                        composable<LocalRoute> { LocalView() }
-                        composable<SettingRoute> { SettingView() }
+                        entry<WelcomeRoute> {
+                            WelcomeView()
+                        }
+                        entry<MyRoute> {
+                            MyView()
+                        }
+                        entry<LocalRoute> {
+                            LocalView()
+                        }
+                        entry<SettingRoute> {
+                            SettingView()
+                        }
                     }
                 }
                 // 全屏播放界面

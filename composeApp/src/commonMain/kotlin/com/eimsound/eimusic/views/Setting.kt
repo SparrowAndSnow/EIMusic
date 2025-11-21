@@ -38,14 +38,11 @@ import eimusic.composeapp.generated.resources.setting_proxy_desc
 import eimusic.composeapp.generated.resources.setting_proxy_host
 import eimusic.composeapp.generated.resources.setting_proxy_port
 import eimusic.composeapp.generated.resources.setting_proxy_enable
-import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
 import androidx.compose.runtime.collectAsState
 import com.eimsound.eimusic.viewmodel.SettingViewModel
 import org.jetbrains.compose.resources.stringResource
 
-@Serializable
-object SettingRoute
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

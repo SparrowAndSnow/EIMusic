@@ -10,7 +10,7 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
-    alias(libs.plugins.composeHotReload)
+//    alias(libs.plugins.composeHotReload)
     alias(libs.plugins.kotlinSerialization)
     id("com.google.osdetector") version "1.7.3"
 }
@@ -69,15 +69,16 @@ kotlin {
         val wasmJsMain by getting
         commonMain.dependencies {
             implementation(projects.shared)
+            implementation(libs.bundles.compose)
 
-            implementation(compose.runtime)
-            implementation(compose.foundation)
-            implementation(compose.material3)
-            implementation(compose.ui)
-            implementation(compose.components.resources)
-            implementation(compose.components.uiToolingPreview)
+//            implementation(compose.runtime)
+//            implementation(compose.foundation)
+//            implementation(compose.material3)
+//            implementation(compose.ui)
+//            implementation(compose.components.resources)
+//            implementation(compose.components.uiToolingPreview)
             implementation(compose.materialIconsExtended)
-            implementation(compose.material3AdaptiveNavigationSuite)
+//            implementation(compose.material3AdaptiveNavigationSuite)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.coil.compose.image.loader)
             implementation(libs.coil.compose.image.loader.network.ktor)
@@ -95,7 +96,6 @@ kotlin {
         }
 
         androidMain.dependencies {
-            implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.media3.common)
             implementation(libs.androidx.media3.exoplayer)
