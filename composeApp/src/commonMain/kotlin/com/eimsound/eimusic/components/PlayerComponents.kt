@@ -21,7 +21,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.eimsound.eimusic.Duration
 import com.eimsound.eimusic.media.PlayMode
@@ -41,12 +40,12 @@ fun TimeDisplay(
             } else {
                 "${position.minutesPart}:${position.secondsPart}"
             },
-            style = MaterialTheme.typography.labelMedium,
+            style = MaterialTheme.typography.labelMedium
         )
         Text(text = " / ", style = MaterialTheme.typography.labelMedium)
         Text(
             text = "${duration.minutesPart}:${duration.secondsPart}",
-            style = MaterialTheme.typography.labelMedium,
+            style = MaterialTheme.typography.labelMedium
         )
     }
 }
@@ -83,12 +82,7 @@ fun PlayerSlider(
             onValueChangeFinished = {
                 onValueChangeFinished(progress)
                 isDragging = false
-            },
-            colors = SliderDefaults.colors(
-                thumbColor = MaterialTheme.colorScheme.primary,
-                activeTrackColor = MaterialTheme.colorScheme.primary,
-                inactiveTrackColor = Color.Unspecified
-            )
+            }
         )
 
         // 缓冲进度条
@@ -139,7 +133,7 @@ fun PlayModeButton(
                 PlayMode.LOOP -> "列表循环"
                 PlayMode.REPEAT_ONE -> "单曲循环"
                 PlayMode.SHUFFLE -> "随机播放"
-            },
+            }
         )
     }
 }
@@ -197,7 +191,7 @@ fun Volume(
                 } else {
                     Icons.AutoMirrored.Default.VolumeMute
                 },
-                contentDescription = null,
+                contentDescription = null
             )
         }
         Slider(value = volume.toFloat(), onValueChange = {
