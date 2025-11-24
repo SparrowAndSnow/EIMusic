@@ -9,6 +9,7 @@ import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
@@ -65,7 +66,7 @@ private fun ContentLayout(
             }
         },
         bottomBar = {
-            Row(Modifier.fillMaxWidth()) {
+            Row(Modifier.navigationBarsPadding().fillMaxWidth()) {
                 bottomBar()
             }
         },
