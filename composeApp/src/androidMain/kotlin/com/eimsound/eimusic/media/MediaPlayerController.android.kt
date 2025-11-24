@@ -7,9 +7,8 @@ import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.eimsound.eimusic.Duration
 import com.eimsound.eimusic.EIMusicApplication
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import android.os.Handler
+import android.os.Looper
 
 /**
  * Android平台的媒体播放控制器实现
@@ -21,6 +20,8 @@ actual class MediaPlayerController {
     private var currentVolume: Float = 1.0f
     private var preparedSources: List<String> = emptyList()
     private var currentMediaItemIndex: Int = 0
+    private var progressUpdateHandler: Handler? = null
+    private var progressUpdateRunnable: Runnable? = null
 
     actual fun prepare(source: String, listener: MediaPlayerListener) {
         prepare(listOf(source), 0, listener)
@@ -40,6 +41,27 @@ actual class MediaPlayerController {
         release()
         preparedSources = sources
         
+        // 初始化进度更新处理器
+        progressUpdateHandler = Handler(Looper.getMainLooper())
+        progressUpdateRunnable = object : Runnable {
+            override fun run() {
+                exoPlayer?.let { player ->
+                    // 报告播放进度
+                    mediaPlayerListener?.timer(Duration(player.currentPosition / 1000))
+                    
+                    // 报告缓冲进度
+                    val duration = player.duration
+                    if (duration != androidx.media3.common.C.TIME_UNSET) {
+                        val progress = if (duration > 0) player.bufferedPosition.toFloat() / duration else 0f
+                        mediaPlayerListener?.onBufferProgress(progress.coerceIn(0f, 1f))
+                    }
+                }
+                
+                // 每100毫秒更新一次进度
+                progressUpdateHandler?.postDelayed(this, 100)
+            }
+        }
+        
         // 创建新的ExoPlayer实例
         exoPlayer = ExoPlayer.Builder(EIMusicApplication.instance).build().apply {
             addListener(object : Player.Listener {
@@ -47,6 +69,9 @@ actual class MediaPlayerController {
                     when (playbackState) {
                         Player.STATE_READY -> {
                             mediaPlayerListener?.onReady()
+                            // 开始进度更新
+                            progressUpdateHandler?.removeCallbacks(progressUpdateRunnable!!)
+                            progressUpdateHandler?.post(progressUpdateRunnable!!)
                         }
                         Player.STATE_ENDED -> {
                             mediaPlayerListener?.onAudioCompleted()
@@ -61,20 +86,20 @@ actual class MediaPlayerController {
                     super.onPlayWhenReadyChanged(playWhenReady, reason)
                     if (playWhenReady) {
                         mediaPlayerListener?.onLoaded()
+                        // 开始进度更新
+                        progressUpdateHandler?.removeCallbacks(progressUpdateRunnable!!)
+                        progressUpdateHandler?.post(progressUpdateRunnable!!)
+                    } else {
+                        // 暂停时停止进度更新
+                        progressUpdateHandler?.removeCallbacks(progressUpdateRunnable!!)
                     }
                 }
 
                 override fun onPlayerError(error: PlaybackException) {
                     mediaPlayerListener?.onError()
+                    // 出错时停止进度更新
+                    progressUpdateHandler?.removeCallbacks(progressUpdateRunnable!!)
                 }
-
-//                override fun onPlaybackProgressUpdate(positionMs: Long, bufferedPositionMs: Long, durationMs: Long) {
-//                    super.onPlaybackProgressUpdate(positionMs, bufferedPositionMs, durationMs)
-//                    if (durationMs != androidx.media3.common.C.TIME_UNSET) {
-//                        val progress = if (durationMs > 0) bufferedPositionMs.toFloat() / durationMs else 0f
-//                        mediaPlayerListener?.onBufferProgress(progress.coerceIn(0f, 1f))
-//                    }
-//                }
                 
                 override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                     super.onMediaItemTransition(mediaItem, reason)
@@ -126,6 +151,11 @@ actual class MediaPlayerController {
         }
 
     actual fun release() {
+        // 停止进度更新
+        progressUpdateHandler?.removeCallbacks(progressUpdateRunnable!!)
+        progressUpdateHandler = null
+        progressUpdateRunnable = null
+        
         exoPlayer?.release()
         exoPlayer = null
         preparedSources = emptyList()
