@@ -83,7 +83,7 @@ private fun <T> List(
     list: List<T>,
     onItemClick: (T) -> Unit,
 ) {
-    Card (modifier = Modifier.width(64.dp)){
+    Card {
         ColumnList(list = list) {
             ListItem(
                 modifier = Modifier

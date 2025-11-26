@@ -6,8 +6,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.eimsound.eimusic.Duration
 import com.eimsound.eimusic.components.*
+import com.eimsound.eimusic.components.WindowDragHandle
 import com.eimsound.eimusic.viewmodel.PlayerViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -47,10 +48,14 @@ fun FullScreenPlayer(
     val playerViewModel = koinViewModel<PlayerViewModel>()
     val playerState by playerViewModel.state.collectAsState()
     // 全屏播放界面
-    Surface(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        Box {
+    Surface {
+        // 添加窗口拖拽条，让用户可以拖动窗口
+        WindowDragHandle(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp) // 与标题栏高度一致
+        )
+        Box{
             // 顶部关闭按钮
             IconButton(
                 onClick = onDismiss,
@@ -73,7 +78,7 @@ fun FullScreenPlayer(
                     modifier = Modifier.size(32.dp)
                 )
             }
-            
+
             // 内容区域，防止点击关闭
             Column(
                 modifier = Modifier
@@ -82,7 +87,7 @@ fun FullScreenPlayer(
                     .padding(16.dp)
                     .clickable(enabled = false) { } // 阻止点击事件传递到背景，但不禁用按钮
             ) {
-                
+
                 // 专辑封面和歌曲信息
                 Column(
                     modifier = Modifier
@@ -98,7 +103,7 @@ fun FullScreenPlayer(
                             .clip(RoundedCornerShape(16.dp)),
                         image = playerState.track?.album?.image,
                         isPlaying = playerState.isPlaying
-                    ) { 
+                    ) {
                         playerViewModel.isPlaying(!playerState.isPlaying)
                     }
 
@@ -115,7 +120,7 @@ fun FullScreenPlayer(
                             overflow = TextOverflow.Ellipsis,
                             textAlign = TextAlign.Center
                         )
-                        
+
                         Text(
                             text = playerState.track?.artists?.joinToString(", ") { it.name ?: "" } ?: "未知艺术家",
                             style = MaterialTheme.typography.titleMedium,
@@ -141,7 +146,7 @@ fun FullScreenPlayer(
                             },
                             onValueChange = { }
                         )
-                        
+
                         TimeDisplay(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -167,7 +172,7 @@ fun FullScreenPlayer(
                         playMode = playerState.playMode,
                         onPlayModeChanged = playerViewModel::onPlayModeChanged
                     )
-                    
+
                     // 上一首
                     IconButton(
                         onClick = playerViewModel::previous,
@@ -178,14 +183,14 @@ fun FullScreenPlayer(
                             contentDescription = "上一首"
                         )
                     }
-                    
+
                     // 播放/暂停
                     PlayPauseButton(
                         isPlaying = playerState.isPlaying,
                         onIsPlayingChanged = playerViewModel::isPlaying,
                         modifier = Modifier.size(64.dp).padding(horizontal = 4.dp),
                     )
-                    
+
                     // 下一首
                     IconButton(
                         onClick = playerViewModel::next,
