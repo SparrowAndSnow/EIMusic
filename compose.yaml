@@ -1,0 +1,8 @@
+name: eimusic-backend
+
+services:
+  backend:
+    restart: unless-stopped
+    image: eimusic-backend:${GIT_COMMIT_SHA}
+    ports:
+      - "43679:8080"

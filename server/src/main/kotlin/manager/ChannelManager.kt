@@ -1,0 +1,318 @@
+package com.eimsound.eimusic.server.manager
+
+import com.eimsound.eimusic.music.PlayMode
+import com.eimsound.eimusic.server.model.SYSTEM
+import com.eimsound.eimusic.server.model.ServerChannel
+import com.eimsound.eimusic.server.model.UserSession
+import com.eimsound.eimusic.together.Channel
+import com.eimsound.eimusic.together.ChannelEvent
+import com.eimsound.eimusic.together.ChannelMessage
+import com.eimsound.eimusic.together.CreateChannelResult
+import com.eimsound.eimusic.together.JoinChannelResult
+import com.eimsound.eimusic.together.LeaveChannelResult
+import com.eimsound.eimusic.together.PlayState
+import com.eimsound.eimusic.together.SyncState
+import com.eimsound.eimusic.together.SystemMessageType
+import com.eimsound.eimusic.together.TogetherProtocol
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import org.slf4j.LoggerFactory
+import kotlin.time.Clock
+
+/**
+ * 频道管理器
+ * 负责频道的创建、维护、清理等操作
+ */
+class ChannelManager(
+    private val maxChannels: Int = 1000, private val maxUsersPerChannel: Int = 50
+) {
+    private val logger = LoggerFactory.getLogger(ChannelManager::class.java)
+    private val mutex = Mutex()
+
+    // 频道存储 channel_id -> ServerChannel
+    private val channels = mutableMapOf<String, ServerChannel>()
+
+    /**
+     * 创建新频道
+     */
+    suspend fun createChannel(
+        channelId: String,
+        channelName: String,
+        owner: UserSession,
+        syncState: SyncState = SyncState(),
+        description: String = ""
+    ): CreateChannelResult = mutex.withLock {
+        // 检查频道数量限制
+        if (channels.size >= maxChannels) {
+            logger.warn("Maximum channels reached: $maxChannels")
+            return CreateChannelResult.LimitExceeded
+        }
+
+        // 检查频道是否已存在
+        if (channels.containsKey(channelId)) {
+            logger.warn("Channel $channelId already exists")
+            val channel = channels[channelId]?.channel ?: return CreateChannelResult.Error("Channel not found")
+            return CreateChannelResult.Exists(channel)
+        }
+
+        val channel = Channel(
+            id = channelId,
+            name = channelName,
+            description = description,
+            owner = owner.user,
+            members = listOf(owner.user),
+            playState = syncState.playState ?: PlayState.STOPPED,
+            currentPosition = syncState.position ?: 0L,
+            trackList = syncState.trackList ?: emptyList(),
+            currentTrack = syncState.track ?: null,
+            playMode = syncState.playMode ?: PlayMode.Loop,
+            createdAt = Clock.System.now(),
+            maxMembers = maxUsersPerChannel,
+            isPrivate = false
+        )
+
+        val serverChannel = ServerChannel(
+            channel = channel,
+            createTime = Clock.System.now(),
+            lastActivity = Clock.System.now(),
+            owner = owner,
+            members = mutableSetOf(owner)
+        )
+
+        channels[channelId] = serverChannel
+
+        logger.info("Created channel $channelId named '$channelName' by user ${owner.user.username}")
+        return CreateChannelResult.Success(channel)
+    }
+
+    /**
+     * 获取频道信息
+     */
+    fun getChannel(channelId: String): Channel? {
+        return channels[channelId]?.channel
+    }
+
+    /**
+     * 获取服务器频道（包含额外信息）
+     */
+    fun getServerChannel(channelId: String): ServerChannel? {
+        return channels[channelId]
+    }
+
+    /**
+     * 用户加入频道
+     */
+    suspend fun joinChannel(channelId: String, userSession: UserSession): JoinChannelResult = mutex.withLock {
+        val serverChannel = channels[channelId] ?: return JoinChannelResult.NotFound
+
+        // 检查频道人数限制
+        if (serverChannel.channel.members.size >= serverChannel.channel.maxMembers) {
+            logger.warn("Channel $channelId is full (max: ${serverChannel.channel.maxMembers})")
+            return JoinChannelResult.ChannelFull
+        }
+
+        // 检查用户是否已在频道中
+        if (serverChannel.channel.members.any { it.id == userSession.user.id }) {
+            logger.debug("User ${userSession.user.username} is already in channel $channelId")
+            return JoinChannelResult.AlreadyInChannel(serverChannel.channel)
+        }
+
+        serverChannel.addSession(userSession)
+
+        logger.info("User ${userSession.user.username} joined channel $channelId")
+        return JoinChannelResult.Success(serverChannel.channel)
+    }
+
+    /**
+     * 用户离开频道
+     */
+    suspend fun leaveChannel(channelId: String?, userSession: UserSession): LeaveChannelResult = mutex.withLock {
+        val serverChannel = channels[channelId] ?: return LeaveChannelResult.NotFound
+
+        if (serverChannel.members.none { it.sessionId == userSession.sessionId }) {
+            logger.warn("User ${userSession.user.id} is not in channel $channelId")
+            return LeaveChannelResult.NotInChannel
+        }
+        // 移除用户
+        serverChannel.removeSession(userSession)
+
+        logger.info("User ${userSession.user.id} left channel $channelId")
+
+        // 如果频道变空，标记为待清理
+        if (serverChannel.members.isEmpty()) {
+            return LeaveChannelResult.SuccessAndChannelEmpty(serverChannel.channel)
+        }
+        return LeaveChannelResult.Success(serverChannel.channel)
+    }
+
+    /**
+     * 更新频道播放状态
+     */
+    suspend fun updatePlayState(
+        channelId: String,
+        block: (Channel) -> SyncState?,
+    ): SyncState? = mutex.withLock {
+        val serverChannel = channels[channelId] ?: return null
+        val channel = serverChannel.channel
+
+        val state = block(channel) ?: return null
+
+        val updatedChannel = channel.copy(
+            currentTrack = state.track ?: channel.currentTrack,
+            trackList = state.trackList ?: channel.trackList,
+            playState = state.playState ?: channel.playState,
+            playMode = state.playMode ?: channel.playMode,
+            currentPosition = state.position ?: channel.currentPosition,
+            anchorTimestamp = state.anchorTimestamp ?: channel.anchorTimestamp,
+        )
+
+        serverChannel.channel = updatedChannel
+        serverChannel.lastActivity = Clock.System.now()
+
+        return state
+    }
+
+    /**
+     * 更新频道房主逻辑
+     */
+    fun updateOwner(channelId: String, newOwner: UserSession): Boolean {
+        val serverChannel = channels[channelId] ?: return false
+
+        if (serverChannel.members.none { it.sessionId == newOwner.sessionId }) {
+            logger.warn("User ${newOwner.user.id} is not in channel $channelId, cannot promote to owner")
+            return false
+        }
+
+        serverChannel.changeOwner(newOwner)
+
+        logger.info("Channel $channelId owner updated to ${newOwner.user.username}")
+        return true
+    }
+
+    /**
+     * 获取频道统计信息
+     */
+    fun getChannelStats(channelId: String): Map<String, Any>? {
+        val serverChannel = channels[channelId] ?: return null
+
+        return mapOf(
+            "channelId" to channelId,
+            "memberCount" to serverChannel.channel.members.size,
+            "onlineCount" to serverChannel.members.size,
+            "playState" to serverChannel.channel.playState.name,
+            "currentTrack" to serverChannel.channel.currentTrack,
+            "createTime" to serverChannel.createTime.toString(),
+            "lastActivity" to serverChannel.lastActivity.toString()
+        ) as? Map<String, Any>?
+    }
+
+    /**
+     * 获取所有频道列表
+     */
+    fun getAllChannels(): List<Channel> {
+        return channels.values.map { it.channel }
+    }
+
+
+    /**
+     * 清理不活跃的频道
+     */
+    suspend fun cleanupInactiveChannels(sessionManager: UserSessionManager, timeoutSeconds: Long = 30): Int =
+        mutex.withLock {
+            val allSessions = sessionManager.getAllSessions()
+            val activeSessionIds = allSessions.map { it.sessionId }.toSet()
+
+            channels.values.forEach { channel ->
+                sessionManager.getSessionsInChannel(channel.channel.id)
+                val (activeSessions, expiredSessions) = channel.members.partition { member ->
+                    member.sessionId in activeSessionIds
+                }
+                if (expiredSessions.isEmpty()) return@forEach
+
+                channel.removeSessions(expiredSessions)
+
+                val expiredUserNameString = expiredSessions.joinToString(", ") { it.user.username }
+                logger.info("Cleaned up inactive channel ${channel.channel.id} members: $expiredUserNameString")
+
+                val currentUsers = activeSessions.map { it.user }
+
+                val ownerStillPresent = activeSessions.any { it.user.id == channel.channel.owner.id }
+                if (!ownerStillPresent) {
+                    activeSessions.firstOrNull()?.let {
+                        channel.changeOwner(it)
+                        sessionManager.broadcast(
+                            channel.channel.id, TogetherProtocol.MessageReceived(
+                                ChannelMessage.System(
+                                    channel.channel.id,
+                                    SYSTEM,
+                                    content = "${it.user.username} 自动成为新房主",
+                                    messageType = SystemMessageType.JOIN
+                                )
+                            )
+                        )
+                    }
+                }
+
+
+                sessionManager.broadcast(
+                    channel.channel.id,
+                    TogetherProtocol.ServerEvent(
+                        ChannelEvent.UserLeft(
+                            channel.channel.id, expiredSessions[0].user, currentUsers
+                        )
+                    )
+                )
+                sessionManager.broadcast(
+                    channel.channel.id,
+                    TogetherProtocol.MessageReceived(
+                        ChannelMessage.System(
+                            channel.channel.id,
+                            SYSTEM,
+                            content = "$expiredUserNameString 已断开",
+                            messageType = SystemMessageType.LEAVE
+                        )
+                    )
+                )
+
+            }
+
+            val inactiveChannels = channels.filter { (_, serverChannel) ->
+                serverChannel.isInactive(timeoutSeconds)
+            }
+
+            inactiveChannels.forEach { (channelId, _) ->
+                channels.remove(channelId)
+                logger.info("Cleaned up inactive channel: $channelId")
+            }
+
+            val cleanedCount = inactiveChannels.size
+            if (cleanedCount > 0) {
+                logger.info("Cleaned up $cleanedCount inactive channels")
+            }
+
+            return cleanedCount
+        }
+
+    /**
+     * 获取系统统计信息
+     */
+    suspend fun getSystemStats(): Map<String, Any> = mutex.withLock {
+        val totalChannels = channels.size
+        val totalMembers = channels.values.sumOf { it.channel.members.size }
+        val onlineUsers = channels.values.sumOf { it.members.size }
+        val emptyChannels = channels.count { it.value.channel.members.isEmpty() }
+
+        mapOf(
+            "totalChannels" to totalChannels,
+            "totalMembers" to totalMembers,
+            "onlineUsers" to onlineUsers,
+            "emptyChannels" to emptyChannels,
+            "maxChannels" to maxChannels,
+            "avgMembersPerChannel" to if (totalChannels > 0) totalMembers.toDouble() / totalChannels else 0.0
+        )
+    }
+
+    fun deleteChannel(channelId: String) {
+        channels.remove(channelId)
+    }
+}

@@ -1,0 +1,14 @@
+.git/
+.idea/
+.vscode/
+.zed/
+.gitignore
+Dockerfile
+compose.yaml
+.gradle
+**/build
+.claude
+.codex
+.gitea
+.trellis
+.agents

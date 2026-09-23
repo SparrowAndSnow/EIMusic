@@ -1,0 +1,145 @@
+package com.eimsound.eimusic.viewmodel
+
+import com.eimsound.eimusic.music.PlayerState
+import com.eimsound.eimusic.music.Track
+import com.eimsound.eimusic.music.PlayMode
+import com.eimsound.eimusic.music.change
+import com.eimsound.eimusic.music.name
+import com.eimsound.eimusic.playback.IMediaPlayerController
+import com.eimsound.eimusic.storage.IStorage
+import com.eimsound.eimusic.storage.Settings
+import com.eimsound.eimusic.storage.get
+import com.eimsound.eimusic.storage.save
+import com.eimsound.eimusic.together.PlayState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
+
+class PlayerViewModel(
+    private val controller: IMediaPlayerController,
+    private val storage: IStorage,
+) {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    val state: StateFlow<PlayerState> = controller.state
+
+    /** 积累式 seek 偏移量 */
+    private val _pendingDelta = MutableStateFlow(0L)
+
+    /** UI 显示的进度位置（引擎位置 + 积累偏移），变化时立即触发重组 */
+    val displayPosition: StateFlow<Long> = combine(
+        state,
+        _pendingDelta,
+    ) { s, delta ->
+        (s.position + delta).coerceIn(0, s.duration)
+    }.stateIn(scope, SharingStarted.Eagerly, 0L)
+
+    private var debounceJob: Job? = null
+
+    init {
+        // 启动时从配置文件恢复音量、静音和循环模式
+        val savedVolume = storage.get(Settings::volume, 1.0f)
+        val savedMuted = storage.get(Settings::isMuted, false)
+        val savedPlayMode = storage.get(Settings::playMode, PlayMode.Loop.name)
+        controller.volume(savedVolume, savedMuted)
+        controller.playMode(PlayMode.of(savedPlayMode))
+
+        // 后台收集状态变化，自动持久化到配置文件
+        scope.launch {
+            controller.state
+                .map { Triple(it.volume, it.isMute, it.playMode.name) }
+                .distinctUntilChanged()
+                .collect { (volume, isMute, playMode) ->
+                    storage.save(Settings::volume, volume)
+                    storage.save(Settings::isMuted, isMute)
+                    storage.save(Settings::playMode, playMode)
+                }
+        }
+    }
+
+    fun seekRelative(delta: Long) {
+        _pendingDelta.value += delta
+        debounceJob?.cancel()
+        debounceJob = scope.launch {
+            delay(SEEK_DEBOUNCE_MS.milliseconds)
+            flushPendingSeek()
+        }
+    }
+
+    private fun flushPendingSeek() {
+        val offset = _pendingDelta.value
+        if (offset == 0L) return
+        _pendingDelta.value = 0L
+        val target = (state.value.position + offset).coerceIn(0, state.value.duration)
+        controller.seek(target)
+    }
+
+    fun togglePlayPause() {
+        val s = state.value.playState
+        controller.playState(
+            if (s == PlayState.PLAYING) PlayState.PAUSED else PlayState.PLAYING
+        )
+    }
+
+    fun next() = controller.next()
+
+    fun previous() = controller.previous()
+
+    fun seek(millis: Long) = controller.seek(millis)
+
+    fun togglePlayMode() {
+        val newMode = state.value.playMode.change { state.value.queue.size }
+        controller.playMode(newMode)
+    }
+
+    fun volumeUp() {
+        val steps = ((state.value.volume * 10f) + 0.001f).toInt().coerceIn(0, 10)
+        controller.volume((steps + 1).coerceAtMost(10) / 10f, state.value.isMute)
+    }
+
+    fun volumeDown() {
+        val steps = ((state.value.volume * 10f) + 0.001f).toInt().coerceIn(0, 10)
+        controller.volume((steps - 1).coerceAtLeast(0) / 10f, state.value.isMute)
+    }
+
+    fun toggleMute() {
+        val isMuted = state.value.volume > 0f
+        controller.volume(state.value.volume, isMuted)
+    }
+
+    fun playTrack(track: Track) {
+        controller.addTrack(track, state.value.queue.size)
+        controller.play(track)
+    }
+
+    fun playAll(tracks: List<Track>) {
+        if (tracks.isEmpty()) return
+        controller.queue(tracks) {
+            controller.play(tracks.first())
+        }
+    }
+
+    fun removeTrack(index: Int) = controller.removeTrack(index)
+
+    fun clearQueue() {
+        controller.playState(PlayState.STOPPED)
+        val size = state.value.queue.size
+        for (i in (size - 1) downTo 0) {
+            controller.removeTrack(i)
+        }
+    }
+
+    fun release() {
+        scope.cancel()
+    }
+
+    companion object {
+        private const val SEEK_DEBOUNCE_MS = 300L
+    }
+}

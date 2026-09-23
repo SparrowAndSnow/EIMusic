@@ -1,0 +1,10 @@
+package com.eimsound.eimusic.views
+
+import androidx.compose.runtime.Composable
+
+@Composable
+actual fun DisplaySettingView(
+    showLoginDialog: Boolean,
+) {
+    CommonSettingView(showLoginDialog)
+}

@@ -1,0 +1,189 @@
+<resources>
+    <string name="app_name">EIMusic</string>
+    <string name="app_description">Music Player</string>
+    <string name="app_version">1.0.0</string>
+    <string name="artists_divider">,</string>
+    <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
+    <string name="search">Search</string>
+    <string name="close">Close</string>
+    <string name="join">Join</string>
+    <string name="refresh">Refresh</string>
+    <!-- Navigation Routes -->
+    <string name="route_welcome">Home</string>
+    <string name="route_my">My</string>
+    <string name="route_local">Local</string>
+    <string name="route_together">Together</string>
+    <string name="route_setting">Settings</string>
+
+    <!-- Setting View -->
+    <string name="setting_title">Settings</string>
+    <string name="setting_account">Account</string>
+    <string name="setting_dark_mode">Dark Mode</string>
+    <string name="setting_dark_mode_desc">Use dark theme</string>
+    <string name="setting_follow_system">Follow System</string>
+    <string name="setting_follow_system_desc">Automatically switch dark mode based on system settings</string>
+    <string name="setting_about">About</string>
+    <string name="setting_about_title">About EIMusic</string>
+    <string name="setting_about_description">A cross-platform music player based on Kotlin Multiplatform</string>
+    <string name="setting_about_copyright">© 2025 EIMusic Development Team</string>
+    <string name="setting_about_confirm">OK</string>
+    <string name="setting_language">Language</string>
+    <string name="setting_language_desc">Change the application language</string>
+    <string name="setting_language_cancel">Cancel</string>
+    <string name="setting_notification">Notification</string>
+    <string name="setting_notification_enabled">Notification enabled</string>
+    <string name="setting_notification_sound_enabled">Notification sound enabled</string>
+    <!-- Setting View Additional -->
+    <string name="setting_preferences">Preferences</string>
+    <string name="setting_preferences_desc">Fine-tune playback, language and network behavior.</string>
+    <string name="setting_connected">Connected</string>
+    <string name="setting_tap_to_sign_in">Tap to sign in</string>
+    <string name="setting_appearance">Appearance</string>
+    <string name="setting_network">Network</string>
+    <string name="setting_local">Local</string>
+    <string name="setting_tap_to_remove">Tap to remove</string>
+    <string name="setting_proxy_host_label">Host</string>
+    <string name="setting_proxy_port_label">Port</string>
+    <string name="setting_proxy_enable_label">Enable Proxy</string>
+    <string name="setting_save">Save</string>
+
+    <!-- Login Strings -->
+    <string name="login_title">Welcome</string>
+    <string name="login_subtitle">Sign in to your account</string>
+    <string name="login_username">Username</string>
+    <string name="login_password">Password</string>
+    <string name="login_button">Sign In</string>
+    <string name="login_cancel">Cancel</string>
+    <string name="login_forgot_password">Forgot Password?</string>
+
+    <!-- Profile Strings -->
+    <string name="profile_logout">Logout</string>
+    <string name="profile_not_logged_in">Not logged in</string>
+
+    <!-- Top Bar -->
+    <string name="top_bar_search_hint">Hinted search text</string>
+
+    <!-- Welcome View -->
+    <string name="loading_text">Loading...</string>
+    <string name="error_text">Error</string>
+    <string name="no_tracks_text">No tracks available</string>
+
+    <!-- Welcome View Additional -->
+    <string name="welcome_sync_failed">Sync Failed</string>
+    <string name="welcome_no_music_yet">No Music Yet</string>
+    <string name="welcome_daily_spotlight">Daily Spotlight</string>
+    <string name="welcome_daily_spotlight_desc">Top 50 chart and curated picks for your current vibe.</string>
+    <string name="welcome_trending_now">Trending Now</string>
+
+    <!-- Profile View -->
+    <string name="profile_title">Profile</string>
+
+    <!-- My View -->
+    <string name="my_title">My Library</string>
+    <string name="my_subtitle">Manage your saved playlists and start playback fast.</string>
+    <string name="my_playlist_count">%1$d playlists</string>
+    <string name="my_track_count">%1$d tracks</string>
+    <string name="my_add_playlist">Add Playlist</string>
+    <string name="my_add_playlist_hint">Supports NetEase playlist link or playlist ID.</string>
+    <string name="my_add_playlist_input_label">Playlist Link or ID</string>
+    <string name="my_add_playlist_confirm">Add</string>
+    <string name="my_add_playlist_loading">Adding...</string>
+    <string name="my_remove_playlist">Remove playlist</string>
+    <string name="my_empty_title">No playlist yet</string>
+    <string name="my_empty_description">Add a playlist to start building your library.</string>
+    <string name="my_tracks_empty">No tracks in this playlist</string>
+    <string name="my_unknown_playlist">Untitled playlist</string>
+    <string name="my_error_title">Something went wrong</string>
+
+    <!-- Local View -->
+    <string name="setting_local_paths">Local Music Paths</string>
+    <string name="setting_local_paths_desc">Manage local music library paths</string>
+    <string name="setting_add_local_path">Add Path</string>
+    <string name="setting_remove_local_path">Remove</string>
+
+    <!-- Proxy Settings -->
+    <string name="setting_proxy">Proxy Settings</string>
+    <string name="setting_proxy_desc">Configure network proxy for streaming music</string>
+    <string name="setting_proxy_host">Proxy Host</string>
+    <string name="setting_proxy_port">Proxy Port</string>
+    <string name="setting_proxy_enable">Enable Proxy</string>
+
+    <!-- Track Item Menu -->
+    <string name="track_menu_more_options">More Options</string>
+    <string name="track_menu_add_to_playlist">Add to Playlist</string>
+    <string name="track_menu_add_to_playlist_next">Add to Next</string>
+    <string name="track_menu_remove_from_playlist">Remove from Playlist</string>
+    <string name="track_menu_favorite">Favorite</string>
+    <string name="track_menu_download">Download</string>
+    <string name="track_menu_share">Share</string>
+
+    <!-- Together Listen Feature -->
+    <string name="together_title">Listen Together</string>
+    <string name="together_description">Enjoy synchronized music experience with friends</string>
+    <string name="together_join_default_channel">Join Default Channel</string>
+    <string name="together_create_channel">Create Channel</string>
+    <string name="together_join_channel">Join Channel</string>
+    <string name="together_channel_id">Channel ID</string>
+    <string name="together_message_hint">Type a message...</string>
+    <string name="together_now_playing">Now Playing</string>
+    <string name="together_no_track_playing">No track playing</string>
+    <string name="together_members">Members</string>
+
+    <!-- Account Dialog -->
+    <string name="account_login_welcome">Welcome</string>
+    <string name="account_login_hint">Please enter your username</string>
+    <string name="account_username_label">Username</string>
+    <string name="account_login_button">Login</string>
+    <string name="account_info_title">Account Information</string>
+    <string name="account_logout">Logout</string>
+    <string name="account_management">Account Management</string>
+    <string name="account_not_logged_in">You are not logged in, please login first</string>
+
+    <!-- Library Pane -->
+    <string name="library_no_tracks">No Tracks</string>
+    <string name="library_no_tracks_desc">Try adding tracks or sync from online charts.</string>
+    <string name="library_local_subtitle">Manage and play tracks from your local folders.</string>
+
+    <!-- Player View -->
+    <string name="player_unknown_track">Unknown Track</string>
+    <string name="player_unknown_artist">Unknown Artist</string>
+    <string name="player_previous">Previous</string>
+    <string name="player_next">Next</string>
+    <string name="player_close">Close</string>
+
+    <!-- Connection Status -->
+    <string name="connection_connected">Connected</string>
+    <string name="connection_disconnected">Disconnected</string>
+    <string name="connection_connecting">Connecting</string>
+    <string name="connection_reconnecting">Reconnecting</string>
+    <string name="connection_reconnect">Reconnect</string>
+    <string name="connection_sync_available">Realtime sync is available.</string>
+    <string name="connection_lost">Connection lost. Check network and retry.</string>
+    <string name="connection_establishing">Establishing WebSocket channel...</string>
+    <string name="connection_restoring">Trying to restore the session...</string>
+
+    <!-- Update Settings -->
+    <string name="setting_update_title">System Update</string>
+    <string name="setting_update_check">Check for Updates</string>
+    <string name="setting_update_current_version">Current Version</string>
+    <string name="setting_update_checking">Checking...</string>
+    <string name="setting_update_check_button">Check</string>
+    <string name="setting_update_new_version_found">New Version Found</string>
+    <string name="setting_update_latest_version">Latest Version</string>
+    <string name="setting_update_download">Download Update</string>
+    <string name="setting_update_download_error">Download Update Failed</string>
+    <string name="setting_update_later">Later</string>
+    <string name="setting_update_install_now">Install Now</string>
+    <string name="setting_update_error">Failed to check update</string>
+    <string name="setting_update_no_update">You are using the latest version</string>
+
+    <!-- Update Dialog -->
+    <string name="update_dialog_title">🎉 New Version Available</string>
+    <string name="update_dialog_critical">Critical Update</string>
+    <string name="update_dialog_release_date">Release Date</string>
+    <string name="update_dialog_release_notes">📋 Release Notes</string>
+    <string name="update_dialog_new_version_found">New Version Available</string>
+    <string name="update_dialog_description">View Details</string>
+    <string name="update_dialog_dismiss">Dismiss</string>
+</resources>

@@ -1,0 +1,211 @@
+<resources>
+    <string name="app_name">EIMusic</string>
+    <string name="app_description">音乐播放器</string>
+    <string name="app_version">1.0.0</string>
+    <string name="artists_divider">,</string>
+    <string name="cancel">取消</string>
+    <string name="ok">OK</string>
+    <string name="search">搜索</string>
+    <string name="close">关闭</string>
+    <string name="join">加入</string>
+    <string name="refresh">刷新</string>
+    <!-- Navigation Routes -->
+    <string name="route_welcome">主页</string>
+    <string name="route_my">我的</string>
+    <string name="route_local">本地</string>
+    <string name="route_together">一起听</string>
+    <string name="route_setting">设置</string>
+
+    <!-- Setting View -->
+    <string name="setting_title">设置</string>
+    <string name="setting_account">账户</string>
+    <string name="setting_dark_mode">深色模式</string>
+    <string name="setting_dark_mode_desc">使用深色主题</string>
+    <string name="setting_follow_system">跟随系统</string>
+    <string name="setting_follow_system_desc">根据系统设置自动切换深色模式</string>
+    <string name="setting_about">关于</string>
+    <string name="setting_about_title">关于 EIMusic</string>
+    <string name="setting_about_description">一个基于 Kotlin Multiplatform 的跨平台音乐播放器</string>
+    <string name="setting_about_copyright">© 2025 EIMusic 开发团队</string>
+    <string name="setting_about_confirm">确定</string>
+    <string name="setting_language">语言</string>
+    <string name="setting_language_desc">更改应用程序语言</string>
+    <string name="setting_language_cancel">取消</string>
+    <string name="setting_notification">通知</string>
+    <string name="setting_notification_enabled">开启通知</string>
+    <string name="setting_notification_sound_enabled">通知音效</string>
+    <!-- Setting View Additional -->
+    <string name="setting_preferences">偏好设置</string>
+    <string name="setting_preferences_desc">微调播放、语言和网络行为。</string>
+    <string name="setting_connected">已连接</string>
+    <string name="setting_tap_to_sign_in">点击登录</string>
+    <string name="setting_appearance">外观</string>
+    <string name="setting_network">网络</string>
+    <string name="setting_local">本地</string>
+    <string name="setting_tap_to_remove">点击移除</string>
+    <string name="setting_proxy_host_label">主机</string>
+    <string name="setting_proxy_port_label">端口</string>
+    <string name="setting_proxy_enable_label">启用代理</string>
+    <string name="setting_save">保存</string>
+
+    <!-- Login Strings -->
+    <string name="login_title">欢迎</string>
+    <string name="login_subtitle">登录您的账户</string>
+    <string name="login_username">用户名</string>
+    <string name="login_password">密码</string>
+    <string name="login_button">登录</string>
+    <string name="login_cancel">取消</string>
+    <string name="login_forgot_password">忘记密码？</string>
+    
+    <!-- Profile Strings -->
+    <string name="profile_logout">退出登录</string>
+    <string name="profile_not_logged_in">未登录</string>
+    
+    <!-- Top Bar -->
+    <string name="top_bar_search_hint">搜索提示文本</string>
+    
+    <!-- Welcome View -->
+    <string name="loading_text">加载中...</string>
+    <string name="error_text">错误</string>
+    <string name="no_tracks_text">暂无音轨</string>
+
+    <!-- Welcome View Additional -->
+    <string name="welcome_sync_failed">同步失败</string>
+    <string name="welcome_no_music_yet">暂无音乐</string>
+    <string name="welcome_daily_spotlight">每日精选</string>
+    <string name="welcome_daily_spotlight_desc">Top 50 排行榜和为你精心挑选的歌曲。</string>
+    <string name="welcome_trending_now">时下流行</string>
+
+    <!-- Profile View -->
+    <string name="profile_title">个人资料</string>
+    
+    <!-- My View -->
+    <string name="my_title">我的音乐库</string>
+    <string name="my_subtitle">管理你收藏的歌单，快速开始播放。</string>
+    <string name="my_playlist_count">%1$d 个歌单</string>
+    <string name="my_track_count">%1$d 首歌曲</string>
+    <string name="my_add_playlist">添加歌单</string>
+    <string name="my_add_playlist_hint">支持网易云歌单链接或歌单 ID。</string>
+    <string name="my_add_playlist_input_label">歌单链接或 ID</string>
+    <string name="my_add_playlist_confirm">添加</string>
+    <string name="my_add_playlist_loading">添加中...</string>
+    <string name="my_remove_playlist">删除歌单</string>
+    <string name="my_empty_title">还没有歌单</string>
+    <string name="my_empty_description">先添加一个歌单，开始构建你的音乐库。</string>
+    <string name="my_tracks_empty">该歌单暂无歌曲</string>
+    <string name="my_unknown_playlist">未命名歌单</string>
+    <string name="my_error_title">出现错误</string>
+    
+    <!-- Local View -->
+    <string name="setting_local_paths">本地音乐路径</string>
+    <string name="setting_local_paths_desc">管理本地音乐库路径</string>
+    <string name="setting_add_local_path">添加路径</string>
+    <string name="setting_remove_local_path">移除</string>
+    
+    <!-- Proxy Settings -->
+    <string name="setting_proxy">代理设置</string>
+    <string name="setting_proxy_desc">配置网络代理用于流媒体播放</string>
+    <string name="setting_proxy_host">代理主机</string>
+    <string name="setting_proxy_port">代理端口</string>
+    <string name="setting_proxy_enable">启用代理</string>
+    
+    <!-- Track Item Menu -->
+    <string name="track_menu_more_options">更多选项</string>
+    <string name="track_menu_add_to_playlist">添加到播放列表</string>
+    <string name="track_menu_add_to_playlist_next">下一首播放</string>
+    <string name="track_menu_remove_from_playlist">从播放列表删除</string>
+    <string name="track_menu_favorite">收藏</string>
+    <string name="track_menu_download">下载</string>
+    <string name="track_menu_share">分享</string>
+
+    <!-- Together Listen Feature -->
+    <string name="together_title">一起听音乐</string>
+    <string name="together_description">与朋友一起享受同步音乐体验</string>
+    <string name="together_join_default_channel">加入默认频道</string>
+    <string name="together_create_channel">加入/创建频道</string>
+    <string name="together_join_channel">加入频道</string>
+    <string name="together_channel_id">频道 ID</string>
+    <string name="together_message_hint">输入消息...</string>
+    <string name="together_now_playing">正在播放</string>
+    <string name="together_no_track_playing">暂无播放</string>
+    <string name="together_members">成员列表</string>
+    
+    <!-- Account Dialog -->
+    <string name="account_login_welcome">欢迎登录</string>
+    <string name="account_login_hint">请输入您的用户名</string>
+    <string name="account_username_label">用户名</string>
+    <string name="account_login_button">登录</string>
+    <string name="account_info_title">账户信息</string>
+    <string name="account_logout">退出登录</string>
+    <string name="account_management">账户管理</string>
+    <string name="account_not_logged_in">您尚未登录，请先登录账户</string>
+    
+    <!-- Library Pane -->
+    <string name="library_no_tracks">暂无歌曲</string>
+    <string name="library_no_tracks_desc">尝试添加歌曲或从在线排行榜同步。</string>
+    <string name="library_local_subtitle">管理和播放本地文件夹中的歌曲。</string>
+    
+    <!-- Player View -->
+    <string name="player_unknown_track">未知歌曲</string>
+    <string name="player_unknown_artist">未知艺术家</string>
+    <string name="player_previous">上一首</string>
+    <string name="player_next">下一首</string>
+    <string name="player_close">关闭</string>
+    
+    <!-- Connection Status -->
+    <string name="connection_connected">已连接</string>
+    <string name="connection_disconnected">已断开</string>
+    <string name="connection_connecting">连接中</string>
+    <string name="connection_reconnecting">重连中</string>
+    <string name="connection_reconnect">重新连接</string>
+    <string name="connection_sync_available">实时同步可用。</string>
+    <string name="connection_lost">连接丢失，请检查网络并重试。</string>
+    <string name="connection_establishing">正在建立 WebSocket 通道...</string>
+    <string name="connection_restoring">正在尝试恢复会话...</string>
+
+    <!-- Update Settings -->
+    <string name="setting_update_title">系统更新</string>
+    <string name="setting_update_check">检查更新</string>
+    <string name="setting_update_current_version">当前版本</string>
+    <string name="setting_update_checking">检查中...</string>
+    <string name="setting_update_check_button">检查</string>
+    <string name="setting_update_new_version_found">发现新版本</string>
+    <string name="setting_update_latest_version">最新版本</string>
+    <string name="setting_update_download">下载更新</string>
+    <string name="setting_update_download_error">下载更新失败</string>
+    <string name="setting_update_later">稍后再说</string>
+    <string name="setting_update_install_now">立即安装</string>
+    <string name="setting_update_error">检查更新失败</string>
+    <string name="setting_update_no_update">已是最新版本</string>
+
+    <!-- Update Dialog -->
+    <string name="update_dialog_title">🎉 发现新版本</string>
+    <string name="update_dialog_critical">重要更新</string>
+    <string name="update_dialog_release_date">发布日期</string>
+    <string name="update_dialog_release_notes">📋 更新内容</string>
+    <string name="update_dialog_new_version_found">新版本可用</string>
+    <string name="update_dialog_description">查看详情</string>
+    <string name="update_dialog_dismiss">忽略</string>
+
+    <!-- Config Editor -->
+    <string name="config_section">服务器与音乐源</string>
+    <string name="config_server">服务器</string>
+    <string name="config_server_http_label">HTTP 地址</string>
+    <string name="config_server_ws_label">WebSocket 地址</string>
+    <string name="config_sources">音乐源</string>
+    <string name="config_sources_add">添加</string>
+    <string name="config_sources_remove">删除</string>
+
+    <string name="config_source_netease">网易云</string>
+    <string name="config_source_spotify">Spotify</string>
+    <string name="config_source_qq">QQ音乐</string>
+    <string name="config_source_xiami">虾米</string>
+    <string name="config_source_kuwo">酷我</string>
+    <string name="config_source_kugou">酷狗</string>
+    <string name="config_source_baidu">百度音乐</string>
+    <string name="config_source_youtube">YouTube</string>
+    <string name="config_source_youtube_music">YouTube Music</string>
+
+    <string name="config_sources_empty">暂无源地址，请在下方添加</string>
+    <string name="config_sources_url_hint">https://</string>
+</resources>
