@@ -9,6 +9,7 @@ import com.eimsound.eimusic.music.PlayerState
 import com.eimsound.eimusic.music.Track
 import com.eimsound.eimusic.together.PlayState
 import com.eimsound.eimusic.together.SyncState
+import com.eimsound.eimusic.playback.IMediaPlayerController
 import com.goxr3plus.streamplayer.enums.Status
 import com.goxr3plus.streamplayer.stream.StreamPlayer
 import com.goxr3plus.streamplayer.stream.StreamPlayerEvent
@@ -21,16 +22,16 @@ import kotlinx.coroutines.launch
 import java.net.URI
 
 open class JavaStreamPlayerController(
-    open val trackUriResolverFactory: TrackUriResolverFactory
-) {
+    val trackUriResolverFactory: TrackUriResolverFactory
+) : IMediaPlayerController {
 
 
 
     private val _state = MutableStateFlow(PlayerState())
-    open val state: StateFlow<PlayerState> = _state.asStateFlow()
+    override val state: StateFlow<PlayerState> = _state.asStateFlow()
 
     private val _event = MutableSharedFlow<PlaybackEvent>(replay = 0)
-    open val event: SharedFlow<PlaybackEvent> = _event.asSharedFlow()
+    override val event: SharedFlow<PlaybackEvent> = _event.asSharedFlow()
 
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
@@ -182,7 +183,7 @@ open class JavaStreamPlayerController(
      * @param millis 目标位置
      * @param seekOver 跳转完成回调
      */
-    open fun seek(millis: Long, seekOver: () -> Unit) {
+    override fun seek(millis: Long, seekOver: () -> Unit) {
         scope.launch {
             mediaPlayer.seekTo((millis / 1000.0).toInt())
             seekOver()
@@ -192,17 +193,17 @@ open class JavaStreamPlayerController(
     /**
      * 释放当前媒体播放器资源
      */
-    open fun release() {
+    override fun release() {
         cleanupCurrentPlayer()
     }
 
-    open fun queue(medias: List<Track>, prepareOver: () -> Unit) {
+    override fun queue(medias: List<Track>, prepareOver: () -> Unit) {
         _state.update { it.copy(queue = medias) }
         prepareOver()
         playMode(state.value.playMode)
     }
 
-    open fun playState(state: PlayState) {
+    override fun playState(state: PlayState) {
         when (state) {
             PlayState.PLAYING -> mediaPlayer.resume()
             PlayState.PAUSED -> mediaPlayer.pause()
@@ -210,11 +211,11 @@ open class JavaStreamPlayerController(
         }
     }
 
-    open fun playMode(mode: PlayMode) {
+    override fun playMode(mode: PlayMode) {
         _state.update { it.copy(playMode = mode) }
     }
 
-    open fun volume(volume: Float, isMuted: Boolean) {
+    override fun volume(volume: Float, isMuted: Boolean) {
         mediaPlayer.setGain(volume.toDouble())
         mediaPlayer.mute = isMuted
         _state.update {
@@ -226,7 +227,7 @@ open class JavaStreamPlayerController(
     }
 
 
-    open fun nextTrack(): Track? {
+    override fun nextTrack(): Track? {
         val list = getCurrentPlayList()
         if (list.isEmpty()) return null
 
@@ -240,7 +241,7 @@ open class JavaStreamPlayerController(
         }
     }
 
-    open fun next(isAudioCompleted: Boolean) {
+    override fun next(isAudioCompleted: Boolean) {
         when (_state.value.playMode) {
             is PlayMode.Shuffle, is PlayMode.Loop -> {
                 nextTrack()?.let { play(it, isAudioCompleted) }
@@ -250,7 +251,7 @@ open class JavaStreamPlayerController(
         }
     }
 
-    open fun previousTrack(): Track? {
+    override fun previousTrack(): Track? {
         val list = getCurrentPlayList()
         if (list.isEmpty()) return null
 
@@ -264,7 +265,7 @@ open class JavaStreamPlayerController(
         }
     }
 
-    open fun previous() {
+    override fun previous() {
         when (_state.value.playMode) {
             is PlayMode.Shuffle, is PlayMode.Loop -> {
                 previousTrack()?.let { play(it, false) }
@@ -276,7 +277,7 @@ open class JavaStreamPlayerController(
 
     private fun getCurrentPlayList(): List<Track> = _state.value.currentList
 
-    open fun play(media: Track) {
+    override fun play(media: Track) {
         play(media, isAudioCompleted = false)
     }
 
@@ -307,7 +308,7 @@ open class JavaStreamPlayerController(
         }
     }
 
-    open fun sync(syncState: SyncState) {
+    override fun sync(syncState: SyncState) {
         val medias = syncState.trackList ?: return
         val current = state.value.current
         val index = syncState.track?.let { track ->
@@ -350,7 +351,7 @@ open class JavaStreamPlayerController(
         }
     }
 
-    open fun addTrack(media: Track, index: Int) {
+    override fun addTrack(media: Track, index: Int) {
         val existingIndex = state.value.queue.indexOfFirst { track -> track.id == media.id }
         _state.update {
             val updatedQueue = it.queue.toMutableList().apply {
@@ -365,7 +366,7 @@ open class JavaStreamPlayerController(
         }
     }
 
-    open fun removeTrack(index: Int) {
+    override fun removeTrack(index: Int) {
         _state.update {
             val updatedQueue = it.queue.toMutableList().apply { removeAt(index) }
             it.copy(
