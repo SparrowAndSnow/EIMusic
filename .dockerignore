@@ -7,8 +7,4 @@ Dockerfile
 compose.yaml
 .gradle
 **/build
-.claude
-.codex
 .gitea
-.trellis
-.agents

@@ -20,11 +20,7 @@ captures
 **/logs/
 
 .vscode/
-.claude/
-.codex/
 .gitea/
-.trellis/
-.agents/
 scripts/*
 
 # C interop 构建产物（miniaudio / anyascii 静态库）
