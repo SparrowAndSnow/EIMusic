@@ -17,6 +17,6 @@ buildscript {
         gradlePluginPortal()
     }
     dependencies {
-        classpath("org.tomlj:tomlj:1.1.0")
+        classpath("org.tomlj:tomlj:2.2.0")
     }
 }

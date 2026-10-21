@@ -6,7 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.ktor)
     alias(libs.plugins.kotlin.serialization)
-    id("com.github.gmazzo.buildconfig") version "5.6.7"
+    id("com.github.gmazzo.buildconfig") version "6.1.2"
 }
 
 repositories {
@@ -82,8 +82,8 @@ buildConfig {
 
 dependencies {
     implementation(project(":shared"))
-    implementation("io.insert-koin:koin-ktor:4.1.1")
-    implementation("io.insert-koin:koin-logger-slf4j:4.1.1")
+    implementation("io.insert-koin:koin-ktor:4.2.2")
+    implementation("io.insert-koin:koin-logger-slf4j:4.2.2")
     implementation("io.ktor:ktor-server-core")
     implementation("io.ktor:ktor-server-content-negotiation")
     implementation("io.ktor:ktor-serialization-kotlinx-json")
@@ -94,8 +94,8 @@ dependencies {
     implementation("io.ktor:ktor-server-netty")
     implementation("io.ktor:ktor-client-core")
     implementation("io.ktor:ktor-client-content-negotiation")
-    implementation("ch.qos.logback:logback-classic:1.5.16")
+    implementation("ch.qos.logback:logback-classic:1.6.5")
     testImplementation("io.ktor:ktor-server-test-host")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:2.3.0")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:2.4.20")
 
 }

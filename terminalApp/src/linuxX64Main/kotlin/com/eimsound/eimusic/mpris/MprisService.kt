@@ -34,7 +34,7 @@ class MprisService(private val controller: IMediaPlayerController) : MprisManage
             obj = dbusObj
             registerInterfaces(dbusObj)
             connection.requestName(ServiceName("org.mpris.MediaPlayer2.eimusic"))
-            connection.enterEventLoopAsync()
+            connection.startEventLoop()
             TuiLogger.log("MPRIS: sdbus-kotlin initialized")
             controller.state.collect { state ->
                 val prev = prevState

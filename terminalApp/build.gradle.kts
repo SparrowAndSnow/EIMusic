@@ -31,7 +31,7 @@ kotlin {
             implementation("com.jakewharton.mosaic:mosaic-runtime:0.19.0-SNAPSHOT")
             implementation(libs.koin.core)
             implementation(libs.kotlinx.datetime)
-            implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.9.0")
+            implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.9.1")
         }
 
         nativeMain.dependencies {
@@ -40,7 +40,7 @@ kotlin {
 
         // Platform-specific MPRIS only on Linux
         linuxX64Main.dependencies {
-            implementation("com.monkopedia:sdbus-kotlin:0.4.3")
+            implementation("com.monkopedia:sdbus-kotlin:1.0.1")
         }
     }
 

@@ -22,7 +22,7 @@ plugins {
     id("com.google.osdetector") version "1.7.3"
 
     // 添加 KMP BuildConfig 插件支持
-    id("com.github.gmazzo.buildconfig") version "5.3.0"
+    id("com.github.gmazzo.buildconfig") version "6.1.2"
 }
 
 repositories {
@@ -41,7 +41,7 @@ kotlin {
     }
 
     listOf(
-        iosX64(), iosArm64(), iosSimulatorArm64()
+        iosArm64(), iosSimulatorArm64()
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
@@ -106,7 +106,7 @@ kotlin {
             implementation(libs.androidx.media3.common)
             implementation(libs.androidx.media3.exoplayer)
             implementation(libs.ktor.client.okhttp)
-            implementation("androidx.navigationevent:navigationevent:1.0.2")
+            implementation("androidx.navigationevent:navigationevent:1.2.0")
             implementation(libs.androidx.media3.session)
             implementation(libs.koin.android)
             implementation(libs.androidx.lifecycle.process)
