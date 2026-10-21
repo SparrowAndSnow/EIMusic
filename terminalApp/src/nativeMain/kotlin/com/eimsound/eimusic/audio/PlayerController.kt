@@ -1,6 +1,5 @@
 package com.eimsound.eimusic.audio
 
-import com.eimsound.eimusic.cycle
 import com.eimsound.eimusic.events.EventBus
 import com.eimsound.eimusic.events.EventSource
 import com.eimsound.eimusic.events.PlaybackEvent
@@ -13,6 +12,11 @@ import com.eimsound.eimusic.music.PlayMode
 import com.eimsound.eimusic.music.PlayerState
 import com.eimsound.eimusic.music.Track
 import com.eimsound.eimusic.music.change
+import com.eimsound.eimusic.music.nextTrackCandidate
+import com.eimsound.eimusic.music.previousTrackCandidate
+import com.eimsound.eimusic.music.recalculatedIndex
+import com.eimsound.eimusic.music.withTrackAdded
+import com.eimsound.eimusic.music.withTrackRemoved
 import com.eimsound.eimusic.playback.IMediaPlayerController
 import com.eimsound.eimusic.together.PlayState
 import com.eimsound.eimusic.together.SyncState
@@ -190,19 +194,7 @@ class PlayerController(
         }
     }
 
-    override fun nextTrack(): Track? {
-        val list = currentList()
-        if (list.isEmpty()) return null
-
-        val index = (_state.value.index + 1).cycle(0, list.size - 1)
-        val current = list[index]
-
-        return if (_state.value.playMode is PlayMode.RepeatOne) {
-            state.value.current ?: current
-        } else {
-            current
-        }
-    }
+    override fun nextTrack(): Track? = state.value.nextTrackCandidate()
 
     override fun previous() {
         when (_state.value.playMode) {
@@ -219,19 +211,7 @@ class PlayerController(
         }
     }
 
-    override fun previousTrack(): Track? {
-        val list = currentList()
-        if (list.isEmpty()) return null
-
-        val index = (_state.value.index - 1).cycle(0, list.size - 1)
-        val current = list[index]
-
-        return if (_state.value.playMode is PlayMode.RepeatOne) {
-            state.value.current ?: current
-        } else {
-            current
-        }
-    }
+    override fun previousTrack(): Track? = state.value.previousTrackCandidate()
 
     // ── Seek & volume ──
 
@@ -279,34 +259,15 @@ class PlayerController(
     // ── Queue editing ──
 
     override fun addTrack(media: Track, index: Int) {
-        val existingIndex = state.value.queue.indexOfFirst { track -> media.id == track.id }
-        try {
-            _state.update {
-                val updatedQueue = it.queue.toMutableList().apply {
-                    if (existingIndex != -1) removeAt(existingIndex)
-                    add(index, media)
-                }
-
-                it.copy(
-                    queue = updatedQueue,
-                    index = recalculateIndex(updatedQueue)
-                )
-            }
-            EventBus.PlayingListEventBus.send(
-                PlayingListEvent.TrackAdded(media, AddTrackStrategy.AddToLast, source = EventSource.Player)
-            )
-        }catch (e: Exception){}
+        _state.update { it.withTrackAdded(media, index) }
+        EventBus.PlayingListEventBus.send(
+            PlayingListEvent.TrackAdded(media, AddTrackStrategy.AddToLast, source = EventSource.Player)
+        )
     }
 
     override fun removeTrack(index: Int) {
         val removed = _state.value.queue.getOrNull(index)
-        _state.update {
-            val updatedQueue = it.queue.toMutableList().apply { removeAt(index) }
-            it.copy(
-                queue = updatedQueue,
-                index = recalculateIndex(updatedQueue)
-            )
-        }
+        _state.update { it.withTrackRemoved(index) }
         if (removed != null) {
             EventBus.PlayingListEventBus.send(
                 PlayingListEvent.TrackRemoved(removed, source = EventSource.Player)
@@ -321,7 +282,7 @@ class PlayerController(
                 val item = mutable.removeAt(from)
                 mutable.add(to, item)
             }
-            it.copy(queue = mutable, index = recalculateIndex(mutable))
+            it.copy(queue = mutable, index = it.recalculatedIndex(mutable))
         }
     }
 
@@ -477,6 +438,4 @@ class PlayerController(
         positionJob = null
     }
 
-    private fun recalculateIndex(queue: List<Track>): Int =
-        queue.indexOfFirst { t -> t.id == _state.value.current?.id }.coerceAtLeast(0)
 }

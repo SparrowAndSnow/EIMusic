@@ -1,12 +1,15 @@
 package com.eimsound.eimusic.media
 
-import com.eimsound.eimusic.cycle
 import com.eimsound.eimusic.events.EventSource
 import com.eimsound.eimusic.events.PlaybackEvent
 import com.eimsound.eimusic.factory.TrackUriResolverFactory
 import com.eimsound.eimusic.music.PlayMode
 import com.eimsound.eimusic.music.PlayerState
 import com.eimsound.eimusic.music.Track
+import com.eimsound.eimusic.music.nextTrackCandidate
+import com.eimsound.eimusic.music.previousTrackCandidate
+import com.eimsound.eimusic.music.withTrackAdded
+import com.eimsound.eimusic.music.withTrackRemoved
 import com.eimsound.eimusic.together.PlayState
 import com.eimsound.eimusic.together.SyncState
 import com.eimsound.eimusic.playback.IMediaPlayerController
@@ -227,19 +230,7 @@ open class JavaStreamPlayerController(
     }
 
 
-    override fun nextTrack(): Track? {
-        val list = getCurrentPlayList()
-        if (list.isEmpty()) return null
-
-        val index = (_state.value.index + 1).cycle(0, list.size - 1)
-        val current = list[index]
-
-        return if (_state.value.playMode is PlayMode.RepeatOne) {
-            state.value.current ?: current
-        } else {
-            current
-        }
-    }
+    override fun nextTrack(): Track? = state.value.nextTrackCandidate()
 
     override fun next(isAudioCompleted: Boolean) {
         when (_state.value.playMode) {
@@ -251,19 +242,7 @@ open class JavaStreamPlayerController(
         }
     }
 
-    override fun previousTrack(): Track? {
-        val list = getCurrentPlayList()
-        if (list.isEmpty()) return null
-
-        val index = (_state.value.index - 1).cycle(0, list.size - 1)
-        val current = list[index]
-
-        return if (_state.value.playMode is PlayMode.RepeatOne) {
-            state.value.current ?: current
-        } else {
-            current
-        }
-    }
+    override fun previousTrack(): Track? = state.value.previousTrackCandidate()
 
     override fun previous() {
         when (_state.value.playMode) {
@@ -352,30 +331,10 @@ open class JavaStreamPlayerController(
     }
 
     override fun addTrack(media: Track, index: Int) {
-        val existingIndex = state.value.queue.indexOfFirst { track -> track.id == media.id }
-        _state.update {
-            val updatedQueue = it.queue.toMutableList().apply {
-                if (existingIndex != -1) removeAt(existingIndex)
-                add(index, media)
-            }
-
-            it.copy(
-                queue = updatedQueue,
-                index = recalculateIndex(updatedQueue)
-            )
-        }
+        _state.update { it.withTrackAdded(media, index) }
     }
 
     override fun removeTrack(index: Int) {
-        _state.update {
-            val updatedQueue = it.queue.toMutableList().apply { removeAt(index) }
-            it.copy(
-                queue = updatedQueue,
-                index = recalculateIndex(updatedQueue)
-            )
-        }
+        _state.update { it.withTrackRemoved(index) }
     }
-
-    private fun recalculateIndex(newQueue: List<Track>) =
-        newQueue.indexOfFirst { track -> track.id == state.value.current?.id }
 }
