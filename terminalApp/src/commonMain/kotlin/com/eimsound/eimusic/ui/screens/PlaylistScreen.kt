@@ -5,17 +5,13 @@ import com.eimsound.eimusic.keyboard.PlaylistFocus
 import com.eimsound.eimusic.keyboard.dispatchPlaylistKey
 import com.eimsound.eimusic.keyboard.playlistStatusBarHint
 import com.eimsound.eimusic.music.MediaList
-import com.eimsound.eimusic.ui.border
 import com.eimsound.eimusic.ui.components.InputField
 import com.eimsound.eimusic.ui.components.ListView
 import com.eimsound.eimusic.ui.components.LocalStatusBarHint
 import com.eimsound.eimusic.ui.components.TrackTable
 import com.eimsound.eimusic.ui.theme.LocalSafeContentSize
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
-import com.eimsound.eimusic.util.padEndVisual
-import com.eimsound.eimusic.util.render
 import com.eimsound.eimusic.util.spacer
-import com.eimsound.eimusic.util.truncated
 import com.eimsound.eimusic.viewmodel.PlaylistViewModel
 import com.eimsound.eimusic.viewmodel.PlayerViewModel
 import com.jakewharton.mosaic.layout.*
@@ -188,13 +184,20 @@ private fun PlaylistListView(
 
     if (isLoading) Text(" Loading...", color = palette.textDimFg)
 
-    Text(buildAnnotatedString {
-        spacer(2)
-        withStyle(SpanStyle(color = palette.textDimFg)) {
-            append("Name".padEndVisual(nameWidth))
-            append("   Tracks")
+    Row {
+        Spacer(Modifier.width(2))
+        Box(Modifier.width(nameWidth)) {
+            Text(
+                "Name",
+                Modifier.fillMaxWidth(),
+                color = palette.textDimFg,
+                softWrap = true,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
-    })
+        Text("   Tracks", color = palette.textDimFg)
+    }
 
     ListView(
         items = playlists,
@@ -211,26 +214,30 @@ private fun PlaylistListView(
                 is MediaList.PlaylistMediaList -> "${playlist.playlist.tracks.size}"
                 is MediaList.AlbumMediaList -> "${playlist.album.tracks.size}"
             }
-            val nameResult = name.render().truncated(nameWidth)
-
-            Box(
-                modifier = if (isSelected) Modifier.fillMaxWidth()
-                    .background(palette.selectionBg) else Modifier.fillMaxWidth()
-            ) {
-                Text(buildAnnotatedString {
-                    withStyle(SpanStyle(color = if (isSelected) palette.currentMarkerFg else palette.textDimFg)) {
-                        append(
-                            if (isSelected) "▶" else " "
-                        )
-                    }
-                    append(" ")
-                    withStyle(SpanStyle(color = if (isSelected) palette.highlightFg else palette.textFg)) {
-                        append(nameResult.text + " ".repeat(nameWidth - nameResult.width))
-                    }
-                    append("  ")
-                    withStyle(SpanStyle(color = palette.textDimFg)) { append(trackCount.padStart(4)) }
-                    append(" tracks")
-                })
+            val rowModifier = if (isSelected) {
+                Modifier.fillMaxWidth().background(palette.selectionBg)
+            } else {
+                Modifier.fillMaxWidth()
+            }
+            Row(rowModifier) {
+                Text(
+                    if (isSelected) "▶" else " ",
+                    color = if (isSelected) palette.currentMarkerFg else palette.textDimFg,
+                )
+                Spacer(Modifier.width(1))
+                Box(Modifier.width(nameWidth)) {
+                    Text(
+                        name,
+                        Modifier.fillMaxWidth(),
+                        color = if (isSelected) palette.highlightFg else palette.textFg,
+                        softWrap = true,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                Text("  ", color = palette.textDimFg)
+                Text(trackCount.padStart(4), color = palette.textDimFg)
+                Text(" tracks", color = palette.textDimFg)
             }
         },
     )

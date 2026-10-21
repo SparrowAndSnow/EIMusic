@@ -17,7 +17,6 @@ import com.jakewharton.mosaic.text.withStyle
 import com.jakewharton.mosaic.ui.Alignment
 import com.jakewharton.mosaic.ui.Box
 import com.jakewharton.mosaic.ui.Text
-import kotlin.text.toInt
 
 /** Shared colored segments — both [PlayerControls] and [HeaderBar] iterate this. */
 fun AnnotatedString.Builder.playControlSegments(
@@ -32,21 +31,6 @@ fun AnnotatedString.Builder.playControlSegments(
     withStyle(SpanStyle(color = palette.textFg)) { append(volIcon) }
     spacer(1)
     withStyle(SpanStyle(color = palette.textDimFg)) { append(volPercent) }
-}
-
-fun playControlString(
-    state: PlayerState,
-): String {
-    val (modeIcon, playIcon, volIcon, volPercent) = playControlData(state)
-    return buildString {
-        append(modeIcon)
-        append(3.spacer)
-        append(playIcon)
-        append(2.spacer)
-        append(volIcon)
-        append(1.spacer)
-        append(volPercent)
-    }
 }
 
 data class PlayControlData(val modeIcon: String, val playIcon: String, val volIcon: String, val volPercent: String)

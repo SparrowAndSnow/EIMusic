@@ -13,7 +13,6 @@ import com.eimsound.eimusic.ui.theme.LocalTuiColors
 import com.eimsound.eimusic.util.bridgeToMutable
 import com.eimsound.eimusic.util.render
 import com.eimsound.eimusic.util.spacer
-import com.eimsound.eimusic.util.truncate
 import com.eimsound.eimusic.viewmodel.PlayerViewModel
 import com.eimsound.eimusic.viewmodel.SearchViewModel
 import com.jakewharton.mosaic.LocalTerminalState
@@ -114,8 +113,8 @@ fun SearchScreen(
                             onGoBack()
                         },
                         render = { track, i, isSelected ->
-                            val name = track.name.render().truncate(45)
-                            val artist = (track.artists?.firstOrNull()?.name ?: "").render().truncate(20)
+                            val name = track.name.render()
+                            val artist = (track.artists?.firstOrNull()?.name ?: "").render()
                             TrackListItem(
                                 index = i,
                                 isSelected = isSelected,

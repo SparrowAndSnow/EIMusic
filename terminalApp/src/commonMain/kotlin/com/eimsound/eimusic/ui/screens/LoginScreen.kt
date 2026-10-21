@@ -10,7 +10,6 @@ import com.eimsound.eimusic.ui.components.LocalStatusBarHint
 import com.eimsound.eimusic.ui.theme.LocalSafeContentSize
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
 import com.eimsound.eimusic.util.bridgeToMutable
-import com.eimsound.eimusic.util.truncate
 import com.eimsound.eimusic.viewmodel.AuthViewModel
 import com.jakewharton.mosaic.layout.*
 import com.jakewharton.mosaic.modifier.Modifier
@@ -18,6 +17,7 @@ import com.jakewharton.mosaic.ui.Alignment
 import com.jakewharton.mosaic.ui.Box
 import com.jakewharton.mosaic.ui.Column
 import com.jakewharton.mosaic.ui.Text
+import com.jakewharton.mosaic.ui.TextOverflow
 
 /**
  * Login dialog overlay.
@@ -54,8 +54,15 @@ fun LoginScreen(
                     is AuthState.Loading -> "Logging in..."
                     is AuthState.Error -> "Error: ${s.message}"
                     is AuthState.Unauthenticated -> "Not logged in"
-                }.truncate(wrapWidth)
-                Text("  $displayName", color = palette.textFg)
+                }
+                Text(
+                    "  $displayName",
+                    modifier = Modifier.widthIn(max = wrapWidth),
+                    color = palette.textFg,
+                    softWrap = true,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
 
                 if (s !is AuthState.Authenticated) {
                     Text(" ", color = palette.textFg)

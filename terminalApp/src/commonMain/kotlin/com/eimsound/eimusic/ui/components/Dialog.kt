@@ -1,7 +1,7 @@
 package com.eimsound.eimusic.ui.components
 
 import androidx.compose.runtime.Composable
-import com.eimsound.eimusic.ui.border
+import com.jakewharton.mosaic.layout.border
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
 import com.eimsound.eimusic.util.spacer
 import com.jakewharton.mosaic.LocalTerminalState

@@ -2,7 +2,7 @@ package com.eimsound.eimusic
 
 import com.eimsound.eimusic.di.initKoin
 import com.eimsound.eimusic.mpris.createMprisManager
-import com.eimsound.eimusic.util.TuiLogger
+import com.eimsound.eimusic.util.initTuiLogging
 import com.eimsound.eimusic.playback.IMediaPlayerController
 import com.eimsound.eimusic.storage.IStorage
 import com.eimsound.eimusic.util.AnyAsciiProcessor
@@ -14,30 +14,11 @@ import com.eimsound.eimusic.viewmodel.PlaylistViewModel
 import com.eimsound.eimusic.viewmodel.PlayerViewModel
 import com.eimsound.eimusic.viewmodel.SearchViewModel
 import com.jakewharton.mosaic.runMosaicBlocking
-import kotlinx.io.buffered
-import kotlinx.io.files.Path
-import kotlinx.io.files.SystemFileSystem
 import kotlin.system.exitProcess
 
 fun main() {
-    val logFile = "/tmp/eimusic.log"
-    TuiLogger.fileWriter = { line ->
-        runCatching {
-            SystemFileSystem.sink(Path(logFile), append = true).buffered().use { sink ->
-                sink.write((line + "\n").encodeToByteArray())
-                sink.flush()
-            }
-        }
-    }
-    TuiLogger.log("App started")
-    TuiLogger.log("Tip: 终端图标需要 Nerd Font 支持 (https://www.nerdfonts.com/font-downloads)")
-    TuiLogger.log("      安装后设为终端字体即可显示  等控制图标")
-    TuiLogger.log("Tip: 专辑封面需要 chafa 支持 (https://hpjansson.org/chafa/)")
-    TuiLogger.log("      Arch: sudo pacman -S chafa")
-    TuiLogger.log("      Debian/Ubuntu: sudo apt install chafa")
-    TuiLogger.log("      Fedora: sudo dnf install chafa")
-    TuiLogger.log("      macOS: brew install chafa")
-    TuiLogger.log("      Windows: winget install chafa")
+    initTuiLogging()
+
     val koinApp = initKoin()
     val koin = koinApp.koin
 
@@ -72,15 +53,13 @@ fun main() {
         koinApp.close()
     }
     val onQuit = {
-        print("[?25h[?1049l")
         release()
         exitProcess(0)
     }
 
-    print("[?1049h[?25l")
-
+    // 终端进入/退出、光标可见性都由 Mosaic 的 runMosaic* 生命周期负责，这里不再手写 ANSI。
     try {
-        runMosaicBlocking {
+        runMosaicBlocking(mouse = true) {
             App(
                 storage = storage,
                 playerViewModel = playerViewModel,
@@ -93,11 +72,9 @@ fun main() {
             )
         }
     } catch (e: Exception) {
-        print("[?25h[?1049l")
         println("FATAL: ${e.message}")
         e.printStackTrace()
     } finally {
-        print("[?25h[?1049l")
         release()
     }
 }

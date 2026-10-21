@@ -1,25 +1,28 @@
 package com.eimsound.eimusic.ui.components
 
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.eimsound.eimusic.keyboard.TrackTableScreenAction
+import com.eimsound.eimusic.keyboard.dispatchTrackTableKey
 import com.eimsound.eimusic.music.Track
 import com.eimsound.eimusic.music.TrackId
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
-import com.eimsound.eimusic.util.padEndVisual
-import com.eimsound.eimusic.util.padStartVisual
-import com.eimsound.eimusic.util.render
-import com.eimsound.eimusic.util.spacer
-import com.eimsound.eimusic.util.truncate
-import com.eimsound.eimusic.util.truncated
-import com.eimsound.eimusic.keyboard.TrackTableScreenAction
-import com.eimsound.eimusic.keyboard.dispatchTrackTableKey
-import com.eimsound.eimusic.keyboard.mapTrackTableKey
-import com.jakewharton.mosaic.layout.*
+import com.jakewharton.mosaic.layout.background
+import com.jakewharton.mosaic.layout.fillMaxWidth
+import com.jakewharton.mosaic.layout.onKeyEvent
+import com.jakewharton.mosaic.layout.width
 import com.jakewharton.mosaic.modifier.Modifier
+import com.jakewharton.mosaic.ui.Alignment
 import com.jakewharton.mosaic.ui.Box
-import com.jakewharton.mosaic.text.SpanStyle
-import com.jakewharton.mosaic.text.buildAnnotatedString
-import com.jakewharton.mosaic.text.withStyle
-import com.jakewharton.mosaic.ui.*
+import com.jakewharton.mosaic.ui.Color
+import com.jakewharton.mosaic.ui.Column
+import com.jakewharton.mosaic.ui.Row
+import com.jakewharton.mosaic.ui.Spacer
+import com.jakewharton.mosaic.ui.Text
+import com.jakewharton.mosaic.ui.TextOverflow
 
 private fun formatDuration(ms: Long): String {
     val totalSec = ms / 1000
@@ -28,6 +31,12 @@ private fun formatDuration(ms: Long): String {
     return "$m:${if (s < 10) "0" else ""}$s"
 }
 
+/**
+ * Track list with aligned columns.
+ *
+ * 列宽交给 Row 的固定宽度槽位，单元格内容由 Text 的 maxLines + Ellipsis 负责截断，
+ * 不再手工按字符宽度 pad/truncate（宽字符与 emoji 由 Mosaic 统一度量）。
+ */
 @Composable
 fun TrackTable(
     tracks: List<Track>,
@@ -49,7 +58,7 @@ fun TrackTable(
     val numWidth = 4
     val nameWidth = (termWidth * 0.40).toInt().coerceIn(15, 40)
     val artistWidth = (termWidth * 0.25).toInt().coerceIn(10, 25)
-    val durWidth = 7
+    val durWidth = 8
 
     Box(Modifier.onKeyEvent { event ->
         if (!enabled) return@onKeyEvent false
@@ -70,16 +79,30 @@ fun TrackTable(
         }
 
         Column {
-            Text(buildAnnotatedString {
-                spacer(2)
-                withStyle(SpanStyle(color = palette.textDimFg)) {
-                    append("#".padEnd(numWidth))
-                    append(1.spacer)
-                    append("Title".padEndVisual(nameWidth))
-                    append("Artist".padEndVisual(artistWidth))
-                    append("Duration".padStart(durWidth))
+            Row(Modifier.fillMaxWidth()) {
+                Spacer(Modifier.width(2))
+                Box(Modifier.width(numWidth)) {
+                    Text("#", Modifier.fillMaxWidth(), color = palette.textDimFg, softWrap = true, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
-            })
+                Spacer(Modifier.width(1))
+                Box(Modifier.width(nameWidth)) {
+                    Text("Title", Modifier.fillMaxWidth(), color = palette.textDimFg, softWrap = true, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                Box(Modifier.width(artistWidth)) {
+                    Text("Artist", Modifier.fillMaxWidth(), color = palette.textDimFg, softWrap = true, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                Box(Modifier.width(durWidth)) {
+                    Text(
+                        "Duration",
+                        Modifier.fillMaxWidth(),
+                        color = palette.textDimFg,
+                        textAlign = Alignment.End,
+                        softWrap = true,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
 
             ListView(
                 items = tracks,
@@ -97,32 +120,60 @@ fun TrackTable(
                         isSelected -> palette.currentMarkerFg
                         else -> Color.Unspecified
                     }
-                    val name = track.name.render().truncate(nameWidth)
-                    val artist = (track.artists?.firstOrNull()?.name ?: "").render().truncate(artistWidth)
-                    val dur = track.duration?.milliseconds?.let { formatDuration(it) }?.padStart(5) ?: "  --:--"
+                    val nameColor = if (isCurrent) palette.highlightFg else palette.textFg
+                    val artist = track.artists?.firstOrNull()?.name ?: ""
+                    val dur = track.duration?.milliseconds?.let { formatDuration(it) } ?: "--:--"
 
-                    Box(
-                        modifier = if (isSelected) Modifier.fillMaxWidth()
-                            .background(palette.selectionBg) else Modifier.fillMaxWidth()
-                    ) {
-                        Text(buildAnnotatedString {
-                            withStyle(SpanStyle(color = markerColor)) { append(marker) }
-                            spacer(1)
-                            withStyle(SpanStyle(color = palette.textDimFg)) {
-                                append(
-                                    "#${
-                                        (i + 1).toString().padEnd(numWidth)
-                                    }"
-                                )
-                            }
-                            withStyle(SpanStyle(color = if (isCurrent) palette.highlightFg else palette.textFg)) {
-                                append(
-                                    name.padEndVisual(nameWidth)
-                                )
-                            }
-                            withStyle(SpanStyle(color = palette.textDimFg)) { append(artist.padEndVisual(artistWidth)) }
-                            withStyle(SpanStyle(color = palette.textDimFg)) { append(dur.padStart(durWidth)) }
-                        })
+                    val rowModifier = if (isSelected) {
+                        Modifier.fillMaxWidth().background(palette.selectionBg)
+                    } else {
+                        Modifier.fillMaxWidth()
+                    }
+                    Row(rowModifier) {
+                        Text(marker, color = markerColor)
+                        Spacer(Modifier.width(1))
+                        Box(Modifier.width(numWidth)) {
+                            Text(
+                                "#${i + 1}",
+                                Modifier.fillMaxWidth(),
+                                color = palette.textDimFg,
+                                softWrap = true,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        Spacer(Modifier.width(1))
+                        Box(Modifier.width(nameWidth)) {
+                            Text(
+                                track.name,
+                                Modifier.fillMaxWidth(),
+                                color = nameColor,
+                                softWrap = true,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        Box(Modifier.width(artistWidth)) {
+                            Text(
+                                artist,
+                                Modifier.fillMaxWidth(),
+                                color = palette.textDimFg,
+                                softWrap = true,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        Box(Modifier.width(durWidth)) {
+                            Text(
+                                dur,
+                                Modifier.fillMaxWidth(),
+                                color = palette.textDimFg,
+                                textAlign = Alignment.End,
+                                softWrap = true,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                     }
                 },
             )

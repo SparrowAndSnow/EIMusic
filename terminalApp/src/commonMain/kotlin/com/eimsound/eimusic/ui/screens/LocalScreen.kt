@@ -4,7 +4,7 @@ import androidx.compose.runtime.*
 import com.eimsound.eimusic.keyboard.LocalFocus
 import com.eimsound.eimusic.keyboard.dispatchLocalSongsKey
 import com.eimsound.eimusic.keyboard.localSongsStatusBarHint
-import com.eimsound.eimusic.ui.border
+import com.jakewharton.mosaic.layout.border
 import com.eimsound.eimusic.ui.components.InputField
 import com.eimsound.eimusic.ui.components.ListView
 import com.eimsound.eimusic.ui.components.LocalStatusBarHint

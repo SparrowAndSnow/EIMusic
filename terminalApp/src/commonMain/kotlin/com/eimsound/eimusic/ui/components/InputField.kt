@@ -1,26 +1,36 @@
 package com.eimsound.eimusic.ui.components
 
-import androidx.compose.runtime.*
-import com.eimsound.eimusic.keyboard.InputFieldScreenAction
-import com.eimsound.eimusic.keyboard.dispatchInputFieldKey
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import com.eimsound.eimusic.ui.theme.LocalSafeContentSize
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
-import com.jakewharton.mosaic.layout.onKeyEvent
-import com.jakewharton.mosaic.layout.widthIn
+import com.jakewharton.mosaic.layout.FocusRequester
+import com.jakewharton.mosaic.layout.fillMaxWidth
+import com.jakewharton.mosaic.layout.focusRequester
+import com.jakewharton.mosaic.layout.MouseEvent
+import com.jakewharton.mosaic.layout.horizontalScroll
+import com.jakewharton.mosaic.layout.onMouseEvent
+import com.jakewharton.mosaic.layout.onPreviewKeyEvent
+import com.jakewharton.mosaic.layout.rememberScrollState
+import com.jakewharton.mosaic.layout.width
 import com.jakewharton.mosaic.modifier.Modifier
 import com.jakewharton.mosaic.text.SpanStyle
 import com.jakewharton.mosaic.text.buildAnnotatedString
 import com.jakewharton.mosaic.text.withStyle
+import com.jakewharton.mosaic.ui.BasicTextField
 import com.jakewharton.mosaic.ui.Box
-import com.jakewharton.mosaic.ui.Column
 import com.jakewharton.mosaic.ui.Text
+import com.jakewharton.mosaic.ui.TextOverflow
 
 /**
- * Text input field with cursor indicator, optional placeholder, line wrapping,
- * and self-managed cursor positioning.
+ * 单行文本输入框，基于 Mosaic 的 [BasicTextField]。
  *
- * Handles its own key events: typing, backspace, arrow keys for cursor movement,
- * Enter triggers [onConfirm], Escape triggers [onCancel].
+ * - 由 BasicTextField 自己负责字素簇光标、IME、粘贴与焦点；不再手工拆行/画光标块。
+ * - 视口宽度随内容增长（最短 30 格，最长到内容区宽度），超出部分横向滚动并自动贴到末尾。
+ * - Enter 触发 [onConfirm]，Escape 触发 [onCancel]；Up/Down/Tab/翻页键在输入期间被吞掉，
+ *   避免误触底层列表导航。
+ * - [enabled] 与 [showCursor] 同时为真时才可编辑并显示光标。
  */
 @Composable
 fun InputField(
@@ -29,115 +39,76 @@ fun InputField(
     placeholder: String = "",
     showCursor: Boolean = true,
     enabled: Boolean = true,
-    maxWidth: Int? = null,
-    maxLines: Int = 3,
     onConfirm: () -> Unit = {},
     onCancel: () -> Unit = {},
 ) {
-    var cursorPosition by remember { mutableIntStateOf(value.length) }
-    if (cursorPosition > value.length) cursorPosition = value.length.coerceAtLeast(0)
+    val palette = LocalTuiColors.current
+    val safeArea = LocalSafeContentSize.current
+    val active = enabled && showCursor
+    val requester = remember { FocusRequester() }
+    val scroll = rememberScrollState()
 
-    // Mosaic drains all pending key events in a single frame before recomposition.
-    // IME-committed characters arrive in rapid succession, so the composable parameter
-    // `value` is stale within the batch. A mutable ref keeps successive handler
-    // invocations chained correctly.
-    val currentValue = remember { mutableStateOf(value) }
-    if (value != currentValue.value) {
-        currentValue.value = value
-        if (cursorPosition > value.length) cursorPosition = value.length.coerceAtLeast(0)
+    // 视口随输入增长；CJK/emoji 用字符数估算可能偏窄，横滚负责兜底。
+    val maxFieldWidth = (safeArea.columns - 4).coerceAtLeast(20)
+    val viewportWidth = (value.length + 2).coerceIn(30, maxFieldWidth)
+
+    LaunchedEffect(active) {
+        if (active) requester.requestFocus()
+    }
+    LaunchedEffect(scroll.maxValue, value) {
+        scroll.scrollTo(scroll.maxValue)
     }
 
-    Box(Modifier.onKeyEvent { event ->
-        if (!enabled) return@onKeyEvent false
-
-        // 计算当前光标所在的行和列（用于上下导航）
-        val tempWrapWidth = maxWidth ?: 60
-        val allLines = splitIntoLines(currentValue.value, tempWrapWidth)
-
-        var currentLineIndex = 0
-        var currentColInLine = cursorPosition
-        var charCount = 0
-        for (i in allLines.indices) {
-            if (charCount + allLines[i].length >= cursorPosition) {
-                currentLineIndex = i
-                currentColInLine = cursorPosition - charCount
-                break
-            }
-            charCount += allLines[i].length
-        }
-
-        val action = dispatchInputFieldKey(event, currentValue.value, { newValue ->
-            currentValue.value = newValue; onValueChange(newValue)
-        }, cursorPosition, { newPosition ->
-            cursorPosition = newPosition
-        }, currentLineIndex, currentColInLine, allLines, tempWrapWidth)
-        
-        when (action) {
-            InputFieldScreenAction.Confirm -> { onConfirm(); true }
-            InputFieldScreenAction.Cancel -> { onCancel(); true }
-            null -> true
-        }
-    }) {
-        val palette = LocalTuiColors.current
-        val safeArea = LocalSafeContentSize.current
-        val termWidth = safeArea.columns
-        val contentWidth = (termWidth * 0.7f).toInt().coerceIn(30, termWidth - 4)
-
-        if (currentValue.value.isEmpty() && placeholder.isNotEmpty()) {
-            val sb = buildAnnotatedString {
-                withStyle(SpanStyle(color = palette.textDimFg)) { append(placeholder) }
-                if (showCursor) withStyle(SpanStyle(color = palette.highlightFg)) { append("█") }
-            }
-            Text(sb, color = palette.textFg)
-            return@Box
-        }
-
-        val wrapWidth = maxWidth ?: contentWidth
-        val lines = splitIntoLines(currentValue.value, wrapWidth)
-        val displayLines = lines.takeLast(maxLines)
-
-        val linesBeforeDisplay = lines.size - displayLines.size
-        val charsBeforeDisplay = lines.take(linesBeforeDisplay).sumOf { it.length }
-        val cursorInDisplay = (cursorPosition - charsBeforeDisplay).coerceIn(0, displayLines.sumOf { it.length.coerceAtLeast(0) })
-
-        var cursorLine = displayLines.lastIndex
-        var cursorCol = displayLines.lastOrNull()?.length ?: 0
-        if (showCursor) {
-            var remaining = cursorInDisplay
-            for (i in displayLines.indices) {
-                if (remaining <= displayLines[i].length) {
-                    cursorLine = i
-                    cursorCol = remaining
-                    break
+    Box(
+        Modifier
+            .width(viewportWidth)
+            .onMouseEvent { event ->
+                // 点击输入框（含占位符区域）把焦点拉回来；按下即响应，不依赖 press/release 跨帧配对。
+                if (active && event.type == MouseEvent.Type.Press && event.button == MouseEvent.Button.Left) {
+                    requester.requestFocus()
+                    true
+                } else {
+                    false
                 }
-                remaining -= displayLines[i].length
             }
+            .onPreviewKeyEvent { event ->
+                if (!active) return@onPreviewKeyEvent false
+                when (event.key) {
+                    "Escape" -> {
+                        onCancel()
+                        true
+                    }
+                    "Enter" -> {
+                        onConfirm()
+                        true
+                    }
+                    // 单行输入期间这些键交给输入框自己吞掉，不冒泡到屏幕级快捷键。
+                    "ArrowUp", "ArrowDown", "PageUp", "PageDown", "Tab" -> true
+                    else -> false
+                }
+            }
+    ) {
+        if (value.isEmpty() && placeholder.isNotEmpty()) {
+            Text(
+                buildAnnotatedString {
+                    // 前导空格让 BasicTextField 的反显光标落在这一格，而不是吃掉占位符首字符。
+                    withStyle(SpanStyle(color = palette.textDimFg)) { append(" $placeholder") }
+                },
+                Modifier.fillMaxWidth(),
+                color = palette.textDimFg,
+                softWrap = true,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
-
-        Column(modifier = Modifier.widthIn(wrapWidth.coerceAtMost(30), (termWidth - 2).coerceAtLeast(1))) {
-            displayLines.forEachIndexed { index, line ->
-                Text(
-                    buildAnnotatedString {
-                        if (showCursor && index == cursorLine) {
-                            withStyle(SpanStyle(color = palette.textFg)) { append(line.take(cursorCol)) }
-                            withStyle(SpanStyle(color = palette.highlightFg)) { append("█") }
-                            withStyle(SpanStyle(color = palette.textFg)) { append(line.drop(cursorCol)) }
-                        } else {
-                            withStyle(SpanStyle(color = palette.textFg)) { append(line) }
-                        }
-                    },
-                    color = palette.textFg,
-                )
-            }
+        Box(Modifier.fillMaxWidth().horizontalScroll(scroll)) {
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                modifier = Modifier.focusRequester(requester),
+                enabled = active,
+                color = palette.textFg,
+            )
         }
     }
 }
-
-/** 将文本按换行符和 [maxWidth] 字符长度分行为多行 */
-fun splitIntoLines(text: String, maxWidth: Int): List<String> =
-    if (maxWidth <= 0 || text.length <= maxWidth && '\n' !in text) listOf(text)
-    else text.lines().flatMap { line ->
-        if (line.length <= maxWidth) listOf(line)
-        else line.chunked(maxWidth)
-    }
-

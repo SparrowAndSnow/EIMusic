@@ -7,20 +7,17 @@ import com.eimsound.eimusic.music.PlayerState
 import com.eimsound.eimusic.ui.Icon
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
 import com.eimsound.eimusic.util.bridgeToMutable
-import com.eimsound.eimusic.util.render
 import com.eimsound.eimusic.util.spacer
-import com.eimsound.eimusic.util.truncated
 import com.eimsound.eimusic.viewmodel.AuthViewModel
-import com.jakewharton.mosaic.LocalTerminalState
 import com.jakewharton.mosaic.layout.background
 import com.jakewharton.mosaic.layout.fillMaxWidth
-import com.jakewharton.mosaic.layout.width
 import com.jakewharton.mosaic.modifier.Modifier
 import com.jakewharton.mosaic.text.SpanStyle
 import com.jakewharton.mosaic.text.buildAnnotatedString
 import com.jakewharton.mosaic.text.withStyle
 import com.jakewharton.mosaic.ui.Box
 import com.jakewharton.mosaic.ui.Text
+import com.jakewharton.mosaic.ui.TextOverflow
 
 @Composable
 fun HeaderBar(
@@ -32,39 +29,14 @@ fun HeaderBar(
     channelLabel: String? = null,
 ) {
     val palette = LocalTuiColors.current
-    val term = LocalTerminalState.current
     val authState by authViewModel.authState.bridgeToMutable()
     val authLabel = when (val s = authState) {
         is AuthState.Authenticated -> s.user.username
         is AuthState.Loading -> "..."
         else -> "login"
     }
-    val playControls = playControlString(state)
     val queue = "${state.queue.size}"
     val themeIcon = if (isDark) Icon.Moon.sym else Icon.Sun.sym
-    val widthRaw = buildString {
-        append(1.spacer)
-        append(title)
-        append(2.spacer)
-        append(themeIcon)
-        append(2.spacer)
-        append(playControls)
-        append(2.spacer)
-        append(Icon.Queue.sym)
-        append(1.spacer)
-        append(queue)
-        append(2.spacer)
-        append(Icon.User.sym)
-        append(1.spacer)
-        append(authLabel)
-        append(2.spacer)
-        if (channelLabel != null) {
-            append(Icon.Together.sym)
-            append(1.spacer)
-            append(channelLabel)
-        }
-    }
-    val lineWidth = widthRaw.render().truncated(term.size.columns).width
 
     Box(modifier = Modifier.fillMaxWidth().background(palette.headerBg)) {
         Text(
@@ -90,8 +62,12 @@ fun HeaderBar(
                     withStyle(SpanStyle(color = palette.highlightFg)) { append(channelLabel) }
                 }
             },
-            Modifier.width(lineWidth),
+            // 终端宽度交给 Text 的 maxLines + Ellipsis 处理：不再手算列宽/截断。
+            Modifier.fillMaxWidth(),
             color = palette.textFg,
+            softWrap = true,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }

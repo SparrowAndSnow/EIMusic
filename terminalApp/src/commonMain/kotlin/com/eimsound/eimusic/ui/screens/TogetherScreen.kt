@@ -7,14 +7,12 @@ import com.eimsound.eimusic.keyboard.togetherStatusBarHint
 import com.eimsound.eimusic.together.ChannelMessage
 import com.eimsound.eimusic.together.ChannelState
 import com.eimsound.eimusic.together.ConnectionState
-import com.eimsound.eimusic.ui.border
 import com.eimsound.eimusic.ui.components.InputField
 import com.eimsound.eimusic.ui.components.ListView
 import com.eimsound.eimusic.ui.components.LocalStatusBarHint
 import com.eimsound.eimusic.ui.theme.LocalSafeContentSize
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
 import com.eimsound.eimusic.util.render
-import com.eimsound.eimusic.util.truncate
 import com.eimsound.eimusic.viewmodel.ChannelViewModel
 import com.jakewharton.mosaic.LocalTerminalState
 import com.jakewharton.mosaic.layout.*
@@ -277,8 +275,8 @@ private fun ChatBubble(
 
     when (message) {
         is ChannelMessage.Text -> {
-            val senderName = message.sender.username.render().truncate(15)
-            val content = message.content.render().truncate(maxContentWidth)
+            val senderName = message.sender.username.render()
+            val content = message.content.render()
             val timestamp = channelViewModel.formatTimestamp(message.timestamp)
             val avatar = message.sender.username.firstOrNull()?.uppercase() ?: "?"
             val align = if (isCurrentUser) Alignment.CenterEnd else Alignment.CenterStart
@@ -293,19 +291,30 @@ private fun ChatBubble(
                         .border(color = borderColor)
                 ) {
                     Column {
-                        Text(buildAnnotatedString {
-                            if (isSelected) withStyle(SpanStyle(color = palette.currentMarkerFg)) { append(selectionPrefix) }
-                            else append(" ")
-                            withStyle(SpanStyle(color = palette.titleFg)) { append("($avatar)") }
-                            append(" ")
-                            withStyle(SpanStyle(color = if (isCurrentUser) palette.highlightFg else palette.textFg)) { append(senderName) }
-                            append("  ")
-                            withStyle(SpanStyle(color = palette.textDimFg)) { append(timestamp) }
-                        })
-                        Text(buildAnnotatedString {
-                            append("  ")
-                            withStyle(SpanStyle(color = palette.textFg)) { append(content) }
-                        })
+                        Row {
+                            Text(selectionPrefix, color = if (isSelected) palette.currentMarkerFg else palette.textDimFg)
+                            Text("($avatar) ", color = palette.titleFg)
+                            Text(
+                                senderName,
+                                Modifier.widthIn(max = 15),
+                                color = if (isCurrentUser) palette.highlightFg else palette.textFg,
+                                softWrap = true,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Text("  ", color = palette.textDimFg)
+                            Text(timestamp, color = palette.textDimFg)
+                        }
+                        Text(
+                            buildAnnotatedString {
+                                append("  ")
+                                withStyle(SpanStyle(color = palette.textFg)) { append(content) }
+                            },
+                            Modifier.widthIn(max = maxContentWidth),
+                            softWrap = true,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
                     }
                 }
             }
@@ -318,12 +327,16 @@ private fun ChatBubble(
                         append("  $sel* ${message.content.render()}")
                     },
                     color = palette.textDimFg,
-                    modifier = Modifier.align(Alignment.Center),
+                    modifier = Modifier.fillMaxWidth().align(Alignment.Center),
+                    textAlign = Alignment.CenterHorizontally,
+                    softWrap = true,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }
         is ChannelMessage.PlayControl -> {
-            val sender = message.sender.username.render().truncate(15)
+            val sender = message.sender.username.render()
             val ev = message.event
             val action = when (ev) {
                 is com.eimsound.eimusic.together.PlayControlEvent.Play -> "▶ played"
@@ -342,7 +355,11 @@ private fun ChatBubble(
                         append("  $sel$sender $action")
                     },
                     color = palette.textDimFg,
-                    modifier = Modifier.align(Alignment.Center),
+                    modifier = Modifier.fillMaxWidth().align(Alignment.Center),
+                    textAlign = Alignment.CenterHorizontally,
+                    softWrap = true,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }

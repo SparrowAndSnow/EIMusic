@@ -5,17 +5,15 @@ import androidx.compose.runtime.getValue
 import com.eimsound.eimusic.music.PlayerState
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
 import com.eimsound.eimusic.util.spacer
-import com.eimsound.eimusic.util.truncated
-import com.jakewharton.mosaic.LocalTerminalState
 import com.jakewharton.mosaic.layout.background
 import com.jakewharton.mosaic.layout.fillMaxWidth
-import com.jakewharton.mosaic.layout.width
 import com.jakewharton.mosaic.modifier.Modifier
 import com.jakewharton.mosaic.text.SpanStyle
 import com.jakewharton.mosaic.text.buildAnnotatedString
 import com.jakewharton.mosaic.text.withStyle
 import com.jakewharton.mosaic.ui.Box
 import com.jakewharton.mosaic.ui.Text
+import com.jakewharton.mosaic.ui.TextOverflow
 
 @Composable
 fun StatusBar(
@@ -23,33 +21,24 @@ fun StatusBar(
     playerState: PlayerState? = null,
 ) {
     val palette = LocalTuiColors.current
-    val term = LocalTerminalState.current
     val hints by LocalStatusBarHint.current
     val tag = statusBarTag(mode)
-
-    val full = if (tag != null) "$hints${2.spacer}$tag" else hints
-    val (visible, lineWidth) = full.truncated(term.size.columns)
-
-    val leftLen = hints.length.coerceAtMost(visible.length)
-    val right = if (tag != null && visible.length > leftLen) {
-        visible.drop(leftLen + 2)
-    } else null
 
     Box(modifier = Modifier.fillMaxWidth().background(palette.statusBarBg)) {
         Text(
             buildAnnotatedString {
-                withStyle(SpanStyle(color = palette.statusBarFg)) {
-                    append(visible.take(leftLen))
-                }
-                if (right != null) {
+                withStyle(SpanStyle(color = palette.statusBarFg)) { append(hints) }
+                if (tag != null) {
                     spacer(2)
-                    withStyle(SpanStyle(color = palette.highlightFg)) {
-                        append(right)
-                    }
+                    withStyle(SpanStyle(color = palette.highlightFg)) { append(tag) }
                 }
             },
-            Modifier.width(lineWidth),
+            // 由 Text 在终端宽度内做单行省略，替代手算 visible/lineWidth。
+            Modifier.fillMaxWidth(),
             color = palette.statusBarFg,
+            softWrap = true,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }

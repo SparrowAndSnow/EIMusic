@@ -38,8 +38,7 @@ import com.jakewharton.mosaic.layout.*
 import com.jakewharton.mosaic.modifier.Modifier
 import com.jakewharton.mosaic.terminal.Terminal
 import com.jakewharton.mosaic.ui.*
-import kotlinx.coroutines.delay
-import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.awaitCancellation
 
 @Composable
 fun App(
@@ -52,7 +51,8 @@ fun App(
     channelViewModel: ChannelViewModel,
     onQuit: () -> Unit = {},
 ) {
-    LaunchedEffect(Unit) { while (true) delay(10_000L.milliseconds) }
+    // runMosaic 是 run-until-idle：没有常驻 effect 时首帧稳定后即返回、进程退出。
+    LaunchedEffect(Unit) { awaitCancellation() }
 
     val localTerminal = LocalTerminalState.current
     val terminalTheme = localTerminal.theme
@@ -103,17 +103,14 @@ fun App(
         )
     }
 
+    // 组合根按无界约束测量，全屏应用必须自己声明画布；尺寸随终端 resize 重组更新。
     Box(
         modifier = Modifier
-            .width(localTerminal.size.columns - 1)
-            .height(localTerminal.size.rows - 1)
+            .size(localTerminal.size.columns, localTerminal.size.rows)
             .background(palette.mainBg)
     ) {
-        val safeRows = (localTerminal.size.rows - 4).coerceIn(5, 200)
-        val safeCols = (localTerminal.size.columns - 2).coerceAtLeast(20)
         CompositionLocalProvider(
             LocalTuiColors provides palette,
-            LocalSafeContentSize provides SafeContentSize(safeCols, safeRows),
             LocalGlobalActions provides appGlobalActions,
         ) {
             Column {
@@ -130,69 +127,74 @@ fun App(
                     onNavigate = { navigate(Route.Login) },
                     channelLabel = channelLabel
                 )
-                Box(Modifier.weight(1f).onKeyEvent { event ->
+                BoxWithConstraints(Modifier.weight(1f).onKeyEvent { event ->
                     dispatchGlobalKey(event, appGlobalActions)
                 }) {
-                    when (currentRoute) {
-                        is Route.Main -> {
-                            MainScreen(
+                    // 内容区真实可用尺寸来自父级约束，不再用终端行列数硬减。
+                    CompositionLocalProvider(
+                        LocalSafeContentSize provides SafeContentSize(maxWidth, maxHeight),
+                    ) {
+                        when (currentRoute) {
+                            is Route.Main -> {
+                                MainScreen(
+                                    playerState = playerState,
+                                    playerViewModel = playerViewModel,
+                                    onOpenHelp = { navigate(Route.Help) },
+                                    onOpenSearch = { navigate(Route.Search()) },
+                                    onOpenLogin = { navigate(Route.Login) },
+                                    onOpenLogs = { navigate(Route.LogViewer) },
+                                    onOpenPlaylists = { navigate(Route.Playlists) },
+                                    onOpenLocalSongs = { navigate(Route.LocalSongs) },
+                                    onOpenTogether = { navigate(Route.Together) },
+                                    onOpenQueue = { navigate(Route.Queue) },
+                                    onToggleTheme = {
+                                        isDark = !isDark
+                                        storage.save(Settings::darkMode, isDark)
+                                    },
+                                    onQuit = onQuit,
+                                )
+                            }
+
+                            is Route.Help -> HelpScreen(onGoBack = goBack)
+
+                            is Route.Search -> SearchScreen(
+                                searchViewModel = searchViewModel,
+                                playerViewModel = playerViewModel,
+                                onGoBack = goBack,
+                            )
+
+                            is Route.Login -> LoginScreen(
+                                authViewModel = authViewModel,
+                                onGoBack = goBack,
+                            )
+
+                            is Route.LogViewer -> LogViewerScreen(
+                                onGoBack = goBack,
+                            )
+
+                            is Route.Playlists -> PlaylistScreen(
+                                playlistViewModel = playlistViewModel,
+                                playerViewModel = playerViewModel,
+                                onGoBack = goBack,
+                            )
+
+                            is Route.LocalSongs -> LocalScreen(
+                                localViewModel = localViewModel,
+                                playerViewModel = playerViewModel,
+                                onGoBack = goBack,
+                            )
+
+                            is Route.Together -> TogetherScreen(
+                                channelViewModel = channelViewModel,
+                                onGoBack = goBack,
+                            )
+
+                            is Route.Queue -> QueueScreen(
                                 playerState = playerState,
                                 playerViewModel = playerViewModel,
-                                onOpenHelp = { navigate(Route.Help) },
-                                onOpenSearch = { navigate(Route.Search()) },
-                                onOpenLogin = { navigate(Route.Login) },
-                                onOpenLogs = { navigate(Route.LogViewer) },
-                                onOpenPlaylists = { navigate(Route.Playlists) },
-                                onOpenLocalSongs = { navigate(Route.LocalSongs) },
-                                onOpenTogether = { navigate(Route.Together) },
-                                onOpenQueue = { navigate(Route.Queue) },
-                                onToggleTheme = {
-                                    isDark = !isDark
-                                    storage.save(Settings::darkMode, isDark)
-                                },
-                                onQuit = onQuit,
+                                onGoBack = goBack,
                             )
                         }
-
-                        is Route.Help -> HelpScreen(onGoBack = goBack)
-
-                        is Route.Search -> SearchScreen(
-                            searchViewModel = searchViewModel,
-                            playerViewModel = playerViewModel,
-                            onGoBack = goBack,
-                        )
-
-                        is Route.Login -> LoginScreen(
-                            authViewModel = authViewModel,
-                            onGoBack = goBack,
-                        )
-
-                        is Route.LogViewer -> LogViewerScreen(
-                            onGoBack = goBack,
-                        )
-
-                        is Route.Playlists -> PlaylistScreen(
-                            playlistViewModel = playlistViewModel,
-                            playerViewModel = playerViewModel,
-                            onGoBack = goBack,
-                        )
-
-                        is Route.LocalSongs -> LocalScreen(
-                            localViewModel = localViewModel,
-                            playerViewModel = playerViewModel,
-                            onGoBack = goBack,
-                        )
-
-                        is Route.Together -> TogetherScreen(
-                            channelViewModel = channelViewModel,
-                            onGoBack = goBack,
-                        )
-
-                        is Route.Queue -> QueueScreen(
-                            playerState = playerState,
-                            playerViewModel = playerViewModel,
-                            onGoBack = goBack,
-                        )
                     }
                 }
 
