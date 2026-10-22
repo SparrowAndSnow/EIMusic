@@ -48,7 +48,7 @@ fun QueueScreen(
         },
     ) {
         Column {
-            Text(" Queue  (press 'o' to hide)", color = palette.titleFg)
+            Text(" Queue", color = palette.titleFg)
 
             TrackTable(
                 tracks = playerState.queue,

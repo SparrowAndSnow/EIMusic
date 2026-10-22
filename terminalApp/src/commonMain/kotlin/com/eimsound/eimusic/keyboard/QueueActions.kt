@@ -11,7 +11,7 @@ sealed interface QueueAction : KeyAction {
 val queueKeyBindings: List<KeyBinding<QueueAction>> = listOf(
     KeyBinding(listOf("d"), "d", QueueAction.RemoveTrack, "Remove"),
     KeyBinding(listOf("c"), "c", QueueAction.ClearQueue, "Clear"),
-    KeyBinding(listOf("o", "Escape"), "Esc", QueueAction.GoBack, "Back"),
+    KeyBinding(listOf("Escape"), "Esc", QueueAction.GoBack, "Back"),
 )
 
 private val queueKeyMap: Map<String, QueueAction> = buildMap {

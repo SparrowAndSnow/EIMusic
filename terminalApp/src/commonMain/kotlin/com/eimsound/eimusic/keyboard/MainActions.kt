@@ -17,11 +17,7 @@ sealed interface MainAction : KeyAction {
     data object SeekBackward : MainAction
     data object VolumeUp : MainAction
     data object VolumeDown : MainAction
-    data object ToggleQueue : MainAction
     data object ToggleTheme : MainAction
-    data object OpenPlaylists : MainAction
-    data object OpenLocalSongs : MainAction
-    data object OpenTogether : MainAction
     data object Quit : MainAction
 }
 
@@ -45,10 +41,6 @@ val mainKeyBindings: List<KeyBinding<MainAction>> = listOf(
     KeyBinding(listOf("t"), "t", MainAction.ToggleTheme, "Toggle theme"),
     KeyBinding(listOf("l"), "l", MainAction.OpenLogin, "Login"),
     KeyBinding(listOf("f"), "f", MainAction.OpenSearch, "Search music"),
-    KeyBinding(listOf("o"), "o", MainAction.ToggleQueue, "Toggle queue view"),
-    KeyBinding(listOf("p"), "p", MainAction.OpenPlaylists, "My playlists"),
-    KeyBinding(listOf("s"), "s", MainAction.OpenLocalSongs, "Local songs"),
-    KeyBinding(listOf("y"), "y", MainAction.OpenTogether, "Together"),
     KeyBinding(listOf("`"), "`", MainAction.OpenLogs, "View logs"),
     KeyBinding(listOf("q"), "q", MainAction.Quit, "Quit"),
 )
@@ -91,10 +83,6 @@ fun mainStatusBarHint(): String {
         MainAction.ToggleHelp,
         MainAction.PlayPause, MainAction.Previous, MainAction.Next,
         MainAction.OpenSearch,
-        MainAction.ToggleQueue,
-        MainAction.OpenPlaylists,
-        MainAction.OpenLocalSongs,
-        MainAction.OpenTogether,
         MainAction.Quit,
     )
     val labels: Map<MainAction, String> = mapOf(
@@ -103,10 +91,6 @@ fun mainStatusBarHint(): String {
         MainAction.Previous to "Prev",
         MainAction.Next to "Next",
         MainAction.OpenSearch to "Search",
-        MainAction.ToggleQueue to "Queue",
-        MainAction.OpenPlaylists to "Playlists",
-        MainAction.OpenLocalSongs to "Local",
-        MainAction.OpenTogether to "Together",
         MainAction.Quit to "Quit",
     )
     return mainKeyBindings
@@ -122,15 +106,11 @@ fun dispatchMainKey(
     event: KeyEvent,
     globalActions: GlobalKeyActions,
     onToggleHelp: () -> Unit,
-    onOpenQueue: () -> Unit,
     onOpenSearch: () -> Unit,
     onOpenLogin: () -> Unit,
     onOpenLogs: () -> Unit,
     onToggleTheme: () -> Unit,
     onQuit: () -> Unit,
-    onOpenPlaylists: () -> Unit = {},
-    onOpenLocalSongs: () -> Unit = {},
-    onOpenTogether: () -> Unit = {},
 ): Boolean {
     val action = if (event.ctrl) mapCtrlKey(event.key) else mapMainKey(event.key)
     if (action == null) return false
@@ -141,7 +121,6 @@ fun dispatchMainKey(
         MainAction.Previous -> globalActions.onPrevious()
         MainAction.TogglePlayMode -> globalActions.onTogglePlayMode()
         MainAction.ToggleHelp -> onToggleHelp()
-        MainAction.ToggleQueue -> onOpenQueue()
         MainAction.OpenSearch -> onOpenSearch()
         MainAction.OpenLogin -> onOpenLogin()
         MainAction.OpenLogs -> onOpenLogs()
@@ -150,9 +129,6 @@ fun dispatchMainKey(
         MainAction.VolumeUp -> globalActions.onVolumeUp()
         MainAction.VolumeDown -> globalActions.onVolumeDown()
         MainAction.ToggleTheme -> onToggleTheme()
-        MainAction.OpenPlaylists -> onOpenPlaylists()
-        MainAction.OpenLocalSongs -> onOpenLocalSongs()
-        MainAction.OpenTogether -> onOpenTogether()
         MainAction.Quit -> onQuit()
     }
     return true

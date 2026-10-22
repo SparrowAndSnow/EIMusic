@@ -100,7 +100,6 @@ fun App(
             onSeekForward = { playerViewModel.seekRelative(5000L) },
             onSeekBackward = { playerViewModel.seekRelative(-5000L) },
             onTogglePlayMode = { playerViewModel.togglePlayMode() },
-            onOpenQueue = { if (currentRoute !is Route.Queue) navigate(Route.Queue) },
             onOpenSearch = { if (currentRoute !is Route.Search) navigate(Route.Search()) },
         )
     }
@@ -116,10 +115,6 @@ fun App(
                     onOpenSearch = { navigate(Route.Search()) },
                     onOpenLogin = { navigate(Route.Login) },
                     onOpenLogs = { navigate(Route.LogViewer) },
-                    onOpenPlaylists = { navigate(Route.Playlists) },
-                    onOpenLocalSongs = { navigate(Route.LocalSongs) },
-                    onOpenTogether = { navigate(Route.Together) },
-                    onOpenQueue = { navigate(Route.Queue) },
                     onToggleTheme = {
                         isDark = !isDark
                         storage.save(Settings::darkMode, isDark)

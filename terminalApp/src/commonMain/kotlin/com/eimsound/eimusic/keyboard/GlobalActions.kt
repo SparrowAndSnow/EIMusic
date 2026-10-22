@@ -29,7 +29,6 @@ class GlobalKeyActions(
     val onSeekForward: () -> Unit = {},
     val onSeekBackward: () -> Unit = {},
     val onTogglePlayMode: () -> Unit = {},
-    val onOpenQueue: () -> Unit = {},
     val onOpenSearch: () -> Unit = {},
 )
 
@@ -50,7 +49,6 @@ fun dispatchGlobalKey(event: KeyEvent, actions: GlobalKeyActions): Boolean {
         MainAction.SeekBackward -> { actions.onSeekBackward(); true }
         MainAction.VolumeUp -> { actions.onVolumeUp(); true }
         MainAction.VolumeDown -> { actions.onVolumeDown(); true }
-        MainAction.ToggleQueue -> { actions.onOpenQueue(); true }
         MainAction.OpenSearch -> { actions.onOpenSearch(); true }
         else -> false
     }
