@@ -11,8 +11,7 @@ import com.eimsound.eimusic.storage.get
 import com.eimsound.eimusic.storage.save
 import com.eimsound.eimusic.ui.OverlayHost
 import com.eimsound.eimusic.ui.components.HeaderBar
-import com.eimsound.eimusic.ui.components.TabBar
-import com.eimsound.eimusic.ui.components.TabItem
+import com.eimsound.eimusic.ui.components.LocalStatusBarHint
 import com.eimsound.eimusic.ui.screens.HelpScreen
 import com.eimsound.eimusic.ui.screens.LocalScreen
 import com.eimsound.eimusic.ui.screens.LogViewerScreen
@@ -67,6 +66,7 @@ fun App(
         )
     }
     val palette = remember(isDark) { if (isDark) TuiColors.dark() else TuiColors.light() }
+    val statusHint by LocalStatusBarHint.current
 
     var backStack by remember { mutableStateOf(listOf<Route>(Route.Main)) }
     val playerState by playerViewModel.state.bridgeToMutable()
@@ -229,17 +229,36 @@ fun App(
                 }
 
                 // 底部页面 tabs；点击切换时回到该页面的根路由（同时关闭弹窗）。
-                TabBar(
-                    tabs = tabRoutes.map { (label, route) ->
-                        TabItem(
-                            label = label,
-                            selected = activeTabRoute == route,
-                            onClick = {
-                                if (activeTabRoute != route) {
-                                    backStack = listOf(route)
-                                }
-                            },
-                        )
+                TabRow(
+                    tabs = tabRoutes.map { it.first },
+                    selectedIndex = tabRoutes.indexOfFirst { it.second == activeTabRoute },
+                    onSelect = { index ->
+                        val route = tabRoutes[index].second
+                        if (overlayRoute || activeTabRoute != route) {
+                            backStack = listOf(route)
+                        }
+                    },
+                    colors = TabRowColors(
+                        container = palette.statusBarBg,
+                        selectedBackground = palette.selectionBg,
+                        selectedContent = palette.highlightFg,
+                        content = palette.statusBarFg,
+                        hoverBackground = palette.hoverBg,
+                        divider = palette.dimBorderFg,
+                    ),
+                    trailing = if (statusHint.isBlank()) {
+                        null
+                    } else {
+                        {
+                            Text(
+                                "  $statusHint",
+                                modifier = Modifier.weight(1f),
+                                color = palette.statusBarFg,
+                                softWrap = false,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                     },
                 )
             }
