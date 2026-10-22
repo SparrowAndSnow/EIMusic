@@ -13,8 +13,10 @@ import com.eimsound.eimusic.viewmodel.LocalViewModel
 import com.eimsound.eimusic.viewmodel.PlaylistViewModel
 import com.eimsound.eimusic.viewmodel.PlayerViewModel
 import com.eimsound.eimusic.viewmodel.SearchViewModel
-import com.jakewharton.mosaic.runMosaicBlocking
-import kotlin.system.exitProcess
+import com.jakewharton.mosaic.runMosaic
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 fun main() {
     initTuiLogging()
@@ -52,24 +54,29 @@ fun main() {
         channelViewModel.release()
         koinApp.close()
     }
-    val onQuit = {
-        release()
-        exitProcess(0)
-    }
+    // 退出不能走 exitProcess：那会跳过 Mosaic 的 withTerminal/withFinalizationHook，
+    // 备用屏、鼠标和 raw mode 都来不及恢复。改为取消 composition 所在协程，让库正常收尾。
+    var quitJob: Job? = null
+    val requestQuit: () -> Unit = { quitJob?.cancel() }
 
-    // 终端进入/退出、光标可见性都由 Mosaic 的 runMosaic* 生命周期负责，这里不再手写 ANSI。
     try {
-        runMosaicBlocking(mouse = true) {
-            App(
-                storage = storage,
-                playerViewModel = playerViewModel,
-                searchViewModel = searchViewModel,
-                authViewModel = authViewModel,
-                playlistViewModel = playlistViewModel,
-                localViewModel = localViewModel,
-                channelViewModel = channelViewModel,
-                onQuit = onQuit,
-            )
+        runBlocking {
+            val job = launch {
+                runMosaic(mouse = true, alternateScreen = true) {
+                    App(
+                        storage = storage,
+                        playerViewModel = playerViewModel,
+                        searchViewModel = searchViewModel,
+                        authViewModel = authViewModel,
+                        playlistViewModel = playlistViewModel,
+                        localViewModel = localViewModel,
+                        channelViewModel = channelViewModel,
+                        onQuit = requestQuit,
+                    )
+                }
+            }
+            quitJob = job
+            job.join()
         }
     } catch (e: Exception) {
         println("FATAL: ${e.message}")

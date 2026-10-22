@@ -3,6 +3,7 @@ package com.eimsound.eimusic.ui.components
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.eimsound.eimusic.keyboard.ListViewScreenAction
@@ -10,20 +11,27 @@ import com.eimsound.eimusic.keyboard.dispatchListViewKey
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
 import com.eimsound.eimusic.util.spacer
 import com.jakewharton.mosaic.layout.MouseEvent
+import com.jakewharton.mosaic.layout.background
 import com.jakewharton.mosaic.layout.fillMaxWidth
+import com.jakewharton.mosaic.layout.hoverable
 import com.jakewharton.mosaic.layout.onKeyEvent
 import com.jakewharton.mosaic.layout.onMouseEvent
 import com.jakewharton.mosaic.layout.width
 import com.jakewharton.mosaic.modifier.Modifier
 import com.jakewharton.mosaic.ui.Box
+import com.jakewharton.mosaic.ui.Color
 import com.jakewharton.mosaic.ui.Column
 import com.jakewharton.mosaic.ui.Row
 import com.jakewharton.mosaic.ui.Spacer
 import com.jakewharton.mosaic.ui.Text
 import com.jakewharton.mosaic.ui.TextOverflow
+import kotlin.time.Clock
 
 /** 滚轮一次移动的选择行数。 */
 private const val WheelStep = 3
+
+/** 双击判定窗口（毫秒）。 */
+private const val DoubleClickMillis = 400L
 
 @Composable
 fun <T> ListView(
@@ -37,6 +45,9 @@ fun <T> ListView(
     onSelectedChange: (Int) -> Unit = {},
 ) {
     var selectedIndex by remember(items) { mutableIntStateOf(0) }
+    var hoveredIndex by remember { mutableIntStateOf(-1) }
+    var lastClickRow by remember { mutableIntStateOf(-1) }
+    var lastClickAt by remember { mutableLongStateOf(0L) }
     val palette = LocalTuiColors.current
 
     val scrollOffset = remember(selectedIndex, visibleLines, items.size) {
@@ -67,6 +78,7 @@ fun <T> ListView(
                         if (next != selectedIndex) {
                             selectedIndex = next
                             onSelectedChange(next)
+                            hoveredIndex = -1 // 行整体移动后旧的 hover 行号已失效
                         }
                         true
                     }
@@ -86,17 +98,33 @@ fun <T> ListView(
             for (i in scrollOffset until end) {
                 val item = items[i]
                 val isSelected = i == selectedIndex
+                val hovered = hoveredIndex == i
                 Box(
-                    Modifier.fillMaxWidth().onMouseEvent { event ->
-                        if (enabled && event.type == MouseEvent.Type.Press && event.button == MouseEvent.Button.Left) {
-                            selectedIndex = i
-                            onSelectedChange(i)
-                            onConfirm(item)
-                            true
-                        } else {
-                            false
+                    Modifier
+                        .fillMaxWidth()
+                        .background(if (hovered && !isSelected) palette.hoverBg else Color.Unspecified)
+                        .hoverable { inside ->
+                            if (inside) {
+                                hoveredIndex = i
+                            } else if (hoveredIndex == i) {
+                                hoveredIndex = -1
+                            }
                         }
-                    }
+                        .onMouseEvent { event ->
+                            if (enabled && event.type == MouseEvent.Type.Press && event.button == MouseEvent.Button.Left) {
+                                // 单击只负责选中；同一行短时间内再次按下才算双击并触发确认。
+                                val now = Clock.System.now().toEpochMilliseconds()
+                                val doubleClick = i == lastClickRow && now - lastClickAt in 0L..DoubleClickMillis
+                                selectedIndex = i
+                                onSelectedChange(i)
+                                if (doubleClick) onConfirm(item)
+                                lastClickRow = i
+                                lastClickAt = now
+                                true
+                            } else {
+                                false
+                            }
+                        }
                 ) {
                     render(item, i, isSelected)
                 }
