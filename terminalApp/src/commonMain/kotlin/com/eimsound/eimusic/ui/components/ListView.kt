@@ -13,10 +13,10 @@ import com.eimsound.eimusic.ui.LocalUiInputEnabled
 import com.eimsound.eimusic.keyboard.dispatchListViewKey
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
 import com.eimsound.eimusic.util.spacer
-import com.jakewharton.mosaic.layout.ClickTracker
 import com.jakewharton.mosaic.layout.MomentumScrollState
 import com.jakewharton.mosaic.layout.MouseEvent
 import com.jakewharton.mosaic.layout.background
+import com.jakewharton.mosaic.layout.clickable
 import com.jakewharton.mosaic.layout.fillMaxWidth
 import com.jakewharton.mosaic.layout.hoverable
 import com.jakewharton.mosaic.layout.onKeyEvent
@@ -31,7 +31,6 @@ import com.jakewharton.mosaic.ui.Spacer
 import com.jakewharton.mosaic.ui.Text
 import com.jakewharton.mosaic.ui.TextOverflow
 import kotlin.math.roundToInt
-import kotlin.time.Clock
 import kotlinx.coroutines.flow.first
 
 /** 滚轮一次移动的选择行数。 */
@@ -52,7 +51,6 @@ fun <T> ListView(
     var selectedIndex by remember(items) { mutableIntStateOf(0) }
     val scroll = remember(items) { MomentumScrollState() }
     var hoveredIndex by remember { mutableIntStateOf(-1) }
-    val clickTracker = remember { ClickTracker() }
     val uiInput = LocalUiInputEnabled.current
     val palette = LocalTuiColors.current
 
@@ -151,20 +149,16 @@ fun <T> ListView(
                                 hoveredIndex = -1
                             }
                         }
-                        .onMouseEvent { event ->
-                            if (uiInput && enabled && event.type == MouseEvent.Type.Press && event.button == MouseEvent.Button.Left) {
-                                // 单击只负责选中；同一行短时间内再次按下才算双击并触发确认。
-                                val now = Clock.System.now().toEpochMilliseconds()
-                                val doubleClick = clickTracker.press(i, now)
+                        // 单击只负责选中；同一行 400ms 内再次点击才触发确认。
+                        .clickable(
+                            enabled = uiInput && enabled,
+                            onDoubleClick = { onConfirm(item) },
+                            onClick = {
                                 selectedIndex = i
                                 scroll.jumpTo(i)
                                 onSelectedChange(i)
-                                if (doubleClick) onConfirm(item)
-                                true
-                            } else {
-                                false
-                            }
-                        }
+                            },
+                        )
                 ) {
                     render(item, i, isSelected)
                 }

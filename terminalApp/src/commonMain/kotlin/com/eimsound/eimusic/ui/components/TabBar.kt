@@ -6,11 +6,10 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
-import com.jakewharton.mosaic.layout.MouseEvent
 import com.jakewharton.mosaic.layout.background
+import com.jakewharton.mosaic.layout.clickable
 import com.jakewharton.mosaic.layout.fillMaxWidth
 import com.jakewharton.mosaic.layout.hoverable
-import com.jakewharton.mosaic.layout.onMouseEvent
 import com.jakewharton.mosaic.layout.padding
 import com.jakewharton.mosaic.modifier.Modifier
 import com.jakewharton.mosaic.ui.Box
@@ -52,14 +51,7 @@ fun TabBar(
                     .hoverable { inside ->
                         hovered = if (inside) index else if (hovered == index) -1 else hovered
                     }
-                    .onMouseEvent { event ->
-                        if (event.type == MouseEvent.Type.Press && event.button == MouseEvent.Button.Left) {
-                            tab.onClick()
-                            true
-                        } else {
-                            false
-                        }
-                    }
+                    .clickable(onClick = tab.onClick)
                     .padding(horizontal = 1)
             ) {
                 Text(
