@@ -5,7 +5,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -13,6 +13,8 @@ import androidx.compose.runtime.withFrameNanos
 import com.eimsound.eimusic.keyboard.ListViewScreenAction
 import com.eimsound.eimusic.ui.LocalUiInputEnabled
 import com.eimsound.eimusic.keyboard.dispatchListViewKey
+import com.eimsound.eimusic.ui.input.ClickTracker
+import com.eimsound.eimusic.ui.input.MomentumScroll
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
 import com.eimsound.eimusic.util.spacer
 import com.jakewharton.mosaic.layout.MouseEvent
@@ -30,8 +32,6 @@ import com.jakewharton.mosaic.ui.Row
 import com.jakewharton.mosaic.ui.Spacer
 import com.jakewharton.mosaic.ui.Text
 import com.jakewharton.mosaic.ui.TextOverflow
-import kotlin.math.abs
-import kotlin.math.exp
 import kotlin.math.roundToInt
 import kotlin.time.Clock
 import kotlinx.coroutines.flow.first
@@ -39,17 +39,6 @@ import kotlinx.coroutines.flow.first
 /** 滚轮一次移动的选择行数。 */
 private const val WheelStep = 3
 
-/** 双击判定窗口（毫秒）。 */
-private const val DoubleClickMillis = 400L
-
-/** 滚动摩擦（1/s）：速度按 e^(-friction*dt) 衰减，越大停得越快。 */
-private const val ScrollFriction = 3f
-
-/** 滚轮速度上限（行/秒）。 */
-private const val MaxScrollSpeed = 60f
-
-/** 低于这个速度直接停住，避免无限小数抖动。 */
-private const val MinScrollSpeed = 0.5f
 
 @Composable
 fun <T> ListView(
@@ -63,12 +52,12 @@ fun <T> ListView(
     onSelectedChange: (Int) -> Unit = {},
 ) {
     var selectedIndex by remember(items) { mutableIntStateOf(0) }
+    val scroll = remember(items) { MomentumScroll() }
     var visualPos by remember(items) { mutableFloatStateOf(0f) }
-    var scrollVelocity by remember(items) { mutableFloatStateOf(0f) }
+    var animating by remember(items) { mutableStateOf(false) }
     var hoveredIndex by remember { mutableIntStateOf(-1) }
+    val clickTracker = remember { ClickTracker() }
     val uiInput = LocalUiInputEnabled.current
-    var lastClickRow by remember { mutableIntStateOf(-1) }
-    var lastClickAt by remember { mutableLongStateOf(0L) }
     val palette = LocalTuiColors.current
 
     // 动画期间窗口跟着小数位置移动，行内容每跨过一行才真正重绘，看起来是逐行平滑滚动。
@@ -80,36 +69,28 @@ fun <T> ListView(
 
     LaunchedEffect(items) {
         while (true) {
-            // 空闲时不占帧；有速度时才按帧推进。
-            snapshotFlow { scrollVelocity }.first { it != 0f }
+            // 空闲时不占帧；有惯性时才按帧推进。
+            snapshotFlow { animating }.first { it }
             var lastNanos = 0L
-            while (scrollVelocity != 0f) {
+            while (animating) {
                 withFrameNanos { now ->
                     if (items.isEmpty()) {
-                        scrollVelocity = 0f
+                        scroll.jumpTo(0)
+                        visualPos = 0f
+                        animating = false
                         return@withFrameNanos
                     }
                     if (lastNanos != 0L) {
-                        val dt = ((now - lastNanos) / 1_000_000_000.0).toFloat().coerceIn(0f, 0.05f)
-                        val max = items.lastIndex.toFloat()
-                        var next = visualPos + scrollVelocity * dt
-                        if (next <= 0f) {
-                            next = 0f
-                            scrollVelocity = 0f
-                        }
-                        if (next >= max) {
-                            next = max
-                            scrollVelocity = 0f
-                        }
-                        visualPos = next
-                        val index = next.roundToInt().coerceIn(0, items.lastIndex)
+                        val dt = (now - lastNanos) / 1_000_000_000.0.toFloat()
+                        val moving = scroll.advance(dt, items.lastIndex.toFloat())
+                        visualPos = scroll.position
+                        val index = scroll.position.roundToInt().coerceIn(0, items.lastIndex)
                         if (index != selectedIndex) {
                             selectedIndex = index
                             onSelectedChange(index)
                         }
-                        scrollVelocity *= exp(-ScrollFriction * dt)
-                        if (abs(scrollVelocity) < MinScrollSpeed) scrollVelocity = 0f
                         hoveredIndex = -1
+                        if (!moving) animating = false
                     }
                     lastNanos = now
                 }
@@ -127,8 +108,9 @@ fun <T> ListView(
                         selectedIndex,
                         { index ->
                             selectedIndex = index
+                            scroll.jumpTo(index)
                             visualPos = index.toFloat()
-                            scrollVelocity = 0f
+                            animating = false
                             onSelectedChange(index)
                         },
                         items.lastIndex,
@@ -147,8 +129,8 @@ fun <T> ListView(
                     MouseEvent.Button.WheelUp, MouseEvent.Button.WheelDown -> {
                         // 一次滚轮给一个约 WheelStep 行的初速度，之后由摩擦衰减形成渐停。
                         val rows = if (event.button == MouseEvent.Button.WheelUp) -WheelStep else WheelStep
-                        scrollVelocity = (scrollVelocity + rows * ScrollFriction)
-                            .coerceIn(-MaxScrollSpeed, MaxScrollSpeed)
+                        scroll.impulse(rows)
+                        animating = true
                         hoveredIndex = -1
                         true
                     }
@@ -184,14 +166,13 @@ fun <T> ListView(
                             if (uiInput && enabled && event.type == MouseEvent.Type.Press && event.button == MouseEvent.Button.Left) {
                                 // 单击只负责选中；同一行短时间内再次按下才算双击并触发确认。
                                 val now = Clock.System.now().toEpochMilliseconds()
-                                val doubleClick = i == lastClickRow && now - lastClickAt in 0L..DoubleClickMillis
+                                val doubleClick = clickTracker.press(i, now)
                                 selectedIndex = i
+                                scroll.jumpTo(i)
                                 visualPos = i.toFloat()
-                                scrollVelocity = 0f
+                                animating = false
                                 onSelectedChange(i)
                                 if (doubleClick) onConfirm(item)
-                                lastClickRow = i
-                                lastClickAt = now
                                 true
                             } else {
                                 false
