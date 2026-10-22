@@ -8,12 +8,10 @@ import com.eimsound.eimusic.music.PlayerState
 import com.eimsound.eimusic.together.PlayState
 import com.eimsound.eimusic.util.bridgeToMutable
 import com.eimsound.eimusic.ui.components.AlbumArt
-import com.eimsound.eimusic.ui.components.LocalStatusBarHint
 import com.eimsound.eimusic.ui.components.PlayerControls
+import com.eimsound.eimusic.ui.components.ScreenFrame
 import com.eimsound.eimusic.ui.components.ProgressBar
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
-import com.eimsound.eimusic.ui.LocalUiInputEnabled
-import com.eimsound.eimusic.ui.uiKeyEvent
 import com.eimsound.eimusic.util.render
 import com.eimsound.eimusic.util.spacer
 import com.eimsound.eimusic.viewmodel.PlayerViewModel
@@ -38,13 +36,9 @@ fun MainScreen(
 ) {
     val displayPos by playerViewModel.displayPosition.bridgeToMutable()
     val globalActions = LocalGlobalActions.current
-    val statusBarHint = LocalStatusBarHint.current
-    val uiActive = LocalUiInputEnabled.current
-    LaunchedEffect(uiActive) {
-        statusBarHint.value = mainStatusBarHint()
-    }
-    Box(
-        modifier = Modifier.fillMaxSize().uiKeyEvent { event ->
+    ScreenFrame(
+        hint = mainStatusBarHint(),
+        onKey = { event ->
             dispatchMainKey(
                 event = event,
                 globalActions = globalActions,
@@ -55,7 +49,7 @@ fun MainScreen(
                 onToggleTheme = onToggleTheme,
                 onQuit = onQuit,
             )
-        }
+        },
     ) {
         PlayerCenter(playerState, displayPos)
     }
@@ -77,7 +71,7 @@ private fun PlayerCenter(playerState: PlayerState, displayPos: Long) {
                 Text("♪", color = palette.textDimFg)
                 Text("No track playing", color = palette.textDimFg)
                 Spacer(Modifier.height(2))
-                Text("Press 'f' to search  •  'o' for queue", color = palette.textDimFg)
+                Text("Press 'f' to search  •  1-5 switch tabs", color = palette.textDimFg)
             } else {
                 // ── Album art (roughly square considering font 1:2 ratio) ──
                 val artWidth = contentWidth.coerceAtMost(40)

@@ -7,12 +7,10 @@ import com.eimsound.eimusic.keyboard.playlistStatusBarHint
 import com.eimsound.eimusic.music.MediaList
 import com.eimsound.eimusic.ui.components.InputField
 import com.eimsound.eimusic.ui.components.ListView
-import com.eimsound.eimusic.ui.components.LocalStatusBarHint
+import com.eimsound.eimusic.ui.components.ScreenFrame
 import com.eimsound.eimusic.ui.components.TrackTable
 import com.eimsound.eimusic.ui.theme.LocalSafeContentSize
-import com.eimsound.eimusic.ui.LocalUiInputEnabled
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
-import com.eimsound.eimusic.ui.uiKeyEvent
 import com.eimsound.eimusic.util.spacer
 import com.eimsound.eimusic.viewmodel.PlaylistViewModel
 import com.eimsound.eimusic.viewmodel.PlayerViewModel
@@ -34,20 +32,17 @@ fun PlaylistScreen(
     val state = playlistViewModel.state.collectAsState().value
     val termWidth = safeArea.columns
     val termHeight = safeArea.rows
-    val statusBarHint = LocalStatusBarHint.current
     val visibleLines = (termHeight - 4).coerceAtLeast(1)
 
     var focus by remember { mutableStateOf(PlaylistFocus.List) }
-    val uiActive = LocalUiInputEnabled.current
-    LaunchedEffect(uiActive, focus) {
-        statusBarHint.value = playlistStatusBarHint(focus)
-    }
     var playlistIndex by remember { mutableIntStateOf(0) }
     var trackIndex by remember { mutableIntStateOf(0) }
     var showTrackList by remember { mutableStateOf(false) }
 
-    Box(modifier = Modifier.fillMaxSize().uiKeyEvent { event ->
-        dispatchPlaylistKey(
+    ScreenFrame(
+        hint = playlistStatusBarHint(focus),
+        onKey = { event ->
+            dispatchPlaylistKey(
             event = event,
             focus = focus,
             showTrackList = showTrackList,
@@ -64,13 +59,14 @@ fun PlaylistScreen(
                 state.playlists.getOrNull(playlistIndex)?.let { playlistViewModel.removePlaylist(it) }
                 playlistIndex = (playlistIndex - 1).coerceAtLeast(0)
             },
-            onSelectPlaylist = {
-                state.playlists.getOrNull(playlistIndex)?.let { p ->
-                    playlistViewModel.selectPlaylist(p)
-                }
-            },
-        )
-    }) {
+                onSelectPlaylist = {
+                    state.playlists.getOrNull(playlistIndex)?.let { p ->
+                        playlistViewModel.selectPlaylist(p)
+                    }
+                },
+            )
+        },
+    ) {
         when (focus) {
             PlaylistFocus.Input -> InputView(
                 value = state.addUrlInput,

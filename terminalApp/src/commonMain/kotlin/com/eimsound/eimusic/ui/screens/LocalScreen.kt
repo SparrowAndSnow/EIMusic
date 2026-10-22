@@ -7,12 +7,10 @@ import com.eimsound.eimusic.keyboard.localSongsStatusBarHint
 import com.jakewharton.mosaic.layout.border
 import com.eimsound.eimusic.ui.components.InputField
 import com.eimsound.eimusic.ui.components.ListView
-import com.eimsound.eimusic.ui.components.LocalStatusBarHint
+import com.eimsound.eimusic.ui.components.ScreenFrame
 import com.eimsound.eimusic.ui.components.TrackTable
 import com.eimsound.eimusic.ui.theme.LocalSafeContentSize
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
-import com.eimsound.eimusic.ui.LocalUiInputEnabled
-import com.eimsound.eimusic.ui.uiKeyEvent
 import com.eimsound.eimusic.util.spacer
 import com.eimsound.eimusic.viewmodel.LocalViewModel
 import com.eimsound.eimusic.viewmodel.PlayerViewModel
@@ -34,19 +32,15 @@ fun LocalScreen(
     val state = localViewModel.state.collectAsState().value
     val termHeight = safeArea.rows
     val termWidth = safeArea.columns
-    val statusBarHint = LocalStatusBarHint.current
-
     var focus by remember { mutableStateOf(LocalFocus.Songs) }
-    val uiActive = LocalUiInputEnabled.current
-    LaunchedEffect(uiActive, focus) {
-        statusBarHint.value = localSongsStatusBarHint(focus)
-    }
     var trackIndex by remember { mutableIntStateOf(0) }
     var pathIndex by remember { mutableIntStateOf(0) }
     var showPaths by remember { mutableStateOf(false) }
 
-    Box(modifier = Modifier.fillMaxSize().uiKeyEvent { event ->
-        dispatchLocalSongsKey(
+    ScreenFrame(
+        hint = localSongsStatusBarHint(focus),
+        onKey = { event ->
+            dispatchLocalSongsKey(
             event = event,
             focus = focus,
             showPaths = showPaths,
@@ -63,9 +57,10 @@ fun LocalScreen(
                 state.localPaths.toList().getOrNull(pathIndex)?.let { localViewModel.removePath(it) }
                 pathIndex = (pathIndex - 1).coerceAtLeast(0)
             },
-            onRefresh = { localViewModel.refreshTracks() },
-        )
-    }) {
+                onRefresh = { localViewModel.refreshTracks() },
+            )
+        },
+    ) {
         Column {
             val title = when {
                 focus == LocalFocus.Input -> "Add Path"

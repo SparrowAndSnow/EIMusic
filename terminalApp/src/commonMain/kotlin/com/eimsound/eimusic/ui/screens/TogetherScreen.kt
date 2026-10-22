@@ -9,11 +9,9 @@ import com.eimsound.eimusic.together.ChannelState
 import com.eimsound.eimusic.together.ConnectionState
 import com.eimsound.eimusic.ui.components.InputField
 import com.eimsound.eimusic.ui.components.ListView
-import com.eimsound.eimusic.ui.components.LocalStatusBarHint
+import com.eimsound.eimusic.ui.components.ScreenFrame
 import com.eimsound.eimusic.ui.theme.LocalSafeContentSize
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
-import com.eimsound.eimusic.ui.LocalUiInputEnabled
-import com.eimsound.eimusic.ui.uiKeyEvent
 import com.eimsound.eimusic.util.render
 import com.eimsound.eimusic.viewmodel.ChannelViewModel
 import com.jakewharton.mosaic.LocalTerminalState
@@ -34,13 +32,7 @@ fun TogetherScreen(
     val state = channelViewModel.uiState.collectAsState().value
     val termWidth = safeArea.columns
     val termHeight = safeArea.rows
-    val statusBarHint = LocalStatusBarHint.current
-
     var focus by remember { mutableStateOf(TogetherFocus.Welcome) }
-    val uiActive = LocalUiInputEnabled.current
-    LaunchedEffect(uiActive, focus) {
-        statusBarHint.value = togetherStatusBarHint(focus)
-    }
 
     LaunchedEffect(Unit) {
         if (state.connectionState == ConnectionState.DISCONNECTED) {
@@ -56,16 +48,19 @@ fun TogetherScreen(
 
     val isJoined = state.channelState is ChannelState.Joined
 
-    Box(modifier = Modifier.fillMaxSize().uiKeyEvent { event ->
-        dispatchTogetherKey(
+    ScreenFrame(
+        hint = togetherStatusBarHint(focus),
+        onKey = { event ->
+            dispatchTogetherKey(
             event = event,
             focus = focus,
             isJoined = isJoined,
             onLeaveChannel = { channelViewModel.leaveChannel() },
             onSetFocus = { focus = it },
-            onGoBack = { channelViewModel.disconnect(); onGoBack() },
-        )
-    }) {
+                onGoBack = { channelViewModel.disconnect(); onGoBack() },
+            )
+        },
+    ) {
         Column {
             when (focus) {
                 TogetherFocus.Welcome -> WelcomeView(

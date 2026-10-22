@@ -9,7 +9,7 @@ import com.eimsound.eimusic.storage.IStorage
 import com.eimsound.eimusic.storage.Settings
 import com.eimsound.eimusic.storage.get
 import com.eimsound.eimusic.storage.save
-import com.eimsound.eimusic.ui.LocalUiInputEnabled
+import com.eimsound.eimusic.ui.OverlayHost
 import com.eimsound.eimusic.ui.components.HeaderBar
 import com.eimsound.eimusic.ui.components.TabBar
 import com.eimsound.eimusic.ui.components.TabItem
@@ -74,7 +74,7 @@ fun App(
     val currentRoute = backStack.last()
 
     // 弹窗类路由：保留底层页面绘制，弹窗叠在上面。
-    val overlayRoute = currentRoute is Route.Help || currentRoute is Route.Search || currentRoute is Route.Login
+    val overlayRoute = currentRoute.isOverlay
     val baseRoute = if (overlayRoute) backStack.getOrNull(backStack.size - 2) else null
 
     val navigate: (Route) -> Unit = { route -> backStack = backStack + route }
@@ -217,14 +217,14 @@ fun App(
                     CompositionLocalProvider(
                         LocalSafeContentSize provides SafeContentSize(maxWidth, maxHeight),
                     ) {
-                        if (baseRoute != null) {
-                            CompositionLocalProvider(LocalUiInputEnabled provides false) {
-                                RouteContent(baseRoute)
-                            }
-                        }
-                        CompositionLocalProvider(LocalUiInputEnabled provides true) {
-                            RouteContent(currentRoute)
-                        }
+                        OverlayHost(
+                            base = if (baseRoute != null) {
+                                { RouteContent(baseRoute) }
+                            } else {
+                                null
+                            },
+                            overlay = { RouteContent(currentRoute) },
+                        )
                     }
                 }
 

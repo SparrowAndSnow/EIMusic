@@ -4,12 +4,10 @@ import androidx.compose.runtime.*
 import com.eimsound.eimusic.keyboard.dispatchQueueKey
 import com.eimsound.eimusic.keyboard.queueStatusBarHint
 import com.eimsound.eimusic.music.PlayerState
-import com.eimsound.eimusic.ui.components.LocalStatusBarHint
+import com.eimsound.eimusic.ui.components.ScreenFrame
 import com.eimsound.eimusic.ui.components.TrackTable
 import com.eimsound.eimusic.ui.theme.LocalSafeContentSize
-import com.eimsound.eimusic.ui.LocalUiInputEnabled
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
-import com.eimsound.eimusic.ui.uiKeyEvent
 import com.eimsound.eimusic.viewmodel.PlayerViewModel
 import com.jakewharton.mosaic.layout.*
 import com.jakewharton.mosaic.modifier.Modifier
@@ -27,17 +25,13 @@ fun QueueScreen(
     val termWidth = safeArea.columns
     val visibleLines = (termHeight - 4).coerceAtLeast(1)
     var queueScroll by remember { mutableIntStateOf(0) }
-    val statusBarHint = LocalStatusBarHint.current
-    val uiActive = LocalUiInputEnabled.current
-    LaunchedEffect(uiActive) {
-        statusBarHint.value = queueStatusBarHint()
-    }
-    Box(
-        modifier = Modifier.fillMaxSize().uiKeyEvent { event ->
+    ScreenFrame(
+        hint = queueStatusBarHint(),
+        onKey = { event ->
             dispatchQueueKey(
                 event = event,
                 onRemoveTrack = {
-                    if (!playerState.queue.isEmpty() && queueScroll < playerState.queue.size){
+                    if (!playerState.queue.isEmpty() && queueScroll < playerState.queue.size) {
                         playerViewModel.removeTrack(queueScroll)
                         queueScroll = (queueScroll - 1).coerceAtLeast(0)
                     }

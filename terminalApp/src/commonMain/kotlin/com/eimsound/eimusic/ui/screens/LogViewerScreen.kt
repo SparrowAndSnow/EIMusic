@@ -4,11 +4,9 @@ import androidx.compose.runtime.*
 import com.eimsound.eimusic.keyboard.dispatchLogViewerKey
 import com.eimsound.eimusic.keyboard.logViewerStatusBarHint
 import com.eimsound.eimusic.ui.components.ListView
-import com.eimsound.eimusic.ui.components.LocalStatusBarHint
+import com.eimsound.eimusic.ui.components.ScreenFrame
 import com.eimsound.eimusic.ui.theme.LocalSafeContentSize
-import com.eimsound.eimusic.ui.LocalUiInputEnabled
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
-import com.eimsound.eimusic.ui.uiKeyEvent
 import com.eimsound.eimusic.util.TuiLogger
 import com.eimsound.eimusic.util.render
 import com.jakewharton.mosaic.layout.*
@@ -27,11 +25,6 @@ fun LogViewerScreen(
 ) {
     val palette = LocalTuiColors.current
     val safeArea = LocalSafeContentSize.current
-    val statusBarHint = LocalStatusBarHint.current
-    val uiActive = LocalUiInputEnabled.current
-    LaunchedEffect(uiActive) {
-        statusBarHint.value = logViewerStatusBarHint()
-    }
 
     val termHeight = safeArea.rows
     val termWidth = safeArea.columns
@@ -48,14 +41,15 @@ fun LogViewerScreen(
     }
     val rows = (termHeight - 4).coerceAtLeast(1)
 
-    Box(
-        modifier = Modifier.fillMaxSize().uiKeyEvent { event ->
+    ScreenFrame(
+        hint = logViewerStatusBarHint(),
+        onKey = { event ->
             dispatchLogViewerKey(
                 event = event,
                 onClear = { TuiLogger.clear() },
                 onClose = onGoBack,
             )
-        }
+        },
     ) {
         Column {
             Text("Logs (Esc to close, j/k to scroll)", color = palette.titleFg)
