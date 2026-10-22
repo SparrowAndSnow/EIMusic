@@ -11,8 +11,8 @@ import com.eimsound.eimusic.storage.get
 import com.eimsound.eimusic.storage.save
 import com.eimsound.eimusic.ui.LocalUiInputEnabled
 import com.eimsound.eimusic.ui.components.HeaderBar
-import com.eimsound.eimusic.ui.components.StatusBar
-import com.eimsound.eimusic.ui.components.StatusBarMode
+import com.eimsound.eimusic.ui.components.TabBar
+import com.eimsound.eimusic.ui.components.TabItem
 import com.eimsound.eimusic.ui.screens.HelpScreen
 import com.eimsound.eimusic.ui.screens.LocalScreen
 import com.eimsound.eimusic.ui.screens.LogViewerScreen
@@ -80,17 +80,15 @@ fun App(
     val navigate: (Route) -> Unit = { route -> backStack = backStack + route }
     val goBack: () -> Unit = { if (backStack.size > 1) backStack = backStack.dropLast(1) }
 
-    val statusBarMode = when (currentRoute) {
-        is Route.Main -> StatusBarMode.Main
-        is Route.Help -> StatusBarMode.Help
-        is Route.Search -> StatusBarMode.Search
-        is Route.Login -> StatusBarMode.Login
-        is Route.LogViewer -> StatusBarMode.LogViewer
-        is Route.Playlists -> StatusBarMode.Playlists
-        is Route.LocalSongs -> StatusBarMode.LocalSongs
-        is Route.Together -> StatusBarMode.Together
-        is Route.Queue -> StatusBarMode.Queue
-    }
+    // 底部标签页：只放可切换的页面，弹窗类路由不算标签。
+    val tabRoutes = listOf(
+        "Home" to Route.Main,
+        "Playlists" to Route.Playlists,
+        "Local" to Route.LocalSongs,
+        "Together" to Route.Together,
+        "Queue" to Route.Queue,
+    )
+    val activeTabRoute = baseRoute ?: currentRoute
 
     val appGlobalActions = remember(playerViewModel) {
         GlobalKeyActions(
@@ -215,8 +213,20 @@ fun App(
                     }
                 }
 
-                // Status bar
-                StatusBar(mode = statusBarMode, playerState = playerState)
+                // 底部页面 tabs；点击切换时回到该页面的根路由（同时关闭弹窗）。
+                TabBar(
+                    tabs = tabRoutes.map { (label, route) ->
+                        TabItem(
+                            label = label,
+                            selected = activeTabRoute == route,
+                            onClick = {
+                                if (activeTabRoute != route) {
+                                    backStack = listOf(route)
+                                }
+                            },
+                        )
+                    },
+                )
             }
 
         }
