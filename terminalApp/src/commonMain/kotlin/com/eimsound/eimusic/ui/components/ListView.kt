@@ -11,9 +11,9 @@ import androidx.compose.runtime.withFrameNanos
 import com.eimsound.eimusic.keyboard.ListViewScreenAction
 import com.eimsound.eimusic.ui.LocalUiInputEnabled
 import com.eimsound.eimusic.keyboard.dispatchListViewKey
-import com.eimsound.eimusic.ui.input.ClickTracker
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
 import com.eimsound.eimusic.util.spacer
+import com.jakewharton.mosaic.layout.ClickTracker
 import com.jakewharton.mosaic.layout.MomentumScrollState
 import com.jakewharton.mosaic.layout.MouseEvent
 import com.jakewharton.mosaic.layout.background
