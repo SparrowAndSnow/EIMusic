@@ -3,9 +3,7 @@ package com.eimsound.eimusic.ui.components
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -14,9 +12,9 @@ import com.eimsound.eimusic.keyboard.ListViewScreenAction
 import com.eimsound.eimusic.ui.LocalUiInputEnabled
 import com.eimsound.eimusic.keyboard.dispatchListViewKey
 import com.eimsound.eimusic.ui.input.ClickTracker
-import com.eimsound.eimusic.ui.input.MomentumScroll
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
 import com.eimsound.eimusic.util.spacer
+import com.jakewharton.mosaic.layout.MomentumScrollState
 import com.jakewharton.mosaic.layout.MouseEvent
 import com.jakewharton.mosaic.layout.background
 import com.jakewharton.mosaic.layout.fillMaxWidth
@@ -52,16 +50,14 @@ fun <T> ListView(
     onSelectedChange: (Int) -> Unit = {},
 ) {
     var selectedIndex by remember(items) { mutableIntStateOf(0) }
-    val scroll = remember(items) { MomentumScroll() }
-    var visualPos by remember(items) { mutableFloatStateOf(0f) }
-    var animating by remember(items) { mutableStateOf(false) }
+    val scroll = remember(items) { MomentumScrollState() }
     var hoveredIndex by remember { mutableIntStateOf(-1) }
     val clickTracker = remember { ClickTracker() }
     val uiInput = LocalUiInputEnabled.current
     val palette = LocalTuiColors.current
 
     // 动画期间窗口跟着小数位置移动，行内容每跨过一行才真正重绘，看起来是逐行平滑滚动。
-    val visualAnchor = if (items.isEmpty()) 0 else visualPos.roundToInt().coerceIn(0, items.lastIndex)
+    val visualAnchor = if (items.isEmpty()) 0 else scroll.position.roundToInt().coerceIn(0, items.lastIndex)
     val scrollOffset = remember(visualAnchor, visibleLines, items.size) {
         val max = (items.size - visibleLines).coerceAtLeast(0)
         (visualAnchor - visibleLines / 2).coerceIn(0, max)
@@ -69,28 +65,24 @@ fun <T> ListView(
 
     LaunchedEffect(items) {
         while (true) {
-            // 空闲时不占帧；有惯性时才按帧推进。
-            snapshotFlow { animating }.first { it }
+            // 空闲时不占帧；库里的状态有惯性时才按帧推进。
+            snapshotFlow { scroll.isMoving }.first { it }
             var lastNanos = 0L
-            while (animating) {
+            while (scroll.isMoving) {
                 withFrameNanos { now ->
                     if (items.isEmpty()) {
                         scroll.jumpTo(0)
-                        visualPos = 0f
-                        animating = false
                         return@withFrameNanos
                     }
                     if (lastNanos != 0L) {
                         val dt = (now - lastNanos) / 1_000_000_000.0.toFloat()
-                        val moving = scroll.advance(dt, items.lastIndex.toFloat())
-                        visualPos = scroll.position
+                        scroll.advance(dt, items.lastIndex.toFloat())
                         val index = scroll.position.roundToInt().coerceIn(0, items.lastIndex)
                         if (index != selectedIndex) {
                             selectedIndex = index
                             onSelectedChange(index)
                         }
                         hoveredIndex = -1
-                        if (!moving) animating = false
                     }
                     lastNanos = now
                 }
@@ -109,8 +101,6 @@ fun <T> ListView(
                         { index ->
                             selectedIndex = index
                             scroll.jumpTo(index)
-                            visualPos = index.toFloat()
-                            animating = false
                             onSelectedChange(index)
                         },
                         items.lastIndex,
@@ -130,7 +120,6 @@ fun <T> ListView(
                         // 一次滚轮给一个约 WheelStep 行的初速度，之后由摩擦衰减形成渐停。
                         val rows = if (event.button == MouseEvent.Button.WheelUp) -WheelStep else WheelStep
                         scroll.impulse(rows)
-                        animating = true
                         hoveredIndex = -1
                         true
                     }
@@ -169,8 +158,6 @@ fun <T> ListView(
                                 val doubleClick = clickTracker.press(i, now)
                                 selectedIndex = i
                                 scroll.jumpTo(i)
-                                visualPos = i.toFloat()
-                                animating = false
                                 onSelectedChange(i)
                                 if (doubleClick) onConfirm(item)
                                 true
