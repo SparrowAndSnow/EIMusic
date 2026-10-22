@@ -30,13 +30,16 @@ fun PlayerState.withTrackAdded(media: Track, index: Int): PlayerState {
     val existing = queue.indexOfFirst { it.id == media.id }
     val updated = queue.toMutableList().apply {
         if (existing != -1) removeAt(existing)
-        add(index, media)
+        // 调用方常按“插入前的 queue.size”算 index；若 media 已在队列里，
+        // 移除后长度会少 1，必须重新收敛到合法范围，否则 add 会越界崩溃。
+        add(index.coerceIn(0, size), media)
     }
     return copy(queue = updated, index = recalculatedIndex(updated))
 }
 
 /** 移除队列中的曲目，并重算当前索引。 */
 fun PlayerState.withTrackRemoved(index: Int): PlayerState {
+    if (index !in queue.indices) return this
     val updated = queue.toMutableList().apply { removeAt(index) }
     return copy(queue = updated, index = recalculatedIndex(updated))
 }
