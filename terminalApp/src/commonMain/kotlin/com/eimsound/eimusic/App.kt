@@ -9,6 +9,7 @@ import com.eimsound.eimusic.storage.IStorage
 import com.eimsound.eimusic.storage.Settings
 import com.eimsound.eimusic.storage.get
 import com.eimsound.eimusic.storage.save
+import com.eimsound.eimusic.ui.LocalUiInputEnabled
 import com.eimsound.eimusic.ui.components.HeaderBar
 import com.eimsound.eimusic.ui.components.StatusBar
 import com.eimsound.eimusic.ui.components.StatusBarMode
@@ -68,10 +69,13 @@ fun App(
     val palette = remember(isDark) { if (isDark) TuiColors.dark() else TuiColors.light() }
 
     var backStack by remember { mutableStateOf(listOf<Route>(Route.Main)) }
-
     val playerState by playerViewModel.state.bridgeToMutable()
     val togetherState by channelViewModel.uiState.bridgeToMutable()
     val currentRoute = backStack.last()
+
+    // 弹窗类路由：保留底层页面绘制，弹窗叠在上面。
+    val overlayRoute = currentRoute is Route.Help || currentRoute is Route.Search || currentRoute is Route.Login
+    val baseRoute = if (overlayRoute) backStack.getOrNull(backStack.size - 2) else null
 
     val navigate: (Route) -> Unit = { route -> backStack = backStack + route }
     val goBack: () -> Unit = { if (backStack.size > 1) backStack = backStack.dropLast(1) }
@@ -103,6 +107,71 @@ fun App(
         )
     }
 
+    @Composable
+    fun RouteContent(route: Route) {
+        when (route) {
+            is Route.Main -> {
+                MainScreen(
+                    playerState = playerState,
+                    playerViewModel = playerViewModel,
+                    onOpenHelp = { navigate(Route.Help) },
+                    onOpenSearch = { navigate(Route.Search()) },
+                    onOpenLogin = { navigate(Route.Login) },
+                    onOpenLogs = { navigate(Route.LogViewer) },
+                    onOpenPlaylists = { navigate(Route.Playlists) },
+                    onOpenLocalSongs = { navigate(Route.LocalSongs) },
+                    onOpenTogether = { navigate(Route.Together) },
+                    onOpenQueue = { navigate(Route.Queue) },
+                    onToggleTheme = {
+                        isDark = !isDark
+                        storage.save(Settings::darkMode, isDark)
+                    },
+                    onQuit = onQuit,
+                )
+            }
+
+            is Route.Help -> HelpScreen(onGoBack = goBack)
+
+            is Route.Search -> SearchScreen(
+                searchViewModel = searchViewModel,
+                playerViewModel = playerViewModel,
+                onGoBack = goBack,
+            )
+
+            is Route.Login -> LoginScreen(
+                authViewModel = authViewModel,
+                onGoBack = goBack,
+            )
+
+            is Route.LogViewer -> LogViewerScreen(
+                onGoBack = goBack,
+            )
+
+            is Route.Playlists -> PlaylistScreen(
+                playlistViewModel = playlistViewModel,
+                playerViewModel = playerViewModel,
+                onGoBack = goBack,
+            )
+
+            is Route.LocalSongs -> LocalScreen(
+                localViewModel = localViewModel,
+                playerViewModel = playerViewModel,
+                onGoBack = goBack,
+            )
+
+            is Route.Together -> TogetherScreen(
+                channelViewModel = channelViewModel,
+                onGoBack = goBack,
+            )
+
+            is Route.Queue -> QueueScreen(
+                playerState = playerState,
+                playerViewModel = playerViewModel,
+                onGoBack = goBack,
+            )
+        }
+    }
+
     // 组合根按无界约束测量，全屏应用必须自己声明画布；尺寸随终端 resize 重组更新。
     Box(
         modifier = Modifier
@@ -128,72 +197,20 @@ fun App(
                     channelLabel = channelLabel
                 )
                 BoxWithConstraints(Modifier.weight(1f).onKeyEvent { event ->
-                    dispatchGlobalKey(event, appGlobalActions)
+                    // 弹窗打开时全局快捷键停用，按键只交给弹窗。
+                    if (overlayRoute) false else dispatchGlobalKey(event, appGlobalActions)
                 }) {
                     // 内容区真实可用尺寸来自父级约束，不再用终端行列数硬减。
                     CompositionLocalProvider(
                         LocalSafeContentSize provides SafeContentSize(maxWidth, maxHeight),
                     ) {
-                        when (currentRoute) {
-                            is Route.Main -> {
-                                MainScreen(
-                                    playerState = playerState,
-                                    playerViewModel = playerViewModel,
-                                    onOpenHelp = { navigate(Route.Help) },
-                                    onOpenSearch = { navigate(Route.Search()) },
-                                    onOpenLogin = { navigate(Route.Login) },
-                                    onOpenLogs = { navigate(Route.LogViewer) },
-                                    onOpenPlaylists = { navigate(Route.Playlists) },
-                                    onOpenLocalSongs = { navigate(Route.LocalSongs) },
-                                    onOpenTogether = { navigate(Route.Together) },
-                                    onOpenQueue = { navigate(Route.Queue) },
-                                    onToggleTheme = {
-                                        isDark = !isDark
-                                        storage.save(Settings::darkMode, isDark)
-                                    },
-                                    onQuit = onQuit,
-                                )
+                        if (baseRoute != null) {
+                            CompositionLocalProvider(LocalUiInputEnabled provides false) {
+                                RouteContent(baseRoute)
                             }
-
-                            is Route.Help -> HelpScreen(onGoBack = goBack)
-
-                            is Route.Search -> SearchScreen(
-                                searchViewModel = searchViewModel,
-                                playerViewModel = playerViewModel,
-                                onGoBack = goBack,
-                            )
-
-                            is Route.Login -> LoginScreen(
-                                authViewModel = authViewModel,
-                                onGoBack = goBack,
-                            )
-
-                            is Route.LogViewer -> LogViewerScreen(
-                                onGoBack = goBack,
-                            )
-
-                            is Route.Playlists -> PlaylistScreen(
-                                playlistViewModel = playlistViewModel,
-                                playerViewModel = playerViewModel,
-                                onGoBack = goBack,
-                            )
-
-                            is Route.LocalSongs -> LocalScreen(
-                                localViewModel = localViewModel,
-                                playerViewModel = playerViewModel,
-                                onGoBack = goBack,
-                            )
-
-                            is Route.Together -> TogetherScreen(
-                                channelViewModel = channelViewModel,
-                                onGoBack = goBack,
-                            )
-
-                            is Route.Queue -> QueueScreen(
-                                playerState = playerState,
-                                playerViewModel = playerViewModel,
-                                onGoBack = goBack,
-                            )
+                        }
+                        CompositionLocalProvider(LocalUiInputEnabled provides true) {
+                            RouteContent(currentRoute)
                         }
                     }
                 }

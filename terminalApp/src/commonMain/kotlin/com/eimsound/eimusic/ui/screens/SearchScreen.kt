@@ -10,6 +10,8 @@ import com.eimsound.eimusic.ui.components.ListView
 import com.eimsound.eimusic.ui.components.LocalStatusBarHint
 import com.eimsound.eimusic.ui.components.TrackListItem
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
+import com.eimsound.eimusic.ui.LocalUiInputEnabled
+import com.eimsound.eimusic.ui.uiKeyEvent
 import com.eimsound.eimusic.util.bridgeToMutable
 import com.eimsound.eimusic.util.render
 import com.eimsound.eimusic.util.spacer
@@ -40,12 +42,13 @@ fun SearchScreen(
     // Dialog overhead ≈ 11 rows, available = termHeight - 2, leave breathing room
     val visibleLines = ((termHeight - 14) / 2).coerceIn(3, 12)
 
-    LaunchedEffect(focus) {
+    val uiActive = LocalUiInputEnabled.current
+    LaunchedEffect(uiActive, focus) {
         statusBarHint.value = searchStatusBarHint(focus)
     }
 
     Box(
-        modifier = Modifier.fillMaxSize().onKeyEvent { event ->
+        modifier = Modifier.fillMaxSize().uiKeyEvent { event ->
             dispatchSearchKey(
                 event = event,
                 focus = focus,

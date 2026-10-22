@@ -10,7 +10,9 @@ import com.eimsound.eimusic.ui.components.ListView
 import com.eimsound.eimusic.ui.components.LocalStatusBarHint
 import com.eimsound.eimusic.ui.components.TrackTable
 import com.eimsound.eimusic.ui.theme.LocalSafeContentSize
+import com.eimsound.eimusic.ui.LocalUiInputEnabled
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
+import com.eimsound.eimusic.ui.uiKeyEvent
 import com.eimsound.eimusic.util.spacer
 import com.eimsound.eimusic.viewmodel.PlaylistViewModel
 import com.eimsound.eimusic.viewmodel.PlayerViewModel
@@ -36,14 +38,15 @@ fun PlaylistScreen(
     val visibleLines = (termHeight - 4).coerceAtLeast(1)
 
     var focus by remember { mutableStateOf(PlaylistFocus.List) }
-    LaunchedEffect(focus) {
+    val uiActive = LocalUiInputEnabled.current
+    LaunchedEffect(uiActive, focus) {
         statusBarHint.value = playlistStatusBarHint(focus)
     }
     var playlistIndex by remember { mutableIntStateOf(0) }
     var trackIndex by remember { mutableIntStateOf(0) }
     var showTrackList by remember { mutableStateOf(false) }
 
-    Box(modifier = Modifier.fillMaxSize().onKeyEvent { event ->
+    Box(modifier = Modifier.fillMaxSize().uiKeyEvent { event ->
         dispatchPlaylistKey(
             event = event,
             focus = focus,

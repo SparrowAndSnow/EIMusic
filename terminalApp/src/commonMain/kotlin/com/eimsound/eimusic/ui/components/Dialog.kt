@@ -24,7 +24,7 @@ fun Dialog(
     val minWidth = (termWidth * 0.35).toInt().coerceIn(30, 50)
 
     Column(
-        modifier = modifier.widthIn(min = minWidth).background(palette.surfaceBg).border(color = palette.activeBorderFg)
+        modifier = modifier.widthIn(min = minWidth).background(palette.dialogBg).border(color = palette.activeBorderFg)
     ) {
         Text("${1.spacer}$title", color = palette.titleFg)
         content()

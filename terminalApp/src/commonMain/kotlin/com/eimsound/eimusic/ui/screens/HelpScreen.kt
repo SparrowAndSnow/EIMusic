@@ -8,7 +8,9 @@ import com.eimsound.eimusic.keyboard.mainHelpEntries
 import com.eimsound.eimusic.keyboard.mapHelpKey
 import com.eimsound.eimusic.ui.components.Dialog
 import com.eimsound.eimusic.ui.components.LocalStatusBarHint
+import com.eimsound.eimusic.ui.LocalUiInputEnabled
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
+import com.eimsound.eimusic.ui.uiKeyEvent
 import com.eimsound.eimusic.util.spacer
 import com.jakewharton.mosaic.layout.fillMaxSize
 import com.jakewharton.mosaic.layout.onKeyEvent
@@ -27,10 +29,11 @@ fun HelpScreen(
 ) {
     val palette = LocalTuiColors.current
     val statusBarHint = LocalStatusBarHint.current
-    LaunchedEffect(Unit) {
+    val uiActive = LocalUiInputEnabled.current
+    LaunchedEffect(uiActive) {
         statusBarHint.value = helpStatusBarHint()
     }
-    Box(Modifier.fillMaxSize().onKeyEvent { event->
+    Box(Modifier.fillMaxSize().uiKeyEvent { event->
         if (mapHelpKey(event.key) == HelpAction.Dismiss) onGoBack()
         true
     }, contentAlignment = Alignment.Center) {

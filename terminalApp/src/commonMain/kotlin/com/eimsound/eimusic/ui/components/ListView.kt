@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.eimsound.eimusic.keyboard.ListViewScreenAction
+import com.eimsound.eimusic.ui.LocalUiInputEnabled
 import com.eimsound.eimusic.keyboard.dispatchListViewKey
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
 import com.eimsound.eimusic.util.spacer
@@ -46,6 +47,7 @@ fun <T> ListView(
 ) {
     var selectedIndex by remember(items) { mutableIntStateOf(0) }
     var hoveredIndex by remember { mutableIntStateOf(-1) }
+    val uiInput = LocalUiInputEnabled.current
     var lastClickRow by remember { mutableIntStateOf(-1) }
     var lastClickAt by remember { mutableLongStateOf(0L) }
     val palette = LocalTuiColors.current
@@ -58,7 +60,7 @@ fun <T> ListView(
     Box(
         Modifier
             .onKeyEvent { event ->
-                if (!enabled) return@onKeyEvent false
+                if (!enabled || !uiInput) return@onKeyEvent false
                 val action =
                     dispatchListViewKey(event, selectedIndex, { selectedIndex = it; onSelectedChange(it) }, items.lastIndex)
                 when (action) {
@@ -69,7 +71,7 @@ fun <T> ListView(
                 }
             }
             .onMouseEvent { event ->
-                if (!enabled || items.isEmpty()) return@onMouseEvent false
+                if (!enabled || !uiInput || items.isEmpty()) return@onMouseEvent false
                 if (event.type != MouseEvent.Type.Press) return@onMouseEvent false
                 when (event.button) {
                     MouseEvent.Button.WheelUp, MouseEvent.Button.WheelDown -> {
@@ -103,7 +105,7 @@ fun <T> ListView(
                     Modifier
                         .fillMaxWidth()
                         .background(if (hovered && !isSelected) palette.hoverBg else Color.Unspecified)
-                        .hoverable { inside ->
+                        .hoverable(enabled = uiInput) { inside ->
                             if (inside) {
                                 hoveredIndex = i
                             } else if (hoveredIndex == i) {
@@ -111,7 +113,7 @@ fun <T> ListView(
                             }
                         }
                         .onMouseEvent { event ->
-                            if (enabled && event.type == MouseEvent.Type.Press && event.button == MouseEvent.Button.Left) {
+                            if (uiInput && enabled && event.type == MouseEvent.Type.Press && event.button == MouseEvent.Button.Left) {
                                 // 单击只负责选中；同一行短时间内再次按下才算双击并触发确认。
                                 val now = Clock.System.now().toEpochMilliseconds()
                                 val doubleClick = i == lastClickRow && now - lastClickAt in 0L..DoubleClickMillis

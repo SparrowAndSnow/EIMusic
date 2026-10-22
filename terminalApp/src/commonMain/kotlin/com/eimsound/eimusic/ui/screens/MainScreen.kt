@@ -12,6 +12,8 @@ import com.eimsound.eimusic.ui.components.LocalStatusBarHint
 import com.eimsound.eimusic.ui.components.PlayerControls
 import com.eimsound.eimusic.ui.components.ProgressBar
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
+import com.eimsound.eimusic.ui.LocalUiInputEnabled
+import com.eimsound.eimusic.ui.uiKeyEvent
 import com.eimsound.eimusic.util.render
 import com.eimsound.eimusic.util.spacer
 import com.eimsound.eimusic.viewmodel.PlayerViewModel
@@ -41,11 +43,12 @@ fun MainScreen(
     val displayPos by playerViewModel.displayPosition.bridgeToMutable()
     val globalActions = LocalGlobalActions.current
     val statusBarHint = LocalStatusBarHint.current
-    LaunchedEffect(Unit) {
+    val uiActive = LocalUiInputEnabled.current
+    LaunchedEffect(uiActive) {
         statusBarHint.value = mainStatusBarHint()
     }
     Box(
-        modifier = Modifier.fillMaxSize().onKeyEvent { event ->
+        modifier = Modifier.fillMaxSize().uiKeyEvent { event ->
             dispatchMainKey(
                 event = event,
                 globalActions = globalActions,

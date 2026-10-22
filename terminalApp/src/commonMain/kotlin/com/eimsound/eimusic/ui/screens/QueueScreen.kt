@@ -7,7 +7,9 @@ import com.eimsound.eimusic.music.PlayerState
 import com.eimsound.eimusic.ui.components.LocalStatusBarHint
 import com.eimsound.eimusic.ui.components.TrackTable
 import com.eimsound.eimusic.ui.theme.LocalSafeContentSize
+import com.eimsound.eimusic.ui.LocalUiInputEnabled
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
+import com.eimsound.eimusic.ui.uiKeyEvent
 import com.eimsound.eimusic.viewmodel.PlayerViewModel
 import com.jakewharton.mosaic.layout.*
 import com.jakewharton.mosaic.modifier.Modifier
@@ -26,11 +28,12 @@ fun QueueScreen(
     val visibleLines = (termHeight - 4).coerceAtLeast(1)
     var queueScroll by remember { mutableIntStateOf(0) }
     val statusBarHint = LocalStatusBarHint.current
-    LaunchedEffect(Unit) {
+    val uiActive = LocalUiInputEnabled.current
+    LaunchedEffect(uiActive) {
         statusBarHint.value = queueStatusBarHint()
     }
     Box(
-        modifier = Modifier.fillMaxSize().onKeyEvent { event ->
+        modifier = Modifier.fillMaxSize().uiKeyEvent { event ->
             dispatchQueueKey(
                 event = event,
                 onRemoveTrack = {

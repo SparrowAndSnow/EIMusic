@@ -6,7 +6,9 @@ import com.eimsound.eimusic.keyboard.logViewerStatusBarHint
 import com.eimsound.eimusic.ui.components.ListView
 import com.eimsound.eimusic.ui.components.LocalStatusBarHint
 import com.eimsound.eimusic.ui.theme.LocalSafeContentSize
+import com.eimsound.eimusic.ui.LocalUiInputEnabled
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
+import com.eimsound.eimusic.ui.uiKeyEvent
 import com.eimsound.eimusic.util.TuiLogger
 import com.eimsound.eimusic.util.render
 import com.jakewharton.mosaic.layout.*
@@ -26,7 +28,8 @@ fun LogViewerScreen(
     val palette = LocalTuiColors.current
     val safeArea = LocalSafeContentSize.current
     val statusBarHint = LocalStatusBarHint.current
-    LaunchedEffect(Unit) {
+    val uiActive = LocalUiInputEnabled.current
+    LaunchedEffect(uiActive) {
         statusBarHint.value = logViewerStatusBarHint()
     }
 
@@ -46,7 +49,7 @@ fun LogViewerScreen(
     val rows = (termHeight - 4).coerceAtLeast(1)
 
     Box(
-        modifier = Modifier.fillMaxSize().onKeyEvent { event ->
+        modifier = Modifier.fillMaxSize().uiKeyEvent { event ->
             dispatchLogViewerKey(
                 event = event,
                 onClear = { TuiLogger.clear() },

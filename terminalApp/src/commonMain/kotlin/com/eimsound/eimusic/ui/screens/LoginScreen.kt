@@ -9,6 +9,8 @@ import com.eimsound.eimusic.ui.components.InputField
 import com.eimsound.eimusic.ui.components.LocalStatusBarHint
 import com.eimsound.eimusic.ui.theme.LocalSafeContentSize
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
+import com.eimsound.eimusic.ui.LocalUiInputEnabled
+import com.eimsound.eimusic.ui.uiKeyEvent
 import com.eimsound.eimusic.util.bridgeToMutable
 import com.eimsound.eimusic.viewmodel.AuthViewModel
 import com.jakewharton.mosaic.layout.*
@@ -37,11 +39,12 @@ fun LoginScreen(
     val wrapWidth= (termWidth - 4).coerceAtLeast(20)
     val palette = LocalTuiColors.current
     val statusBarHint = LocalStatusBarHint.current
-    LaunchedEffect(Unit) {
+    val uiActive = LocalUiInputEnabled.current
+    LaunchedEffect(uiActive) {
         statusBarHint.value = loginStatusBarHint()
     }
     Box(
-        modifier = Modifier.fillMaxSize().onKeyEvent {
+        modifier = Modifier.fillMaxSize().uiKeyEvent {
             dispatchLoginKey(it, onGoBack)
         },
         contentAlignment = Alignment.Center,

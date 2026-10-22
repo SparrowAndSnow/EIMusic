@@ -3,6 +3,7 @@ package com.eimsound.eimusic.ui.components
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import com.eimsound.eimusic.ui.LocalUiInputEnabled
 import com.eimsound.eimusic.ui.theme.LocalSafeContentSize
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
 import com.jakewharton.mosaic.layout.FocusRequester
@@ -44,7 +45,7 @@ fun InputField(
 ) {
     val palette = LocalTuiColors.current
     val safeArea = LocalSafeContentSize.current
-    val active = enabled && showCursor
+    val active = enabled && showCursor && LocalUiInputEnabled.current
     val requester = remember { FocusRequester() }
     val scroll = rememberScrollState()
 

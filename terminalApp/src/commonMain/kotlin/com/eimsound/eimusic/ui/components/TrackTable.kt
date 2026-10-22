@@ -9,6 +9,7 @@ import com.eimsound.eimusic.keyboard.TrackTableScreenAction
 import com.eimsound.eimusic.keyboard.dispatchTrackTableKey
 import com.eimsound.eimusic.music.Track
 import com.eimsound.eimusic.music.TrackId
+import com.eimsound.eimusic.ui.LocalUiInputEnabled
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
 import com.jakewharton.mosaic.layout.background
 import com.jakewharton.mosaic.layout.fillMaxWidth
@@ -60,8 +61,9 @@ fun TrackTable(
     val artistWidth = (termWidth * 0.25).toInt().coerceIn(10, 25)
     val durWidth = 8
 
+    val uiInput = LocalUiInputEnabled.current
     Box(Modifier.onKeyEvent { event ->
-        if (!enabled) return@onKeyEvent false
+        if (!enabled || !uiInput) return@onKeyEvent false
         val action = dispatchTrackTableKey(event, selectedIndex, { selectedIndex = it; onSelectedChange(it) }, tracks.lastIndex)
         when (action) {
             TrackTableScreenAction.PlayTrack -> { tracks.getOrNull(selectedIndex)?.let(onPlayTrack); true }

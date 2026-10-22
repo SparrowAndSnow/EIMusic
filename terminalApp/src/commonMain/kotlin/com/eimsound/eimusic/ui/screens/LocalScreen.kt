@@ -11,6 +11,8 @@ import com.eimsound.eimusic.ui.components.LocalStatusBarHint
 import com.eimsound.eimusic.ui.components.TrackTable
 import com.eimsound.eimusic.ui.theme.LocalSafeContentSize
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
+import com.eimsound.eimusic.ui.LocalUiInputEnabled
+import com.eimsound.eimusic.ui.uiKeyEvent
 import com.eimsound.eimusic.util.spacer
 import com.eimsound.eimusic.viewmodel.LocalViewModel
 import com.eimsound.eimusic.viewmodel.PlayerViewModel
@@ -35,14 +37,15 @@ fun LocalScreen(
     val statusBarHint = LocalStatusBarHint.current
 
     var focus by remember { mutableStateOf(LocalFocus.Songs) }
-    LaunchedEffect(focus) {
+    val uiActive = LocalUiInputEnabled.current
+    LaunchedEffect(uiActive, focus) {
         statusBarHint.value = localSongsStatusBarHint(focus)
     }
     var trackIndex by remember { mutableIntStateOf(0) }
     var pathIndex by remember { mutableIntStateOf(0) }
     var showPaths by remember { mutableStateOf(false) }
 
-    Box(modifier = Modifier.fillMaxSize().onKeyEvent { event ->
+    Box(modifier = Modifier.fillMaxSize().uiKeyEvent { event ->
         dispatchLocalSongsKey(
             event = event,
             focus = focus,

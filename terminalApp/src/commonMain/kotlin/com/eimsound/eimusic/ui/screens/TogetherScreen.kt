@@ -12,6 +12,8 @@ import com.eimsound.eimusic.ui.components.ListView
 import com.eimsound.eimusic.ui.components.LocalStatusBarHint
 import com.eimsound.eimusic.ui.theme.LocalSafeContentSize
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
+import com.eimsound.eimusic.ui.LocalUiInputEnabled
+import com.eimsound.eimusic.ui.uiKeyEvent
 import com.eimsound.eimusic.util.render
 import com.eimsound.eimusic.viewmodel.ChannelViewModel
 import com.jakewharton.mosaic.LocalTerminalState
@@ -35,7 +37,8 @@ fun TogetherScreen(
     val statusBarHint = LocalStatusBarHint.current
 
     var focus by remember { mutableStateOf(TogetherFocus.Welcome) }
-    LaunchedEffect(focus) {
+    val uiActive = LocalUiInputEnabled.current
+    LaunchedEffect(uiActive, focus) {
         statusBarHint.value = togetherStatusBarHint(focus)
     }
 
@@ -53,7 +56,7 @@ fun TogetherScreen(
 
     val isJoined = state.channelState is ChannelState.Joined
 
-    Box(modifier = Modifier.fillMaxSize().onKeyEvent { event ->
+    Box(modifier = Modifier.fillMaxSize().uiKeyEvent { event ->
         dispatchTogetherKey(
             event = event,
             focus = focus,
