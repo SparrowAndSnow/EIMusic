@@ -1,11 +1,15 @@
 package com.eimsound.eimusic.ui.components
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameNanos
 import com.eimsound.eimusic.keyboard.ListViewScreenAction
 import com.eimsound.eimusic.ui.LocalUiInputEnabled
 import com.eimsound.eimusic.keyboard.dispatchListViewKey
@@ -26,13 +30,26 @@ import com.jakewharton.mosaic.ui.Row
 import com.jakewharton.mosaic.ui.Spacer
 import com.jakewharton.mosaic.ui.Text
 import com.jakewharton.mosaic.ui.TextOverflow
+import kotlin.math.abs
+import kotlin.math.exp
+import kotlin.math.roundToInt
 import kotlin.time.Clock
+import kotlinx.coroutines.flow.first
 
 /** 滚轮一次移动的选择行数。 */
 private const val WheelStep = 3
 
 /** 双击判定窗口（毫秒）。 */
 private const val DoubleClickMillis = 400L
+
+/** 滚动摩擦（1/s）：速度按 e^(-friction*dt) 衰减，越大停得越快。 */
+private const val ScrollFriction = 3f
+
+/** 滚轮速度上限（行/秒）。 */
+private const val MaxScrollSpeed = 60f
+
+/** 低于这个速度直接停住，避免无限小数抖动。 */
+private const val MinScrollSpeed = 0.5f
 
 @Composable
 fun <T> ListView(
@@ -46,15 +63,58 @@ fun <T> ListView(
     onSelectedChange: (Int) -> Unit = {},
 ) {
     var selectedIndex by remember(items) { mutableIntStateOf(0) }
+    var visualPos by remember(items) { mutableFloatStateOf(0f) }
+    var scrollVelocity by remember(items) { mutableFloatStateOf(0f) }
     var hoveredIndex by remember { mutableIntStateOf(-1) }
     val uiInput = LocalUiInputEnabled.current
     var lastClickRow by remember { mutableIntStateOf(-1) }
     var lastClickAt by remember { mutableLongStateOf(0L) }
     val palette = LocalTuiColors.current
 
-    val scrollOffset = remember(selectedIndex, visibleLines, items.size) {
+    // 动画期间窗口跟着小数位置移动，行内容每跨过一行才真正重绘，看起来是逐行平滑滚动。
+    val visualAnchor = if (items.isEmpty()) 0 else visualPos.roundToInt().coerceIn(0, items.lastIndex)
+    val scrollOffset = remember(visualAnchor, visibleLines, items.size) {
         val max = (items.size - visibleLines).coerceAtLeast(0)
-        (selectedIndex - visibleLines / 2).coerceIn(0, max)
+        (visualAnchor - visibleLines / 2).coerceIn(0, max)
+    }
+
+    LaunchedEffect(items) {
+        while (true) {
+            // 空闲时不占帧；有速度时才按帧推进。
+            snapshotFlow { scrollVelocity }.first { it != 0f }
+            var lastNanos = 0L
+            while (scrollVelocity != 0f) {
+                withFrameNanos { now ->
+                    if (items.isEmpty()) {
+                        scrollVelocity = 0f
+                        return@withFrameNanos
+                    }
+                    if (lastNanos != 0L) {
+                        val dt = ((now - lastNanos) / 1_000_000_000.0).toFloat().coerceIn(0f, 0.05f)
+                        val max = items.lastIndex.toFloat()
+                        var next = visualPos + scrollVelocity * dt
+                        if (next <= 0f) {
+                            next = 0f
+                            scrollVelocity = 0f
+                        }
+                        if (next >= max) {
+                            next = max
+                            scrollVelocity = 0f
+                        }
+                        visualPos = next
+                        val index = next.roundToInt().coerceIn(0, items.lastIndex)
+                        if (index != selectedIndex) {
+                            selectedIndex = index
+                            onSelectedChange(index)
+                        }
+                        scrollVelocity *= exp(-ScrollFriction * dt)
+                        if (abs(scrollVelocity) < MinScrollSpeed) scrollVelocity = 0f
+                        hoveredIndex = -1
+                    }
+                    lastNanos = now
+                }
+            }
+        }
     }
 
     Box(
@@ -62,7 +122,17 @@ fun <T> ListView(
             .onKeyEvent { event ->
                 if (!enabled || !uiInput) return@onKeyEvent false
                 val action =
-                    dispatchListViewKey(event, selectedIndex, { selectedIndex = it; onSelectedChange(it) }, items.lastIndex)
+                    dispatchListViewKey(
+                        event,
+                        selectedIndex,
+                        { index ->
+                            selectedIndex = index
+                            visualPos = index.toFloat()
+                            scrollVelocity = 0f
+                            onSelectedChange(index)
+                        },
+                        items.lastIndex,
+                    )
                 when (action) {
                     ListViewScreenAction.Confirm -> {
                         items.getOrNull(selectedIndex)?.let(onConfirm); true
@@ -75,13 +145,11 @@ fun <T> ListView(
                 if (event.type != MouseEvent.Type.Press) return@onMouseEvent false
                 when (event.button) {
                     MouseEvent.Button.WheelUp, MouseEvent.Button.WheelDown -> {
-                        val delta = if (event.button == MouseEvent.Button.WheelUp) -WheelStep else WheelStep
-                        val next = (selectedIndex + delta).coerceIn(0, items.lastIndex)
-                        if (next != selectedIndex) {
-                            selectedIndex = next
-                            onSelectedChange(next)
-                            hoveredIndex = -1 // 行整体移动后旧的 hover 行号已失效
-                        }
+                        // 一次滚轮给一个约 WheelStep 行的初速度，之后由摩擦衰减形成渐停。
+                        val rows = if (event.button == MouseEvent.Button.WheelUp) -WheelStep else WheelStep
+                        scrollVelocity = (scrollVelocity + rows * ScrollFriction)
+                            .coerceIn(-MaxScrollSpeed, MaxScrollSpeed)
+                        hoveredIndex = -1
                         true
                     }
                     else -> false
@@ -118,6 +186,8 @@ fun <T> ListView(
                                 val now = Clock.System.now().toEpochMilliseconds()
                                 val doubleClick = i == lastClickRow && now - lastClickAt in 0L..DoubleClickMillis
                                 selectedIndex = i
+                                visualPos = i.toFloat()
+                                scrollVelocity = 0f
                                 onSelectedChange(i)
                                 if (doubleClick) onConfirm(item)
                                 lastClickRow = i
