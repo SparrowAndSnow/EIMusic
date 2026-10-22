@@ -82,11 +82,11 @@ fun App(
 
     // 底部标签页：只放可切换的页面，弹窗类路由不算标签。
     val tabRoutes = listOf(
-        "Home" to Route.Main,
-        "Playlists" to Route.Playlists,
-        "Local" to Route.LocalSongs,
-        "Together" to Route.Together,
-        "Queue" to Route.Queue,
+        "1 Home" to Route.Main,
+        "2 Playlists" to Route.Playlists,
+        "3 Local" to Route.LocalSongs,
+        "4 Together" to Route.Together,
+        "5 Queue" to Route.Queue,
     )
     val activeTabRoute = baseRoute ?: currentRoute
 
@@ -195,8 +195,28 @@ fun App(
                     channelLabel = channelLabel
                 )
                 BoxWithConstraints(Modifier.weight(1f).onKeyEvent { event ->
-                    // 弹窗打开时全局快捷键停用，按键只交给弹窗。
-                    if (overlayRoute) false else dispatchGlobalKey(event, appGlobalActions)
+                    // 数字 1-5 直达标签页；Tab / Shift+Tab 循环切换。
+                    // 输入框会先消费字符，所以在输入时数字仍然是正常输入。
+                    val digit = event.key.toIntOrNull()
+                    if (digit != null && digit in 1..tabRoutes.size && !event.ctrl && !event.alt) {
+                        val target = tabRoutes[digit - 1].second
+                        if (overlayRoute || activeTabRoute != target) {
+                            backStack = listOf(target)
+                        }
+                        true
+                    } else if (event.key == "Tab" && !event.ctrl && !event.alt) {
+                        val currentIndex = tabRoutes.indexOfFirst { it.second == activeTabRoute }
+                        val base = if (currentIndex >= 0) currentIndex else 0
+                        val delta = if (event.shift) -1 else 1
+                        val next = (base + delta + tabRoutes.size) % tabRoutes.size
+                        backStack = listOf(tabRoutes[next].second)
+                        true
+                    } else if (overlayRoute) {
+                        // 弹窗打开时除切页外，全局快捷键停用。
+                        false
+                    } else {
+                        dispatchGlobalKey(event, appGlobalActions)
+                    }
                 }) {
                     // 内容区真实可用尺寸来自父级约束，不再用终端行列数硬减。
                     CompositionLocalProvider(

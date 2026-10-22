@@ -63,7 +63,6 @@ fun MainScreen(
                 onToggleTheme = onToggleTheme,
                 onQuit = onQuit,
             )
-            true
         }
     ) {
         PlayerCenter(playerState, displayPos)

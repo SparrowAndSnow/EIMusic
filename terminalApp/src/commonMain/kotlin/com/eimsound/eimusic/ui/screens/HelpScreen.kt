@@ -34,8 +34,12 @@ fun HelpScreen(
         statusBarHint.value = helpStatusBarHint()
     }
     Box(Modifier.fillMaxSize().uiKeyEvent { event->
-        if (mapHelpKey(event.key) == HelpAction.Dismiss) onGoBack()
-        true
+        if (mapHelpKey(event.key) == HelpAction.Dismiss) {
+            onGoBack()
+            true
+        } else {
+            false
+        }
     }, contentAlignment = Alignment.Center) {
         Dialog(title = "Keyboard Controls", onDismiss = onGoBack) {
             Column {

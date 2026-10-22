@@ -131,9 +131,9 @@ fun dispatchMainKey(
     onOpenPlaylists: () -> Unit = {},
     onOpenLocalSongs: () -> Unit = {},
     onOpenTogether: () -> Unit = {},
-) {
+): Boolean {
     val action = if (event.ctrl) mapCtrlKey(event.key) else mapMainKey(event.key)
-    if (action == null) return
+    if (action == null) return false
 
     when (action) {
         MainAction.PlayPause -> globalActions.onPlayPause()
@@ -155,4 +155,5 @@ fun dispatchMainKey(
         MainAction.OpenTogether -> onOpenTogether()
         MainAction.Quit -> onQuit()
     }
+    return true
 }
