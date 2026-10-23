@@ -8,11 +8,9 @@ package com.eimsound.eimusic.ui
  * placeholders; an ASCII fallback is tracked in TODO.md.
  */
 enum class Icon(val sym: String) {
-    // Use the circular variants for transport states so play/pause/stop share the
-    // same visual weight. The bare play/pause/stop glyphs differ a lot in size.
-    Play("\uF144"),
-    Pause("\uF28B"),
-    Stop("\uF28D"),
+    Play("\uF04B"),
+    Pause("\uF04C"),
+    Stop("\uF04D"),
     Repeat("\uF01E"),
     Shuffle("\uF074"),
     VolumeOff("\uF026"),
