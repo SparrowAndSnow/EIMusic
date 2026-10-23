@@ -179,19 +179,16 @@ fun SearchPage(
                 )
                 Text(" ", color = palette.textFg)
             }
-            Text(
-                buildAnnotatedString {
-                    spacer(2)
-                    if (focus == SearchFocus.Input) {
+            if (focus == SearchFocus.Input) {
+                Text(
+                    buildAnnotatedString {
+                        spacer(2)
                         withStyle(SpanStyle(color = palette.textDimFg)) { append("⏎ search") }
                         withStyle(SpanStyle(color = palette.textDimFg)) { append("  ⎋ cancel") }
-                    } else {
-                        withStyle(SpanStyle(color = palette.textDimFg)) { append("⏎ play") }
-                        withStyle(SpanStyle(color = palette.textDimFg)) { append("  ⎋ back") }
-                    }
-                },
-                color = palette.textFg,
-            )
+                    },
+                    color = palette.textFg,
+                )
+            }
 
             if (searchState.isLoading) {
                 Text("  Searching...", color = palette.textDimFg)
