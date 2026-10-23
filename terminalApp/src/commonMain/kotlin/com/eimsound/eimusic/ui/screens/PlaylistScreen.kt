@@ -88,6 +88,11 @@ fun PlaylistScreen(
                             }
                         }
                     },
+                    refreshPlaylist = {
+                        if (state.selectedPlaylist?.id?.source != com.eimsound.eimusic.music.TrackSource.LOCAL) {
+                            playlistViewModel.refreshPlaylist()
+                        }
+                    },
                     moveTrackDown = {
                         if (state.selectedPlaylist?.id?.source == com.eimsound.eimusic.music.TrackSource.LOCAL) {
                             val index = trackSelection.index

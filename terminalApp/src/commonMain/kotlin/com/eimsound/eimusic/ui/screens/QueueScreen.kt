@@ -67,6 +67,10 @@ fun QueueScreen(
                                 selection.jumpTo(index + 1)
                             }
                         },
+                        jumpToCurrent = {
+                            val index = playerState.index
+                            if (index in playerState.queue.indices) selection.jumpTo(index)
+                        },
                         removeTrack = {
                             val index = selection.index
                             if (index >= 0 && index < playerState.queue.size) {
