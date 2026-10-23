@@ -45,6 +45,8 @@ class PlayerController(
 
     private var positionJob: Job? = null
     private var playJob: Job? = null
+    private var streamJob: Job? = null
+    private var networkStream: NetworkStream? = null
 
     private var syncPendingPosition: Long? = null
     private var syncPendingPlayState: PlayState? = null
@@ -314,6 +316,10 @@ class PlayerController(
     // ── Lifecycle ──
 
     override fun release() {
+        streamJob?.cancel()
+        streamJob = null
+        networkStream?.close()
+        networkStream = null
         stopPositionPolling()
         engine.release()
         scope.cancel()
@@ -346,6 +352,11 @@ class PlayerController(
 
     private fun doOpenAndPlay(track: Track) {
         playJob?.cancel()
+        streamJob?.cancel()
+        streamJob = null
+        engine.closeCurrent()
+        networkStream?.close()
+        networkStream = null
         stopPositionPolling()
         playJob = scope.launch {
             try {
@@ -382,9 +393,11 @@ class PlayerController(
     private suspend fun playNetworkStream(uri: String, cachePath: String) {
         ensureCacheDir()
         val stream = NetworkStream(uri, httpClient!!, cachePath)
+        networkStream = stream
         TuiLogger.log("Starting network stream...")
-        scope.launch { stream.start() }
+        streamJob = scope.launch { stream.start() }
         stream.waitForPrebuffer()
+        check(stream.getBuffer().available() > 0) { "stream produced no audio data" }
         val dur = engine.openStream(stream.getBuffer())
         applyPlaybackState(dur)
     }

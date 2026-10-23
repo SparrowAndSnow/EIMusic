@@ -38,16 +38,19 @@ class NetworkStream(
     suspend fun start() {
         TuiLogger.log("NetworkStream: starting download $url")
         var cacheSink: kotlinx.io.Sink? = null
+        var downloadComplete = false
+        val tempPath = cachePath?.let { "$it.part" }
         try {
             httpClient.prepareGet(url).execute { response ->
                 TuiLogger.log("NetworkStream: connected, status=${response.status}")
-                cacheSink = cachePath?.let {
+                check(response.status.value in 200..299) { "HTTP ${response.status.value}" }
+                cacheSink = tempPath?.let {
                     SystemFileSystem.sink(Path(it)).buffered()
                 }
                 val channel = response.bodyAsChannel()
 
                 @OptIn(InternalAPI::class)
-                while (!channel.isClosedForRead) {
+                while (!channel.isClosedForRead && !innerBuffer.isClosed()) {
                     currentCoroutineContext().ensureActive()
                     val chunk = ByteArray(CHUNK_SIZE)
                     val size = channel.readAvailable(chunk)
@@ -58,6 +61,7 @@ class NetworkStream(
                     innerBuffer.append(bytes)
                     cacheSink?.write(bytes)
                 }
+                downloadComplete = true
                 TuiLogger.log("NetworkStream: download complete")
             }
         } catch (e: Exception) {
@@ -65,6 +69,15 @@ class NetworkStream(
             innerBuffer.markError(e.message ?: "Unknown error")
         } finally {
             cacheSink?.close()
+            if (tempPath != null && cachePath != null) {
+                runCatching {
+                    if (downloadComplete) {
+                        SystemFileSystem.atomicMove(Path(tempPath), Path(cachePath!!))
+                    } else {
+                        SystemFileSystem.delete(Path(tempPath), mustExist = false)
+                    }
+                }
+            }
             innerBuffer.close()
         }
     }
@@ -87,7 +100,8 @@ class NetworkStream(
 
     /** 释放所有资源 */
     fun close() {
-        innerBuffer.dispose()
+        // 只关闭标记，不销毁 mutex/cond：下载协程可能仍在收尾，销毁会造成 use-after-free。
+        innerBuffer.close()
     }
 
     companion object {

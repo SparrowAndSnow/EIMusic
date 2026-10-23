@@ -53,10 +53,7 @@ class NativeAudioEngine {
     // ── 文件播放（用于本地文件和缓存文件） ──
 
     fun openFile(path: String): Long {
-        if (soundLoaded) {
-            ma_sound_stop(soundPtr); ma_sound_uninit(soundPtr)
-            soundLoaded = false
-        }
+        closeCurrent()
         TuiLogger.log("Opening: ${path.take(80)}")
         val result =
             ma_sound_init_from_file(enginePtr, path, FLAG_STREAM or FLAG_NO_SPATIALIZATION, null, null, soundPtr)
@@ -79,12 +76,7 @@ class NativeAudioEngine {
      * 内部创建 ma_decoder（从缓冲区读取编码音频）+ ma_sound（从 decoder 读取 PCM）。
      */
     fun openStream(buffer: StreamBuffer): Long {
-        // 清理旧的 decoder/sound
-        cleanupStream()
-        if (soundLoaded) {
-            ma_sound_stop(soundPtr); ma_sound_uninit(soundPtr)
-            soundLoaded = false
-        }
+        closeCurrent()
 
         activeBuffer = buffer
 
@@ -177,15 +169,21 @@ class NativeAudioEngine {
 
     // ── 生命周期 ──
 
-    fun release() {
+    /** 先停 sound 再销毁 decoder，供切歌/释放复用。 */
+    fun closeCurrent() {
         try {
             if (soundLoaded) {
                 ma_sound_stop(soundPtr)
                 ma_sound_uninit(soundPtr)
+                soundLoaded = false
             }
         } catch (_: Exception) {
         }
         cleanupStream()
+    }
+
+    fun release() {
+        closeCurrent()
         try {
             ma_engine_uninit(enginePtr)
         } catch (_: Exception) {
