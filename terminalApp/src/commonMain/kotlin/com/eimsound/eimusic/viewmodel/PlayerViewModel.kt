@@ -1,5 +1,7 @@
 package com.eimsound.eimusic.viewmodel
 
+import com.eimsound.eimusic.db.DbLibraryRepository
+import com.eimsound.eimusic.db.DbTrack
 import com.eimsound.eimusic.music.PlayerState
 import com.eimsound.eimusic.music.Track
 import com.eimsound.eimusic.music.PlayMode
@@ -24,14 +26,13 @@ import kotlin.time.Duration.Companion.milliseconds
 class PlayerViewModel(
     private val controller: IMediaPlayerController,
     private val storage: IStorage,
+    private val library: DbLibraryRepository,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     val state: StateFlow<PlayerState> = controller.state
 
-    private val _recentTracks = MutableStateFlow(
-        storage.get<Settings, List<Track>>(Settings::recentTracks, emptyList()),
-    )
+    private val _recentTracks = MutableStateFlow(library.recentTracks().map { it.toTrack() })
 
     /** 最近播放（新→旧），用于 Main 空状态。 */
     val recentTracks: StateFlow<List<Track>> = _recentTracks.asStateFlow()
@@ -57,6 +58,14 @@ class PlayerViewModel(
         controller.volume(savedVolume, savedMuted)
         controller.playMode(PlayMode.of(savedPlayMode))
 
+        // 首次启动把旧 Settings 中的最近播放迁到 DB。
+        if (_recentTracks.value.isEmpty()) {
+            storage.get<Settings, List<Track>>(Settings::recentTracks, emptyList()).forEach {
+                library.recordRecent(it.toDbTrack())
+            }
+            _recentTracks.value = library.recentTracks().map { it.toTrack() }
+        }
+
         // 记录最近播放
         scope.launch {
             controller.state
@@ -80,12 +89,35 @@ class PlayerViewModel(
         }
     }
 
+    private fun Track.toDbTrack(): DbTrack = DbTrack(
+        id = id.toString(),
+        source = id.source,
+        externalId = id.id,
+        title = name,
+        artist = artists?.joinToString("/") { it.name },
+        album = album?.name,
+        duration = duration?.milliseconds,
+        uri = uri,
+        artUrl = album?.image,
+    )
+
+    private fun DbTrack.toTrack(): Track = Track(
+        album = null,
+        artists = artist?.let { listOf(com.eimsound.eimusic.music.Artist(null, source.name, it)) },
+        duration = duration?.let { com.eimsound.eimusic.music.Duration(it) },
+        id = runCatching { com.eimsound.eimusic.music.TrackId.parse(id) }
+            .getOrElse { com.eimsound.eimusic.music.TrackId(source, externalId) },
+        name = title,
+        uri = uri,
+        source = source,
+    )
+
     private fun recordRecentTrack(track: Track) {
         val updated = (listOf(track) + _recentTracks.value.filterNot { it.id == track.id })
             .take(12)
         if (updated == _recentTracks.value) return
         _recentTracks.value = updated
-        storage.save<Settings, List<Track>>(Settings::recentTracks, updated)
+        library.recordRecent(track.toDbTrack())
     }
 
     fun seekRelative(delta: Long) {

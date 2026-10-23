@@ -1,0 +1,9 @@
+CREATE TABLE recent (
+    track_id TEXT NOT NULL PRIMARY KEY,
+    played_at INTEGER NOT NULL
+);
+
+CREATE TABLE search_history (
+    query TEXT NOT NULL PRIMARY KEY,
+    searched_at INTEGER NOT NULL
+);

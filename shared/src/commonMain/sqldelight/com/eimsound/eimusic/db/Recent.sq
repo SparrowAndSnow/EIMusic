@@ -1,0 +1,26 @@
+CREATE TABLE recent (
+    track_id TEXT NOT NULL PRIMARY KEY,
+    played_at INTEGER NOT NULL
+);
+
+CREATE TABLE search_history (
+    query TEXT NOT NULL PRIMARY KEY,
+    searched_at INTEGER NOT NULL
+);
+
+upsertRecent:
+INSERT OR REPLACE INTO recent(track_id, played_at) VALUES (?, ?);
+
+selectRecent:
+SELECT track.* FROM recent
+JOIN track ON track.id = recent.track_id
+ORDER BY recent.played_at DESC, recent.rowid DESC
+LIMIT ?;
+
+upsertSearch:
+INSERT OR REPLACE INTO search_history(query, searched_at) VALUES (?, ?);
+
+selectSearches:
+SELECT query FROM search_history
+ORDER BY searched_at DESC, rowid DESC
+LIMIT ?;
