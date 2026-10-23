@@ -60,4 +60,4 @@ fun dispatchQueueKey(
 fun queueStatusBarHint(): String = trackTableKeyBindings
     .filter { it.action in setOf(TrackTableBindingAction.ScrollDown, TrackTableBindingAction.ScrollUp, TrackTableBindingAction.PlayTrack) }
     .joinToString("  ") { "${it.display}:${it.description}" } + "  " +
-    queueKeyBindings.joinToString("  ") { "${it.display}:${it.description}" } + "  l:Add to playlist"
+    queueKeyBindings.joinToString("  ") { "${it.display}:${it.description}" }

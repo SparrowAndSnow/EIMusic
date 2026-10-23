@@ -86,9 +86,6 @@ fun SearchPage(
                 } else {
                     false
                 }
-            } else if (event.key == "l" && focus == SearchFocus.Results && !event.ctrl && !event.alt) {
-                searchState.results.getOrNull(resultSelection.index)?.let(picker::open)
-                true
             } else if (event.key == "m" && focus == SearchFocus.Results && !event.ctrl && !event.alt) {
                 searchState.results.getOrNull(resultSelection.index)?.let(showTrackMenu)
                 true

@@ -67,9 +67,6 @@ fun QueueScreen(
                 } else {
                     false // picker ListView handles j/k/Enter
                 }
-            } else if (event.key == "l" && !event.ctrl && !event.alt) {
-                playerState.queue.getOrNull(selection.index)?.let(picker::open)
-                true
             } else {
                 dispatchQueueKey(
                     event = event,
