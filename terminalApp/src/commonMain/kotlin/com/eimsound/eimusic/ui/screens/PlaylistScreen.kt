@@ -49,6 +49,26 @@ fun PlaylistScreen(
     val trackSelection = rememberListSelectionState()
     val picker = rememberPlaylistPickerState()
     val trackActions = LocalTrackActionHost.current
+    val showTrackMenu: (Track, Int) -> Unit = { track, index ->
+        trackActions?.showMenu(
+            track.name,
+            trackContextItems(
+                onAddToPlaylist = { picker.open(track) },
+                onPlayNext = { playerViewModel.playNext(track) },
+                onShowInfo = { trackActions?.showInfo(track) },
+                extra = if (state.selectedPlaylist?.id?.source == TrackSource.LOCAL) {
+                    listOf(
+                        ContextMenuItem("Remove from playlist") {
+                            playlistViewModel.removeTrackAt(index)
+                            trackSelection.jumpTo((index - 1).coerceAtLeast(0))
+                        },
+                    )
+                } else {
+                    emptyList()
+                },
+            ),
+        )
+    }
     var showTrackList by remember { mutableStateOf(false) }
     var creatingLocal by remember { mutableStateOf(false) }
 
@@ -102,9 +122,13 @@ fun PlaylistScreen(
                         }
                     },
                     refreshPlaylist = {
-                        if (state.selectedPlaylist?.id?.source != com.eimsound.eimusic.music.TrackSource.LOCAL) {
+                        if (state.selectedPlaylist?.id?.source != TrackSource.LOCAL) {
                             playlistViewModel.refreshPlaylist()
                         }
+                    },
+                    openTrackMenu = {
+                        state.tracks.getOrNull(trackSelection.index)
+                            ?.let { showTrackMenu(it, trackSelection.index) }
                     },
                     moveTrackDown = {
                         if (state.selectedPlaylist?.id?.source == com.eimsound.eimusic.music.TrackSource.LOCAL) {
@@ -188,26 +212,7 @@ fun PlaylistScreen(
                         visibleLines = visibleLines,
                         emptyMessage = "No tracks in this playlist.",
                         selection = trackSelection,
-                        onSecondaryClick = { track, index ->
-                            trackActions?.showMenu(
-                                track.name,
-                                trackContextItems(
-                                    onAddToPlaylist = { picker.open(track) },
-                                    onPlayNext = { playerViewModel.playNext(track) },
-                                    onShowInfo = { trackActions?.showInfo(track) },
-                                    extra = if (state.selectedPlaylist?.id?.source == TrackSource.LOCAL) {
-                                        listOf(
-                                            ContextMenuItem("Remove from playlist") {
-                                                playlistViewModel.removeTrackAt(index)
-                                                trackSelection.jumpTo((index - 1).coerceAtLeast(0))
-                                            },
-                                        )
-                                    } else {
-                                        emptyList()
-                                    },
-                                ),
-                            )
-                        },
+                        onSecondaryClick = showTrackMenu,
                         onPlayTrack = {
                             playerViewModel.playTrack(it)
                             onGoBack()

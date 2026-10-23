@@ -51,6 +51,16 @@ fun SearchPage(
     val historySelection = rememberListSelectionState()
     val picker = rememberPlaylistPickerState()
     val trackActions = LocalTrackActionHost.current
+    val showTrackMenu: (Track) -> Unit = { track ->
+        trackActions?.showMenu(
+            track.name,
+            trackContextItems(
+                onAddToPlaylist = { picker.open(track) },
+                onPlayNext = { playerViewModel.playNext(track) },
+                onShowInfo = { trackActions?.showInfo(track) },
+            ),
+        )
+    }
     val playlistState by playlistViewModel.state.collectAsState()
     val localPlaylists = playlistState.playlists.filter { it.id.source == TrackSource.LOCAL }
     val palette = LocalTuiColors.current
@@ -82,6 +92,9 @@ fun SearchPage(
                 }
             } else if (event.key == "l" && focus == SearchFocus.Results && !event.ctrl && !event.alt) {
                 searchState.results.getOrNull(resultSelection.index)?.let(picker::open)
+                true
+            } else if (event.key == "m" && focus == SearchFocus.Results && !event.ctrl && !event.alt) {
+                searchState.results.getOrNull(resultSelection.index)?.let(showTrackMenu)
                 true
             } else {
                 dispatchSearchKey(
@@ -203,16 +216,7 @@ fun SearchPage(
                     visibleLines = visibleLines,
                     emptyMessage = "",
                     selection = resultSelection,
-                    onItemSecondaryClick = { track, _ ->
-                        trackActions?.showMenu(
-                            track.name,
-                            trackContextItems(
-                                onAddToPlaylist = { picker.open(track) },
-                                onPlayNext = { playerViewModel.playNext(track) },
-                                onShowInfo = { trackActions.showInfo(track) },
-                            ),
-                        )
-                    },
+                    onItemSecondaryClick = { track, _ -> showTrackMenu(track) },
                     onConfirm = { track ->
                         playerViewModel.playTrack(track)
                         searchViewModel.reset()

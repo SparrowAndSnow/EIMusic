@@ -16,6 +16,7 @@ sealed interface PlaylistAction : KeyAction {
     data object MoveTrackUp : PlaylistAction
     data object MoveTrackDown : PlaylistAction
     data object RefreshPlaylist : PlaylistAction
+    data object OpenTrackMenu : PlaylistAction
     data object ToggleTrackList : PlaylistAction
     data object GoBack : PlaylistAction
 }
@@ -27,6 +28,7 @@ val playlistKeyBindings: List<KeyBinding<PlaylistAction>> = listOf(
     KeyBinding(listOf("K"), "K", PlaylistAction.MoveTrackUp, "Move up"),
     KeyBinding(listOf("J"), "J", PlaylistAction.MoveTrackDown, "Move down"),
     KeyBinding(listOf("r"), "r", PlaylistAction.RefreshPlaylist, "Refresh"),
+    KeyBinding(listOf("m"), "m", PlaylistAction.OpenTrackMenu, "Menu"),
     KeyBinding(listOf("Tab"), "Tab", PlaylistAction.ToggleTrackList, "Toggle track list"),
     KeyBinding(listOf("Escape"), "Esc", PlaylistAction.GoBack, "Back"),
 )
@@ -51,6 +53,7 @@ data class PlaylistKeyActions(
     val moveTrackUp: () -> Unit,
     val moveTrackDown: () -> Unit,
     val refreshPlaylist: () -> Unit,
+    val openTrackMenu: () -> Unit,
     val selectPlaylist: () -> Unit,
 )
 
@@ -84,6 +87,7 @@ fun dispatchPlaylistKey(
             PlaylistAction.MoveTrackUp -> { actions.moveTrackUp(); true }
             PlaylistAction.MoveTrackDown -> { actions.moveTrackDown(); true }
             PlaylistAction.RefreshPlaylist -> { actions.refreshPlaylist(); true }
+            PlaylistAction.OpenTrackMenu -> { actions.openTrackMenu(); true }
             else -> false // TrackTable handles its own keys
         }
     }
@@ -93,5 +97,5 @@ fun dispatchPlaylistKey(
 fun playlistStatusBarHint(focus: PlaylistFocus): String = when (focus) {
     PlaylistFocus.Input -> inputFieldStatusBarHint()
     PlaylistFocus.List -> "j/k:Scroll  Enter:Open  a:Add  n:New  d:Delete  Tab:Open  Esc:Back"
-    PlaylistFocus.TrackList -> "j/k:Scroll  Enter:Play  p:PlayAll  K/J:Move  d:Remove  r:Refresh  Esc:Back"
+    PlaylistFocus.TrackList -> "j/k:Scroll  Enter:Play  p:PlayAll  K/J:Move  d:Remove  r:Refresh  m:Menu"
 }

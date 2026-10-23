@@ -6,6 +6,7 @@ sealed interface QueueAction : KeyAction {
     data object MoveUp : QueueAction
     data object MoveDown : QueueAction
     data object JumpToCurrent : QueueAction
+    data object OpenMenu : QueueAction
     data object RemoveTrack : QueueAction
     data object ClearQueue : QueueAction
     data object GoBack : QueueAction
@@ -15,6 +16,7 @@ val queueKeyBindings: List<KeyBinding<QueueAction>> = listOf(
     KeyBinding(listOf("K"), "K", QueueAction.MoveUp, "Move up"),
     KeyBinding(listOf("J"), "J", QueueAction.MoveDown, "Move down"),
     KeyBinding(listOf("g"), "g", QueueAction.JumpToCurrent, "Current"),
+    KeyBinding(listOf("m"), "m", QueueAction.OpenMenu, "Menu"),
     KeyBinding(listOf("d"), "d", QueueAction.RemoveTrack, "Remove"),
     KeyBinding(listOf("c"), "c", QueueAction.ClearQueue, "Clear"),
     KeyBinding(listOf("Escape"), "Esc", QueueAction.GoBack, "Back"),
@@ -31,6 +33,7 @@ data class QueueKeyActions(
     val moveUp: () -> Unit,
     val moveDown: () -> Unit,
     val jumpToCurrent: () -> Unit,
+    val openMenu: () -> Unit,
     val removeTrack: () -> Unit,
     val clearQueue: () -> Unit,
     val goBack: () -> Unit,
@@ -46,6 +49,7 @@ fun dispatchQueueKey(
         QueueAction.MoveUp -> { actions.moveUp(); true }
         QueueAction.MoveDown -> { actions.moveDown(); true }
         QueueAction.JumpToCurrent -> { actions.jumpToCurrent(); true }
+        QueueAction.OpenMenu -> { actions.openMenu(); true }
         QueueAction.RemoveTrack -> { actions.removeTrack(); true }
         QueueAction.ClearQueue -> { actions.clearQueue(); true }
         QueueAction.GoBack -> { actions.goBack(); true }

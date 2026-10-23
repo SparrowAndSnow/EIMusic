@@ -4,6 +4,7 @@ import androidx.compose.runtime.*
 import com.eimsound.eimusic.keyboard.QueueKeyActions
 import com.eimsound.eimusic.keyboard.dispatchQueueKey
 import com.eimsound.eimusic.keyboard.queueStatusBarHint
+import com.eimsound.eimusic.music.Track
 import com.eimsound.eimusic.music.PlayerState
 import com.eimsound.eimusic.music.TrackSource
 import com.eimsound.eimusic.ui.components.ContextMenuItem
@@ -39,6 +40,22 @@ fun QueueScreen(
     val localPlaylists = playlistState.playlists.filter { it.id.source == TrackSource.LOCAL }
     val picker = rememberPlaylistPickerState()
     val trackActions = LocalTrackActionHost.current
+    val showTrackMenu: (Track, Int) -> Unit = { track, index ->
+        trackActions?.showMenu(
+            track.name,
+            trackContextItems(
+                onAddToPlaylist = { picker.open(track) },
+                onPlayNext = { playerViewModel.playNext(track) },
+                onShowInfo = { trackActions?.showInfo(track) },
+                extra = listOf(
+                    ContextMenuItem("Remove from queue") {
+                        playerViewModel.removeTrack(index)
+                        selection.jumpTo((index - 1).coerceAtLeast(0))
+                    },
+                ),
+            ),
+        )
+    }
 
     ScreenFrame(
         hint = queueStatusBarHint(),
@@ -74,6 +91,9 @@ fun QueueScreen(
                         jumpToCurrent = {
                             val index = playerState.index
                             if (index in playerState.queue.indices) selection.jumpTo(index)
+                        },
+                        openMenu = {
+                            playerState.queue.getOrNull(selection.index)?.let { showTrackMenu(it, selection.index) }
                         },
                         removeTrack = {
                             val index = selection.index
@@ -111,22 +131,7 @@ fun QueueScreen(
                     visibleLines = visibleLines,
                     onPlayTrack = { track -> playerViewModel.playTrack(track) },
                     selection = selection,
-                    onSecondaryClick = { track, index ->
-                        trackActions?.showMenu(
-                            track.name,
-                            trackContextItems(
-                                onAddToPlaylist = { picker.open(track) },
-                                onPlayNext = { playerViewModel.playNext(track) },
-                                onShowInfo = { trackActions?.showInfo(track) },
-                                extra = listOf(
-                                    ContextMenuItem("Remove from queue") {
-                                        playerViewModel.removeTrack(index)
-                                        selection.jumpTo((index - 1).coerceAtLeast(0))
-                                    },
-                                ),
-                            ),
-                        )
-                    },
+                    onSecondaryClick = showTrackMenu,
                     onConfirm = {
                         playerViewModel.playTrack(it)
                         onGoBack()
