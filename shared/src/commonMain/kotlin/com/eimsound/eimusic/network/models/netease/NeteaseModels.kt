@@ -2,6 +2,7 @@ package com.eimsound.eimusic.network.models.netease
 
 import com.eimsound.eimusic.music.Album
 import com.eimsound.eimusic.music.Artist
+import com.eimsound.eimusic.music.Duration
 import com.eimsound.eimusic.music.Playlist
 import com.eimsound.eimusic.music.Track
 import com.eimsound.eimusic.music.TrackId
@@ -20,6 +21,8 @@ data class NeteaseResult<T>(
 
 @Serializable
 data class NeteaseSearch(
+    @SerialName("duration") val durationMs: Long? = null,
+    @SerialName("dt") val dt: Long? = null,
     val album: String? = null,
     @SerialName("artist_string")
     val artistString: String? = null,
@@ -38,6 +41,8 @@ data class NeteaseSong(
     val alName: String? = null,
     @SerialName("ar_name")
     val arName: String? = null,
+    @SerialName("duration") val durationMs: Long? = null,
+    @SerialName("dt") val dt: Long? = null,
     @SerialName("level")
     val level: String? = null,
     @SerialName("lyric")
@@ -69,6 +74,8 @@ data class NeteaseAlbumResponse(val album: NeteaseAlbum?, val status: String?)
 
 @Serializable
 data class NeteaseAlbumSong(
+    @SerialName("duration") val durationMs: Long? = null,
+    @SerialName("dt") val dt: Long? = null,
     @SerialName("album")
     val album: String? = null,
     @SerialName("artists")
@@ -123,6 +130,8 @@ data class NeteasePlaylist(
 
 @Serializable
 data class NeteasePlaylistSong(
+    @SerialName("duration") val durationMs: Long? = null,
+    @SerialName("dt") val dt: Long? = null,
     val album: String? = null,
     val artists: String? = null,
     val id: Long? = null,
@@ -157,7 +166,7 @@ fun NeteaseSong.toTrack(): Track {
         name = name ?: "",
         artists = artistsList,
         album = albumObj,
-        duration = null,
+        duration = (durationMs ?: dt)?.let(::Duration),
         uri = url,
         source = TrackSource.NETEASE
     )
@@ -188,7 +197,7 @@ fun List<NeteaseSearch>.toTracks(): List<Track> {
                 artists = listOf(artist),
                 tracks = emptyList()
             ),
-            duration = null,
+            duration = (it.durationMs ?: it.dt)?.let(::Duration),
             uri = null,
             source = TrackSource.NETEASE
         )
@@ -214,7 +223,7 @@ fun NeteasePlaylistSong.toTrack(): Track {
             artists = listOf(artist),
             tracks = emptyList()
         ),
-        duration = null,
+        duration = (durationMs ?: dt)?.let(::Duration),
         uri = null,
         source = TrackSource.NETEASE
     )
@@ -262,7 +271,7 @@ fun List<NeteaseAlbumSong>.toTracks(): List<Track> {
                 artists = listOf(artist),
                 tracks = emptyList()
             ),
-            duration = null,
+            duration = (it.durationMs ?: it.dt)?.let(::Duration),
             uri = null,
             source = TrackSource.NETEASE
         )
