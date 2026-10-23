@@ -48,6 +48,9 @@ class PlayerController(
     private var streamJob: Job? = null
     private var networkStream: NetworkStream? = null
 
+    /** 会话恢复后尚未真正打开音频；用户首次播放时再加载。 */
+    private var needsOpen = false
+
     private var syncPendingPosition: Long? = null
     private var syncPendingPlayState: PlayState? = null
 
@@ -134,6 +137,7 @@ class PlayerController(
     }
 
     private fun play(media: Track, isAudioCompleted: Boolean = false) {
+        needsOpen = false
         val list = currentList()
         _state.update {
             it.copy(
@@ -149,6 +153,14 @@ class PlayerController(
     // ── Playback control ──
 
     fun resume() {
+        if (needsOpen) {
+            val track = _state.value.current
+            if (track != null) {
+                needsOpen = false
+                play(track)
+                return
+            }
+        }
         engine.play()
         _state.update { it.copy(playState = PlayState.PLAYING) }
         startPositionPolling()
@@ -290,6 +302,7 @@ class PlayerController(
 
     fun clearQueue() {
         engine.stop()
+        needsOpen = false
         _state.update { it.copy(queue = emptyList(), current = null, playState = PlayState.STOPPED, position = 0) }
     }
 
@@ -303,14 +316,11 @@ class PlayerController(
                 current = current,
                 playState = PlayState.PAUSED,
                 position = 0,
-                isLoading = current != null,
+                isLoading = false,
             )
         }
-        if (current != null) {
-            syncPendingPlayState = PlayState.PAUSED
-            syncPendingPosition = null
-            play(current)
-        }
+        // 只恢复 UI/队列，不打开音频流；首次播放时再加载。
+        needsOpen = current != null
     }
 
     // ── Lifecycle ──
