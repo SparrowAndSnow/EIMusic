@@ -9,7 +9,7 @@ import com.eimsound.eimusic.storage.IStorage
 import com.eimsound.eimusic.storage.Settings
 import com.eimsound.eimusic.storage.get
 import com.eimsound.eimusic.storage.save
-import com.eimsound.eimusic.ui.OverlayHost
+import com.eimsound.eimusic.ui.LocalUiInputEnabled
 import com.eimsound.eimusic.ui.components.HeaderBar
 import com.eimsound.eimusic.ui.components.LocalStatusBarHint
 import com.eimsound.eimusic.ui.screens.HelpScreen
@@ -123,18 +123,8 @@ fun App(
                 )
             }
 
-            is Route.Help -> HelpScreen(onGoBack = goBack)
-
-            is Route.Search -> SearchScreen(
-                searchViewModel = searchViewModel,
-                playerViewModel = playerViewModel,
-                onGoBack = goBack,
-            )
-
-            is Route.Login -> LoginScreen(
-                authViewModel = authViewModel,
-                onGoBack = goBack,
-            )
+            // 弹层路由只通过 OverlayHost 的 overlay 槽渲染，不作为 base 页面。
+            is Route.Help, is Route.Search, is Route.Login -> Unit
 
             is Route.LogViewer -> LogViewerScreen(
                 onGoBack = goBack,
@@ -166,6 +156,23 @@ fun App(
     }
 
     // 组合根按无界约束测量，全屏应用必须自己声明画布；尺寸随终端 resize 重组更新。
+    @Composable
+    fun OverlayRouteContent(route: Route) {
+        when (route) {
+            is Route.Help -> HelpScreen(onGoBack = goBack)
+            is Route.Search -> SearchScreen(
+                searchViewModel = searchViewModel,
+                playerViewModel = playerViewModel,
+                onGoBack = goBack,
+            )
+            is Route.Login -> LoginScreen(
+                authViewModel = authViewModel,
+                onGoBack = goBack,
+            )
+            else -> Unit
+        }
+    }
+
     Box(
         modifier = Modifier
             .size(localTerminal.size.columns, localTerminal.size.rows)
@@ -218,13 +225,18 @@ fun App(
                         LocalSafeContentSize provides SafeContentSize(maxWidth, maxHeight),
                     ) {
                         OverlayHost(
-                            base = if (baseRoute != null) {
-                                { RouteContent(baseRoute) }
+                            overlay = if (overlayRoute && baseRoute != null) {
+                                { OverlayRouteContent(currentRoute) }
                             } else {
                                 null
                             },
-                            overlay = { RouteContent(currentRoute) },
-                        )
+                        ) {
+                            // 库的 modal 门禁已经挡住 base 输入；这里再用 local 冻结
+                            // ScreenFrame 的 hint/按键，保证弹窗关闭后 hint 会重算。
+                            CompositionLocalProvider(LocalUiInputEnabled provides !overlayRoute) {
+                                RouteContent(baseRoute ?: currentRoute)
+                            }
+                        }
                     }
                 }
 
