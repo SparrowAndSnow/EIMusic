@@ -20,17 +20,22 @@ private val queueKeyMap: Map<String, QueueAction> = buildMap {
 
 fun mapQueueKey(key: String): QueueAction? = queueKeyMap[key]
 
+/** Queue 页面按键回调集合。 */
+data class QueueKeyActions(
+    val removeTrack: () -> Unit,
+    val clearQueue: () -> Unit,
+    val goBack: () -> Unit,
+)
+
 fun dispatchQueueKey(
     event: KeyEvent,
-    onRemoveTrack: () -> Unit,
-    onClearQueue: () -> Unit,
-    onGoBack: () -> Unit,
+    actions: QueueKeyActions,
 ): Boolean {
     val screenAction = mapQueueKey(event.key)
     return when (screenAction) {
-        QueueAction.RemoveTrack -> { onRemoveTrack(); true }
-        QueueAction.ClearQueue -> { onClearQueue(); true }
-        QueueAction.GoBack -> { onGoBack(); true }
+        QueueAction.RemoveTrack -> { actions.removeTrack(); true }
+        QueueAction.ClearQueue -> { actions.clearQueue(); true }
+        QueueAction.GoBack -> { actions.goBack(); true }
         null -> false // TrackTable handles its own keys
     }
 }

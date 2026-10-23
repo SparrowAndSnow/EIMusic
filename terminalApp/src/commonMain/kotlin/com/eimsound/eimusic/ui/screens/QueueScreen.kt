@@ -1,6 +1,7 @@
 package com.eimsound.eimusic.ui.screens
 
 import androidx.compose.runtime.*
+import com.eimsound.eimusic.keyboard.QueueKeyActions
 import com.eimsound.eimusic.keyboard.dispatchQueueKey
 import com.eimsound.eimusic.keyboard.queueStatusBarHint
 import com.eimsound.eimusic.music.PlayerState
@@ -30,14 +31,16 @@ fun QueueScreen(
         onKey = { event ->
             dispatchQueueKey(
                 event = event,
-                onRemoveTrack = {
-                    if (!playerState.queue.isEmpty() && queueScroll < playerState.queue.size) {
-                        playerViewModel.removeTrack(queueScroll)
-                        queueScroll = (queueScroll - 1).coerceAtLeast(0)
-                    }
-                },
-                onClearQueue = { playerViewModel.clearQueue() },
-                onGoBack = onGoBack,
+                actions = QueueKeyActions(
+                    removeTrack = {
+                        if (!playerState.queue.isEmpty() && queueScroll < playerState.queue.size) {
+                            playerViewModel.removeTrack(queueScroll)
+                            queueScroll = (queueScroll - 1).coerceAtLeast(0)
+                        }
+                    },
+                    clearQueue = { playerViewModel.clearQueue() },
+                    goBack = onGoBack,
+                ),
             )
         },
     ) {

@@ -2,6 +2,7 @@ package com.eimsound.eimusic.ui.screens
 
 import androidx.compose.runtime.*
 import com.eimsound.eimusic.keyboard.TogetherFocus
+import com.eimsound.eimusic.keyboard.TogetherKeyActions
 import com.eimsound.eimusic.keyboard.dispatchTogetherKey
 import com.eimsound.eimusic.keyboard.togetherStatusBarHint
 import com.eimsound.eimusic.together.ChannelMessage
@@ -52,12 +53,14 @@ fun TogetherScreen(
         hint = togetherStatusBarHint(focus),
         onKey = { event ->
             dispatchTogetherKey(
-            event = event,
-            focus = focus,
-            isJoined = isJoined,
-            onLeaveChannel = { channelViewModel.leaveChannel() },
-            onSetFocus = { focus = it },
-                onGoBack = { channelViewModel.disconnect(); onGoBack() },
+                event = event,
+                focus = focus,
+                isJoined = isJoined,
+                actions = TogetherKeyActions(
+                    leaveChannel = { channelViewModel.leaveChannel() },
+                    setFocus = { focus = it },
+                    goBack = { channelViewModel.disconnect(); onGoBack() },
+                ),
             )
         },
     ) {

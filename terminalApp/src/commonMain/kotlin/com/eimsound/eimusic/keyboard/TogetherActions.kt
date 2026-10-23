@@ -31,28 +31,33 @@ fun mapTogetherKey(key: String): TogetherAction? = togetherKeyMap[key]
 
 // ── Dispatch ──
 
+/** Together 页面按键回调集合。 */
+data class TogetherKeyActions(
+    val leaveChannel: () -> Unit,
+    val setFocus: (TogetherFocus) -> Unit,
+    val goBack: () -> Unit,
+)
+
 fun dispatchTogetherKey(
     event: KeyEvent,
     focus: TogetherFocus,
     isJoined: Boolean,
-    onLeaveChannel: () -> Unit,
-    onSetFocus: (TogetherFocus) -> Unit,
-    onGoBack: () -> Unit,
+    actions: TogetherKeyActions,
 ): Boolean = when (focus) {
     TogetherFocus.Welcome -> when (mapTogetherKey(event.key)) {
-        TogetherAction.JoinChannel -> { onSetFocus(TogetherFocus.Messages); true }
-        TogetherAction.LeaveChannel -> { onLeaveChannel(); true }
+        TogetherAction.JoinChannel -> { actions.setFocus(TogetherFocus.Messages); true }
+        TogetherAction.LeaveChannel -> { actions.leaveChannel(); true }
         TogetherAction.ToggleChat -> false
         TogetherAction.Disconnect,
-        TogetherAction.BackToWelcome -> { onGoBack(); true }
+        TogetherAction.BackToWelcome -> { actions.goBack(); true }
         null -> false
     }
 
     TogetherFocus.Messages -> {
         when (mapTogetherKey(event.key)) {
-            TogetherAction.ToggleChat -> { if (isJoined) { onSetFocus(TogetherFocus.ChatInput); true } else false }
-            TogetherAction.LeaveChannel -> { onLeaveChannel(); onSetFocus(TogetherFocus.Welcome); true }
-            TogetherAction.BackToWelcome -> { onSetFocus(TogetherFocus.Welcome); true }
+            TogetherAction.ToggleChat -> { if (isJoined) { actions.setFocus(TogetherFocus.ChatInput); true } else false }
+            TogetherAction.LeaveChannel -> { actions.leaveChannel(); actions.setFocus(TogetherFocus.Welcome); true }
+            TogetherAction.BackToWelcome -> { actions.setFocus(TogetherFocus.Welcome); true }
             else -> false // ListView handles its own keys
         }
     }
