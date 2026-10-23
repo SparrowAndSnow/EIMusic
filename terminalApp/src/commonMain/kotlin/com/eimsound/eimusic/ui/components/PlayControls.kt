@@ -41,7 +41,7 @@ fun playControlData(
         PlayState.STOPPED -> Icon.Stop.sym
     }
     val volIcon = when {
-        state.volume <= 0f -> Icon.VolumeOff.sym
+        state.isMute || state.volume <= 0f -> Icon.VolumeOff.sym
         state.volume < 0.34f -> Icon.VolumeLow.sym
         else -> Icon.VolumeHigh.sym
     }
