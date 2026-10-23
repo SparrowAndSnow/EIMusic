@@ -207,7 +207,7 @@ fun SearchPage(
                 playlistViewModel.addTrackToPlaylist(playlist.id.id, track)
             }
 
-            if (!picker.isOpen && !searchState.isLoading && searchState.results.isNotEmpty()) {
+            if (!picker.isOpen && !searchState.isLoading && searchState.query.isNotBlank() && searchState.results.isNotEmpty()) {
                 Text(" ", color = palette.textFg)
                 val focusLabel = if (focus == SearchFocus.Results) "▸ Results" else "Results"
                 Text("  $focusLabel", color = palette.titleFg)
@@ -215,6 +215,7 @@ fun SearchPage(
                     items = searchState.results,
                     visibleLines = visibleLines,
                     emptyMessage = "",
+                    enabled = focus == SearchFocus.Results,
                     selection = resultSelection,
                     onItemSecondaryClick = { track, _ -> showTrackMenu(track) },
                     onConfirm = { track ->
