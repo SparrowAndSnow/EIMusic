@@ -162,6 +162,8 @@ fun SearchPage(
                     visibleLines = (visibleLines - 2).coerceAtLeast(1),
                     emptyMessage = "",
                     enabled = focus == SearchFocus.History,
+                    mouseEnabled = true,
+                    confirmOnSingleClick = true,
                     selection = historySelection,
                     onConfirm = { recent ->
                         searchViewModel.updateQuery(recent)

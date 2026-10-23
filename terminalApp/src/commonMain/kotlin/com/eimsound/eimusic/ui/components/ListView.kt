@@ -71,6 +71,10 @@ fun <T> ListView(
     emptyMessage: String = " -- empty -- ",
     showScrollIndicator: Boolean = true,
     enabled: Boolean = true,
+    /** 鼠标交互（点击/滚轮/右键）是否可用，可与键盘 enabled 分开。 */
+    mouseEnabled: Boolean = enabled,
+    /** 单击是否直接确认（历史记录等）。 */
+    confirmOnSingleClick: Boolean = false,
     onConfirm: (T) -> Unit = {},
     onSelectedChange: (Int) -> Unit = {},
     onItemSecondaryClick: ((T, Int) -> Unit)? = null,
@@ -152,7 +156,7 @@ fun <T> ListView(
                 }
             }
             .onMouseEvent { event ->
-                if (!enabled || !uiInput || items.isEmpty()) return@onMouseEvent false
+                if (!mouseEnabled || !uiInput || items.isEmpty()) return@onMouseEvent false
                 if (event.type != MouseEvent.Type.Press) return@onMouseEvent false
                 if (event.button == MouseEvent.Button.Right && onItemSecondaryClick != null) {
                     val row = event.y - listTop + scrollOffset
@@ -190,7 +194,7 @@ fun <T> ListView(
                     Modifier
                         .fillMaxWidth()
                         .background(if (hovered && !isSelected) palette.hoverBg else Color.Unspecified)
-                        .hoverable(enabled = uiInput) { inside ->
+                        .hoverable(enabled = uiInput && mouseEnabled) { inside ->
                             if (inside) {
                                 hoveredIndex = i
                             } else if (hoveredIndex == i) {
@@ -199,9 +203,12 @@ fun <T> ListView(
                         }
                         // 单击只负责选中；同一行 400ms 内再次点击才触发确认。
                         .clickable(
-                            enabled = uiInput && enabled,
+                            enabled = uiInput && mouseEnabled,
                             onDoubleClick = { onConfirm(item) },
-                            onClick = { select(i) },
+                            onClick = {
+                                select(i)
+                                if (confirmOnSingleClick) onConfirm(item)
+                            },
                         )
                 ) {
                     render(item, i, isSelected)
