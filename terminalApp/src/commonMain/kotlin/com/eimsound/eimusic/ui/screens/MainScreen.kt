@@ -76,6 +76,7 @@ private fun PlayerCenter(
     val termWidth = LocalTerminalState.current.size.columns
     val termHeight = LocalTerminalState.current.size.rows
     val contentWidth = (termWidth * 0.7f).toInt().coerceIn(30, termWidth - 4)
+    val recentWidth = (termWidth * 0.6f).toInt().coerceIn(24, 60)
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -83,27 +84,56 @@ private fun PlayerCenter(
         ) {
             if (playerState.playState == PlayState.STOPPED && playerState.current == null) {
                 Spacer(Modifier.height(4))
-                Text("♪", color = palette.textDimFg)
-                Text("No track playing", color = palette.textDimFg)
+                Text(
+                    "♪",
+                    modifier = Modifier.fillMaxWidth(),
+                    color = palette.textDimFg,
+                    textAlign = Alignment.CenterHorizontally,
+                )
+                Text(
+                    "No track playing",
+                    modifier = Modifier.fillMaxWidth(),
+                    color = palette.textDimFg,
+                    textAlign = Alignment.CenterHorizontally,
+                )
                 Spacer(Modifier.height(2))
                 if (recentTracks.isEmpty()) {
-                    Text("Press 'f' to search  •  1-5 switch tabs", color = palette.textDimFg)
-                } else {
-                    Text("  Recent", color = palette.titleFg)
-                    ListView(
-                        items = recentTracks,
-                        visibleLines = 6,
-                        emptyMessage = "",
-                        onConfirm = onPlayRecent,
-                        render = { track, _, selected ->
-                            val marker = if (selected) "▸" else " "
-                            val artist = track.artists?.firstOrNull()?.name?.render().orEmpty()
-                            Text(
-                                " $marker ${track.name.render()}  —  $artist",
-                                color = if (selected) palette.highlightFg else palette.textDimFg,
-                            )
-                        },
+                    Text(
+                        "Press 'f' to search  •  1-5 switch tabs",
+                        modifier = Modifier.fillMaxWidth(),
+                        color = palette.textDimFg,
+                        textAlign = Alignment.CenterHorizontally,
                     )
+                } else {
+                    Box(Modifier.width(recentWidth).align(Alignment.CenterHorizontally)) {
+                        Column {
+                            Text(
+                                "Recent",
+                                modifier = Modifier.fillMaxWidth(),
+                                color = palette.titleFg,
+                                textAlign = Alignment.CenterHorizontally,
+                            )
+                            ListView(
+                                items = recentTracks,
+                                visibleLines = 6,
+                                emptyMessage = "",
+                                onConfirm = onPlayRecent,
+                                render = { track, _, selected ->
+                                    val marker = if (selected) "▸" else " "
+                                    val artist = track.artists?.firstOrNull()?.name?.render().orEmpty()
+                                    Text(
+                                        " $marker ${track.name.render()}  —  $artist",
+                                        modifier = Modifier.fillMaxWidth(),
+                                        color = if (selected) palette.highlightFg else palette.textDimFg,
+                                        textAlign = Alignment.CenterHorizontally,
+                                        softWrap = false,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                },
+                            )
+                        }
+                    }
                 }
             } else {
                 // ── Album art (roughly square considering font 1:2 ratio) ──
