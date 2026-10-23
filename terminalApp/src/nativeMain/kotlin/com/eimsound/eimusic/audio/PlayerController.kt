@@ -275,7 +275,7 @@ class PlayerController(
         }
     }
 
-    fun moveTrack(from: Int, to: Int) {
+    override fun moveTrack(from: Int, to: Int) {
         _state.update {
             val mutable = it.queue.toMutableList()
             if (from in mutable.indices && to in mutable.indices) {

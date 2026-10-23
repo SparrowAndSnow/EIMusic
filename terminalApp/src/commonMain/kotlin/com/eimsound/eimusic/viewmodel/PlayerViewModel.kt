@@ -139,7 +139,10 @@ class PlayerViewModel(
     }
 
     fun playTrack(track: Track) {
-        controller.addTrack(track, state.value.queue.size)
+        // 已在队列里的曲目直接播放，不移动位置；新曲目才追加到末尾。
+        if (state.value.queue.none { it.id == track.id }) {
+            controller.addTrack(track, state.value.queue.size)
+        }
         controller.play(track)
     }
 
@@ -151,6 +154,8 @@ class PlayerViewModel(
     }
 
     fun removeTrack(index: Int) = controller.removeTrack(index)
+
+    fun moveTrack(from: Int, to: Int) = controller.moveTrack(from, to)
 
     fun clearQueue() {
         controller.playState(PlayState.STOPPED)

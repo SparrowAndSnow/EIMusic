@@ -32,6 +32,18 @@ fun QueueScreen(
             dispatchQueueKey(
                 event = event,
                 actions = QueueKeyActions(
+                    moveUp = {
+                        if (queueScroll > 0 && queueScroll < playerState.queue.size) {
+                            playerViewModel.moveTrack(queueScroll, queueScroll - 1)
+                            queueScroll -= 1
+                        }
+                    },
+                    moveDown = {
+                        if (queueScroll >= 0 && queueScroll < playerState.queue.size - 1) {
+                            playerViewModel.moveTrack(queueScroll, queueScroll + 1)
+                            queueScroll += 1
+                        }
+                    },
                     removeTrack = {
                         if (!playerState.queue.isEmpty() && queueScroll < playerState.queue.size) {
                             playerViewModel.removeTrack(queueScroll)

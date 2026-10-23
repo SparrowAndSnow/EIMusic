@@ -25,6 +25,9 @@ interface IMediaPlayerController {
 
     fun removeTrack(index: Int)
 
+    /** 在队列内移动曲目；平台不支持时默认忽略。 */
+    fun moveTrack(from: Int, to: Int) {}
+
     fun nextTrack(): Track?
 
     fun previous()
