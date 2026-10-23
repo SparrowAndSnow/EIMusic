@@ -67,6 +67,8 @@ fun QueueScreen(
                 onPlayTrack = { track -> playerViewModel.playTrack(track) },
                 onSelectedChange = { queueScroll = it },
                 controlledSelectedIndex = queueScroll,
+                // 队列内容会因移动/删除变化，固定选择 key，避免内部选择被重置到 0。
+                rememberSelectionKey = Unit,
                 onConfirm = {
                     playerViewModel.playTrack(it)
                     onGoBack()
