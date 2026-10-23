@@ -15,7 +15,9 @@ import com.eimsound.eimusic.viewmodel.AuthViewModel
 import com.jakewharton.mosaic.layout.background
 import com.jakewharton.mosaic.layout.clickable
 import com.jakewharton.mosaic.layout.fillMaxWidth
+import com.jakewharton.mosaic.layout.MouseEvent
 import com.jakewharton.mosaic.layout.hoverable
+import com.jakewharton.mosaic.layout.onMouseEvent
 import com.jakewharton.mosaic.layout.padding
 import com.jakewharton.mosaic.layout.width
 import com.jakewharton.mosaic.modifier.Modifier
@@ -68,7 +70,10 @@ fun HeaderBar(
             Text(controls.playIcon, color = palette.playBtnFg)
         }
         Spacer(Modifier.width(1))
-        HeaderButton(globalActions.onToggleMute) {
+        HeaderButton(
+            onClick = globalActions.onToggleMute,
+            onWheel = { up -> globalActions.onVolumeScroll(if (up) 1 else -1) },
+        ) {
             Text(controls.volIcon, color = palette.textFg)
             Spacer(Modifier.width(1))
             Text(controls.volPercent, color = palette.textDimFg)
@@ -99,6 +104,7 @@ fun HeaderBar(
 @Composable
 private fun HeaderButton(
     onClick: () -> Unit,
+    onWheel: ((up: Boolean) -> Unit)? = null,
     content: @Composable RowScope.() -> Unit,
 ) {
     val palette = LocalTuiColors.current
@@ -108,6 +114,22 @@ private fun HeaderButton(
             .clickable(onClick = onClick)
             .hoverable { hovered = it }
             .background(if (hovered) palette.hoverBg else Color.Unspecified)
+            .then(
+                if (onWheel == null) {
+                    Modifier
+                } else {
+                    Modifier.onMouseEvent { event ->
+                        if (event.type == MouseEvent.Type.Press &&
+                            (event.button == MouseEvent.Button.WheelUp || event.button == MouseEvent.Button.WheelDown)
+                        ) {
+                            onWheel(event.button == MouseEvent.Button.WheelUp)
+                            true
+                        } else {
+                            false
+                        }
+                    }
+                },
+            )
             .padding(horizontal = 1),
         content = content,
     )

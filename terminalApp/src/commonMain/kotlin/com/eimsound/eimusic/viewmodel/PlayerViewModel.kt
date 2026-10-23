@@ -161,6 +161,13 @@ class PlayerViewModel(
         controller.volume((steps + 1).coerceAtMost(10) / 10f, state.value.isMute)
     }
 
+    /** 滚轮调节：改变音量并解除静音。 */
+    fun adjustVolume(delta: Int) {
+        val steps = ((state.value.volume * 10f) + 0.001f).toInt().coerceIn(0, 10)
+        val next = (steps + delta).coerceIn(0, 10)
+        controller.volume(next / 10f, false)
+    }
+
     fun volumeDown() {
         val steps = ((state.value.volume * 10f) + 0.001f).toInt().coerceIn(0, 10)
         controller.volume((steps - 1).coerceAtLeast(0) / 10f, state.value.isMute)

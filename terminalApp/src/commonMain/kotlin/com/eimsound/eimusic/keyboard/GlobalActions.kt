@@ -26,6 +26,7 @@ class GlobalKeyActions(
     val onPrevious: () -> Unit = {},
     val onVolumeUp: () -> Unit = {},
     val onVolumeDown: () -> Unit = {},
+    val onVolumeScroll: (Int) -> Unit = {},
     val onSeekForward: () -> Unit = {},
     val onSeekBackward: () -> Unit = {},
     val onTogglePlayMode: () -> Unit = {},

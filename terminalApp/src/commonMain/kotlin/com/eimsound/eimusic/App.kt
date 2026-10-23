@@ -134,6 +134,7 @@ fun App(
             onPrevious = { playerViewModel.previous() },
             onVolumeUp = { playerViewModel.volumeUp() },
             onVolumeDown = { playerViewModel.volumeDown() },
+            onVolumeScroll = { playerViewModel.adjustVolume(it) },
             onSeekForward = { playerViewModel.seekRelative(5000L) },
             onSeekBackward = { playerViewModel.seekRelative(-5000L) },
             onTogglePlayMode = { playerViewModel.togglePlayMode() },
