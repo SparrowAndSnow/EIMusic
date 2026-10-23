@@ -29,6 +29,7 @@ object ShareLinkResolverFactory {
     }
 
     fun getSource(uri: String): TrackSource {
-        return domainToSource[uri.split("/")[2]] ?: TrackSource.UNKNOWN
+        val host = uri.substringAfter("://", "").substringBefore('/').substringBefore('?')
+        return domainToSource[host] ?: TrackSource.UNKNOWN
     }
 }

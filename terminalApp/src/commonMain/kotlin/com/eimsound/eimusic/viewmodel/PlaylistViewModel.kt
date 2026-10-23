@@ -93,12 +93,17 @@ class PlaylistViewModel(
     fun addPlaylist(url: String) {
         scope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
-            val mediaList = fetchMediaList(url)
+            val result = runCatching { fetchMediaList(url) }
+            val mediaList = result.getOrNull()
             if (mediaList != null) {
-                importMediaList(mediaList, mediaList.displayName())
-                reloadFromDb("add")
+                runCatching {
+                    importMediaList(mediaList, mediaList.displayName())
+                }.onSuccess {
+                    reloadFromDb("add")
+                }.onFailure(::reportError)
             } else {
                 _state.update { it.copy(isLoading = false) }
+                reportError(result.exceptionOrNull() ?: IllegalArgumentException("Unsupported playlist URL"))
             }
         }
     }
@@ -118,6 +123,9 @@ class PlaylistViewModel(
     }
 
     private suspend fun fetchMediaList(url: String): MediaList? {
+        require(com.eimsound.eimusic.factory.ShareLinkResolverFactory.getSource(url) != TrackSource.UNKNOWN) {
+            "Unsupported playlist URL"
+        }
         val shareLinkResolver = shareLinkResolverFactory.get(url)
         val shareLinkType = shareLinkResolver.resolve(url)
         val mediaListId = shareLinkType.toMediaListId() ?: return null

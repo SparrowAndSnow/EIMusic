@@ -42,8 +42,8 @@ data class PlaylistKeyActions(
     val setShowTrackList: (Boolean) -> Unit,
     val setFocus: (PlaylistFocus) -> Unit,
     val goBack: () -> Unit,
-    val addPlaylist: () -> Unit,
-    val createLocal: () -> Unit,
+    val beginImport: () -> Unit,
+    val beginLocal: () -> Unit,
     val removePlaylist: () -> Unit,
     val removeTrack: () -> Unit,
     val moveTrackUp: () -> Unit,
@@ -64,8 +64,8 @@ fun dispatchPlaylistKey(
     PlaylistFocus.List -> {
         val screenAction = mapPlaylistKey(event.key)
         when (screenAction) {
-            PlaylistAction.AddPlaylist -> { actions.setFocus(PlaylistFocus.Input); true }
-            PlaylistAction.CreateLocal -> { actions.createLocal(); true }
+            PlaylistAction.AddPlaylist -> { actions.beginImport(); true }
+            PlaylistAction.CreateLocal -> { actions.beginLocal(); true }
             PlaylistAction.DeletePlaylist -> { actions.removePlaylist(); true }
             PlaylistAction.ToggleTrackList -> { actions.selectPlaylist(); actions.setShowTrackList(true); actions.setFocus(PlaylistFocus.TrackList); true }
             PlaylistAction.GoBack -> { actions.goBack(); true }

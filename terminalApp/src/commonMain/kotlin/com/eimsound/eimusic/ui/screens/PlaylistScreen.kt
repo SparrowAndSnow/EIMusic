@@ -53,15 +53,14 @@ fun PlaylistScreen(
                     setShowTrackList = { showTrackList = it },
                     setFocus = { focus = it },
                     goBack = onGoBack,
-                    addPlaylist = {
+                    beginImport = {
                         creatingLocal = false
-                        if (state.addUrlInput.isNotBlank()) {
-                            playlistViewModel.addPlaylist(state.addUrlInput.trim())
-                            playlistViewModel.updateAddUrl("")
-                        }
+                        playlistViewModel.updateAddUrl("")
+                        focus = PlaylistFocus.Input
                     },
-                    createLocal = {
+                    beginLocal = {
                         creatingLocal = true
+                        playlistViewModel.updateAddUrl("")
                         focus = PlaylistFocus.Input
                     },
                     removePlaylist = {
@@ -118,9 +117,14 @@ fun PlaylistScreen(
                         }
                         playlistViewModel.updateAddUrl("")
                     }
+                    creatingLocal = false
                     focus = PlaylistFocus.List
                 },
-                onCancel = { focus = PlaylistFocus.List },
+                onCancel = {
+                    creatingLocal = false
+                    playlistViewModel.updateAddUrl("")
+                    focus = PlaylistFocus.List
+                },
             )
 
             else -> Column {
