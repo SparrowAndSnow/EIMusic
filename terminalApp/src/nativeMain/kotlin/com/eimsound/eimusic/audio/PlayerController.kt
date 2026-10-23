@@ -143,7 +143,9 @@ class PlayerController(
             it.copy(
                 index = list.indexOfFirst { track -> track.id == media.id },
                 current = media,
-                isLoading = true
+                isLoading = true,
+                position = 0,
+                duration = 0,
             )
         }
 

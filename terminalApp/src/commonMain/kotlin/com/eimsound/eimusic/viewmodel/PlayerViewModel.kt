@@ -72,6 +72,17 @@ class PlayerViewModel(
             controller.restore(queue, currentId)
         }
 
+        // 切歌时清掉尚未 flush 的 seek 偏移，避免新曲目带上旧进度。
+        scope.launch {
+            state.map { it.current?.id }
+                .distinctUntilChanged()
+                .collect {
+                    _pendingDelta.value = 0L
+                    debounceJob?.cancel()
+                    debounceJob = null
+                }
+        }
+
         // 首次启动把旧 Settings 中的最近播放迁到 DB。
         if (_recentTracks.value.isEmpty()) {
             storage.get<Settings, List<Track>>(Settings::recentTracks, emptyList()).forEach {
