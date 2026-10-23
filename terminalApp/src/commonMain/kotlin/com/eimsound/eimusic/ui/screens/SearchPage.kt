@@ -18,7 +18,6 @@ import com.eimsound.eimusic.ui.components.trackContextItems
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
 import com.eimsound.eimusic.util.bridgeToMutable
 import com.eimsound.eimusic.util.render
-import com.eimsound.eimusic.util.spacer
 import com.eimsound.eimusic.viewmodel.PlaylistViewModel
 import com.eimsound.eimusic.viewmodel.PlayerViewModel
 import com.eimsound.eimusic.viewmodel.SearchViewModel
@@ -30,9 +29,6 @@ import com.jakewharton.mosaic.layout.onPreviewKeyEvent
 import com.jakewharton.mosaic.layout.padding
 import com.jakewharton.mosaic.layout.width
 import com.jakewharton.mosaic.modifier.Modifier
-import com.jakewharton.mosaic.text.SpanStyle
-import com.jakewharton.mosaic.text.buildAnnotatedString
-import com.jakewharton.mosaic.text.withStyle
 import com.jakewharton.mosaic.ui.Alignment
 import com.jakewharton.mosaic.ui.Box
 import com.jakewharton.mosaic.ui.Column
@@ -178,16 +174,6 @@ fun SearchPage(
                     },
                 )
                 Text(" ", color = palette.textFg)
-            }
-            if (focus == SearchFocus.Input) {
-                Text(
-                    buildAnnotatedString {
-                        spacer(2)
-                        withStyle(SpanStyle(color = palette.textDimFg)) { append("⏎ search") }
-                        withStyle(SpanStyle(color = palette.textDimFg)) { append("  ⎋ cancel") }
-                    },
-                    color = palette.textFg,
-                )
             }
 
             if (searchState.isLoading) {
