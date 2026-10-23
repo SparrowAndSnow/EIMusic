@@ -74,7 +74,7 @@ fun viewModelModule() = module {
     single { AuthViewModel(get()) }
     single { TogetherWebSocketClient(get<AppConfig>().server.ws, get(), get()) }
     single { TogetherSyncManager(get(), get()) }
-    single { PlaylistViewModel(get(), get(), get()) }
+    single { PlaylistViewModel(get(), get(), get(), get()) }
     single { LocalViewModel(get()) }
     single { ChannelViewModel(get(), get(), get()) }
 }

@@ -10,6 +10,7 @@ enum class PlaylistFocus { List, TrackList, Input }
 
 sealed interface PlaylistAction : KeyAction {
     data object AddPlaylist : PlaylistAction
+    data object CreateLocal : PlaylistAction
     data object DeletePlaylist : PlaylistAction
     data object ToggleTrackList : PlaylistAction
     data object GoBack : PlaylistAction
@@ -17,6 +18,7 @@ sealed interface PlaylistAction : KeyAction {
 
 val playlistKeyBindings: List<KeyBinding<PlaylistAction>> = listOf(
     KeyBinding(listOf("a"), "a", PlaylistAction.AddPlaylist, "Add"),
+    KeyBinding(listOf("n"), "n", PlaylistAction.CreateLocal, "New local"),
     KeyBinding(listOf("d"), "d", PlaylistAction.DeletePlaylist, "Delete"),
     KeyBinding(listOf("Tab"), "Tab", PlaylistAction.ToggleTrackList, "Toggle track list"),
     KeyBinding(listOf("Escape"), "Esc", PlaylistAction.GoBack, "Back"),
@@ -36,6 +38,7 @@ data class PlaylistKeyActions(
     val setFocus: (PlaylistFocus) -> Unit,
     val goBack: () -> Unit,
     val addPlaylist: () -> Unit,
+    val createLocal: () -> Unit,
     val removePlaylist: () -> Unit,
     val selectPlaylist: () -> Unit,
 )
@@ -45,13 +48,16 @@ fun dispatchPlaylistKey(
     focus: PlaylistFocus,
     showTrackList: Boolean,
     actions: PlaylistKeyActions,
-): Boolean = when (focus) {
+): Boolean {
+    if (event.ctrl || event.alt) return false
+    return when (focus) {
     PlaylistFocus.Input -> false // InputField handles its own keys
 
     PlaylistFocus.List -> {
         val screenAction = mapPlaylistKey(event.key)
         when (screenAction) {
             PlaylistAction.AddPlaylist -> { actions.setFocus(PlaylistFocus.Input); true }
+            PlaylistAction.CreateLocal -> { actions.createLocal(); true }
             PlaylistAction.DeletePlaylist -> { actions.removePlaylist(); true }
             PlaylistAction.ToggleTrackList -> { actions.selectPlaylist(); actions.setShowTrackList(true); actions.setFocus(PlaylistFocus.TrackList); true }
             PlaylistAction.GoBack -> { actions.goBack(); true }
@@ -66,10 +72,11 @@ fun dispatchPlaylistKey(
             else -> false // TrackTable handles its own keys
         }
     }
+    }
 }
 
 fun playlistStatusBarHint(focus: PlaylistFocus): String = when (focus) {
     PlaylistFocus.Input -> inputFieldStatusBarHint()
-    PlaylistFocus.List -> "j/k:Scroll  Enter:Open  a:Add  d:Delete  Tab:Open  Esc:Back"
+    PlaylistFocus.List -> "j/k:Scroll  Enter:Open  a:Add  n:New  d:Delete  Tab:Open  Esc:Back"
     PlaylistFocus.TrackList -> "j/k:Scroll  Enter:Play  p:PlayAll  Esc:Back"
 }

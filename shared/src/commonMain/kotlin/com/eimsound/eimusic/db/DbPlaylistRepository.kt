@@ -60,6 +60,11 @@ class DbPlaylistRepository(
 
     fun deleteLocal(id: String) {
         requireEditable(id)
+        deletePlaylistRecord(id)
+    }
+
+    /** 取消导入/删除本地记录；不改变提供方歌单。 */
+    fun deletePlaylistRecord(id: String) {
         db.transaction {
             playlists.deletePlaylistTracks(id)
             playlists.deletePlaylist(id)

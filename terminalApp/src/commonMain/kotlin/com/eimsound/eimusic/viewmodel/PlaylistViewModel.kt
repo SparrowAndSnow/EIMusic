@@ -1,25 +1,33 @@
 package com.eimsound.eimusic.viewmodel
 
 import com.eimsound.eimusic.Result
+import com.eimsound.eimusic.db.DbPlaylist
+import com.eimsound.eimusic.db.DbPlaylistRepository
+import com.eimsound.eimusic.db.DbTrack
 import com.eimsound.eimusic.factory.ShareLinkResolverFactory
 import com.eimsound.eimusic.factory.TrackRepositoryFactory
+import com.eimsound.eimusic.music.Artist
+import com.eimsound.eimusic.music.Duration
 import com.eimsound.eimusic.music.MediaList
 import com.eimsound.eimusic.music.MediaListId
+import com.eimsound.eimusic.music.MediaListType
+import com.eimsound.eimusic.music.Playlist
 import com.eimsound.eimusic.music.Track
+import com.eimsound.eimusic.music.TrackId
+import com.eimsound.eimusic.music.TrackSource
 import com.eimsound.eimusic.resolver.share.toMediaListId
 import com.eimsound.eimusic.storage.IStorage
 import com.eimsound.eimusic.storage.Settings
 import com.eimsound.eimusic.storage.get
 import com.eimsound.eimusic.storage.save
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class PlaylistUiState(
@@ -36,46 +44,71 @@ class PlaylistViewModel(
     private val trackRepositoryFactory: TrackRepositoryFactory,
     private val shareLinkResolverFactory: ShareLinkResolverFactory,
     private val storage: IStorage,
+    private val db: DbPlaylistRepository,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     private val _state = MutableStateFlow(PlaylistUiState())
     val state: StateFlow<PlaylistUiState> = _state.asStateFlow()
 
-    init { load() }
+    init {
+        scope.launch {
+            migrateLegacyPlaylists()
+            reloadFromDb("init")
+        }
+    }
 
     fun load() {
-        scope.launch {
-            val playlistsStorage = storage.get(Settings::playlists, emptyMap<String, String>())
-            _state.value = _state.value.copy(isLoading = true)
+        scope.launch { reloadFromDb("load") }
+    }
 
-            val resultDeferred = playlistsStorage.map {
-                async {
-                    val mediaListId = MediaListId.parse(it.key)
-                    val trackRepository = trackRepositoryFactory.get(mediaListId.source)
-                    trackRepository.universalMediaList(mediaListId.type, mediaListId.id)
-                }
-            }
-            val playlists = resultDeferred.awaitAll().map {
-                when (it) {
-                    is Result.Success -> it.data
-                    else -> null
-                }
-            }
-            _state.value = _state.value.copy(
-                playlists = playlists.filterNotNull(),
+    private suspend fun reloadFromDb(reason: String) {
+        _state.update { it.copy(isLoading = true) }
+        val playlists = db.localPlaylists() + db.importedPlaylists()
+        _state.update {
+            it.copy(
+                playlists = playlists.map(DbPlaylist::toMediaList),
                 isLoading = false,
             )
         }
     }
 
+    /** 旧版 Settings.playlists 一次性导入数据库。 */
+    private suspend fun migrateLegacyPlaylists() {
+        val saved = storage.get(Settings::playlists, emptyMap<String, String>())
+        if (saved.isEmpty()) return
+        var migrated = true
+        saved.forEach { (key, name) ->
+            runCatching {
+                val id = MediaListId.parse(key)
+                val mediaList = fetchMediaList(id) ?: return@forEach
+                importMediaList(mediaList, name)
+            }.onFailure { migrated = false }
+        }
+        if (migrated) {
+            storage.save(Settings::playlists, emptyMap<String, String>())
+        }
+    }
+
     fun addPlaylist(url: String) {
         scope.launch {
-            val result = runCatching {
-                fetchMediaList(url) ?: return@launch
-            }.getOrElse { return@launch }
-            _state.value = _state.value.copy(playlists = _state.value.playlists + result)
-            store()
+            _state.update { it.copy(isLoading = true, error = null) }
+            val mediaList = fetchMediaList(url)
+            if (mediaList != null) {
+                importMediaList(mediaList, mediaList.displayName())
+                reloadFromDb("add")
+            } else {
+                _state.update { it.copy(isLoading = false) }
+            }
+        }
+    }
+
+    fun createLocalPlaylist(name: String) {
+        scope.launch {
+            if (name.isNotBlank()) {
+                db.createLocal(name.trim())
+                reloadFromDb("create")
+            }
         }
     }
 
@@ -87,49 +120,48 @@ class PlaylistViewModel(
     }
 
     private suspend fun fetchMediaList(id: MediaListId): MediaList? {
-        _state.value = _state.value.copy(isLoading = true)
         val trackRepository = trackRepositoryFactory.get(id.source)
-        when (val result = trackRepository.universalMediaList(id.type, id.id)) {
-            is Result.Success -> {
-                val data = result.data
-                if (_state.value.playlists.any { it.id == data.id }) return null
-                _state.value = _state.value.copy(isLoading = false)
-                return data
-            }
+        return when (val result = trackRepository.universalMediaList(id.type, id.id)) {
+            is Result.Success -> result.data
             is Result.Error -> {
-                _state.value = _state.value.copy(error = result.message, isLoading = false)
-                return null
+                _state.update { it.copy(error = result.message, isLoading = false) }
+                null
             }
         }
     }
 
+    private fun importMediaList(mediaList: MediaList, name: String) {
+        val id = mediaList.id
+        if (id.source == TrackSource.LOCAL) return
+        db.importPlaylist(
+            source = id.source,
+            externalId = id.id,
+            name = name,
+            importedTracks = mediaList.allTracks().map(Track::toDbTrack),
+        )
+    }
+
     fun removePlaylist(mediaList: MediaList) {
-        val updatedPlaylists = _state.value.playlists.filter { it != mediaList }
-        _state.value = _state.value.copy(playlists = updatedPlaylists)
-        store()
+        scope.launch {
+            db.deletePlaylistRecord(mediaList.id.id)
+            if (_state.value.selectedPlaylist?.id == mediaList.id) {
+                _state.update { it.copy(selectedPlaylist = null, tracks = emptyList()) }
+            }
+            reloadFromDb("remove")
+        }
     }
 
     fun selectPlaylist(mediaList: MediaList) {
         scope.launch {
-            val ml = _state.value.playlists.find { it.id == mediaList.id } ?: return@launch
-            val tracks = when (ml) {
-                is MediaList.PlaylistMediaList -> ml.playlist.tracks
-                is MediaList.AlbumMediaList -> ml.album.tracks
+            val stored = db.playlist(mediaList.id.id) ?: run {
+                val fetched = fetchMediaList(mediaList.id) ?: return@launch
+                importMediaList(fetched, fetched.displayName())
+                db.playlist(mediaList.id.id) ?: return@launch
             }
-            if (tracks.isEmpty()) {
-                val result = fetchMediaList(ml.id) ?: return@launch
-                val resultTracks = when (result) {
-                    is MediaList.PlaylistMediaList -> result.playlist.tracks
-                    is MediaList.AlbumMediaList -> result.album.tracks
-                }
-                _state.value = _state.value.copy(
-                    selectedPlaylist = result,
-                    tracks = resultTracks,
-                )
-            } else {
-                _state.value = _state.value.copy(
-                    selectedPlaylist = ml,
-                    tracks = tracks,
+            _state.update {
+                it.copy(
+                    selectedPlaylist = stored.toMediaList(),
+                    tracks = stored.tracks.map(DbTrack::toTrack),
                 )
             }
         }
@@ -137,36 +169,79 @@ class PlaylistViewModel(
 
     fun refreshPlaylist() {
         val selected = _state.value.selectedPlaylist ?: return
+        if (selected.id.source == TrackSource.LOCAL) return
         scope.launch {
-            val result = fetchMediaList(selected.id) ?: return@launch
-            val tracks = when (result) {
-                is MediaList.PlaylistMediaList -> result.playlist.tracks
-                is MediaList.AlbumMediaList -> result.album.tracks
+            val fetched = fetchMediaList(selected.id) ?: return@launch
+            importMediaList(fetched, fetched.displayName())
+            val stored = db.playlist(selected.id.id) ?: return@launch
+            _state.update {
+                it.copy(
+                    selectedPlaylist = stored.toMediaList(),
+                    tracks = stored.tracks.map(DbTrack::toTrack),
+                )
             }
-            _state.value = _state.value.copy(tracks = tracks)
         }
     }
 
     fun updateAddUrl(url: String) {
-        _state.value = _state.value.copy(addUrlInput = url)
+        _state.update { it.copy(addUrlInput = url) }
     }
 
     fun clearError() {
-        _state.value = _state.value.copy(error = null)
+        _state.update { it.copy(error = null) }
     }
 
-    private fun store() {
-        storage.save(
-            Settings::playlists,
-            _state.value.playlists.associate {
-                val name = when (it) {
-                    is MediaList.PlaylistMediaList -> it.playlist.name
-                    is MediaList.AlbumMediaList -> it.album.name
-                }
-                it.id.toString() to name
-            }
-        )
+    fun release() {
+        scope.cancel()
     }
+}
 
-    fun release() { scope.cancel() }
+private fun DbPlaylist.toMediaList(): MediaList.PlaylistMediaList {
+    val mediaListId = MediaListId(source, MediaListType.PLAYLIST, id)
+    val domainTracks = tracks.map(DbTrack::toTrack)
+    return MediaList.PlaylistMediaList(
+        playlist = Playlist(
+            tracks = domainTracks,
+            name = name,
+            id = id,
+            creator = null,
+            image = null,
+            description = null,
+            totalTracks = domainTracks.size,
+        ),
+        source = source,
+        id = mediaListId,
+    )
+}
+
+private fun DbTrack.toTrack(): Track = Track(
+    album = null,
+    artists = artist?.let { listOf(Artist(image = null, id = source.name, name = it)) },
+    duration = duration?.let(::Duration),
+    id = runCatching { TrackId.parse(id) }.getOrElse { TrackId(source, externalId) },
+    name = title,
+    uri = uri,
+    source = source,
+)
+
+private fun Track.toDbTrack(): DbTrack = DbTrack(
+    id = id.toString(),
+    source = id.source,
+    externalId = id.id,
+    title = name,
+    artist = artists?.joinToString("/") { it.name },
+    album = album?.name,
+    duration = duration?.milliseconds,
+    uri = uri,
+    artUrl = album?.image,
+)
+
+private fun MediaList.allTracks(): List<Track> = when (this) {
+    is MediaList.PlaylistMediaList -> playlist.tracks
+    is MediaList.AlbumMediaList -> album.tracks
+}
+
+private fun MediaList.displayName(): String = when (this) {
+    is MediaList.PlaylistMediaList -> playlist.name
+    is MediaList.AlbumMediaList -> album.name
 }

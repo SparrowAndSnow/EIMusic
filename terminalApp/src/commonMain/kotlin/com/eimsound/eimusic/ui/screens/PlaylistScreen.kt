@@ -39,6 +39,7 @@ fun PlaylistScreen(
     var playlistIndex by remember { mutableIntStateOf(0) }
     var trackIndex by remember { mutableIntStateOf(0) }
     var showTrackList by remember { mutableStateOf(false) }
+    var creatingLocal by remember { mutableStateOf(false) }
 
     ScreenFrame(
         hint = playlistStatusBarHint(focus),
@@ -52,10 +53,15 @@ fun PlaylistScreen(
                     setFocus = { focus = it },
                     goBack = onGoBack,
                     addPlaylist = {
+                        creatingLocal = false
                         if (state.addUrlInput.isNotBlank()) {
                             playlistViewModel.addPlaylist(state.addUrlInput.trim())
                             playlistViewModel.updateAddUrl("")
                         }
+                    },
+                    createLocal = {
+                        creatingLocal = true
+                        focus = PlaylistFocus.Input
                     },
                     removePlaylist = {
                         state.playlists.getOrNull(playlistIndex)?.let { playlistViewModel.removePlaylist(it) }
@@ -73,10 +79,17 @@ fun PlaylistScreen(
         when (focus) {
             PlaylistFocus.Input -> InputView(
                 value = state.addUrlInput,
+                title = if (creatingLocal) "Enter local playlist name:" else "Enter playlist URL:",
+                placeholder = if (creatingLocal) "My playlist" else "https://music.163.com/playlist/...",
                 onValueChange = { playlistViewModel.updateAddUrl(it) },
                 onConfirm = {
-                    if (state.addUrlInput.isNotBlank()) {
-                        playlistViewModel.addPlaylist(state.addUrlInput.trim())
+                    val text = state.addUrlInput.trim()
+                    if (text.isNotBlank()) {
+                        if (creatingLocal) {
+                            playlistViewModel.createLocalPlaylist(text)
+                        } else {
+                            playlistViewModel.addPlaylist(text)
+                        }
                         playlistViewModel.updateAddUrl("")
                     }
                     focus = PlaylistFocus.List
@@ -140,6 +153,8 @@ fun PlaylistScreen(
 @Composable
 private fun InputView(
     value: String,
+    title: String,
+    placeholder: String,
     onValueChange: (String) -> Unit,
     onConfirm: () -> Unit,
     onCancel: () -> Unit,
@@ -147,13 +162,13 @@ private fun InputView(
     val palette = LocalTuiColors.current
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.align(Alignment.Center)) {
-            Text(" Enter playlist URL:", color = palette.titleFg)
+            Text(" $title", color = palette.titleFg)
             Spacer(Modifier.height(1))
             Box(modifier = Modifier.border(color = palette.dimBorderFg)) {
                 InputField(
                     value = value,
                     onValueChange = onValueChange,
-                    placeholder = "https://music.163.com/playlist/...",
+                    placeholder = placeholder,
                     onConfirm = onConfirm,
                     onCancel = onCancel,
                 )
