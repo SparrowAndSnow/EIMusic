@@ -1,6 +1,7 @@
 package com.eimsound.eimusic.ui.components
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -33,6 +34,30 @@ import com.jakewharton.mosaic.ui.TextOverflow
 import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.first
 
+/** 列表选中项和滚轮位置；可由页面持有以在外部移动/删除后跳转。 */
+@Stable
+class ListSelectionState(initialIndex: Int = 0) {
+    var index by mutableIntStateOf(initialIndex)
+        private set
+
+    internal val scroll = MomentumScrollState()
+
+    /** 只更新选中项，不重置滚轮位置（动画推进用）。 */
+    internal fun select(index: Int) {
+        this.index = index
+    }
+
+    /** 键盘/点击/外部移动：选中并立即定位。 */
+    fun jumpTo(index: Int) {
+        this.index = index
+        scroll.jumpTo(index)
+    }
+}
+
+@Composable
+fun rememberListSelectionState(key: Any? = Unit): ListSelectionState =
+    remember(key) { ListSelectionState() }
+
 /** 滚轮一次移动的选择行数。 */
 private const val WheelStep = 3
 
@@ -47,51 +72,23 @@ fun <T> ListView(
     enabled: Boolean = true,
     onConfirm: (T) -> Unit = {},
     onSelectedChange: (Int) -> Unit = {},
-    /** 列表内容变化时用于保留选择；默认随 items 重置。 */
-    rememberSelectionKey: Any? = items,
-    initialSelectedIndex: Int = 0,
-    /** 受控选择；非 null 时由调用方决定选中项（Queue 用）。 */
-    controlledSelectedIndex: Int? = null,
+    /** 选中项与滚轮位置；页面可持有一份以在外部移动/删除后跳转。 */
+    selection: ListSelectionState = rememberListSelectionState(items),
 ) {
-    var internalSelectedIndex by remember(rememberSelectionKey) { mutableIntStateOf(initialSelectedIndex) }
-    val scroll = remember(items) { MomentumScrollState() }
+    val scroll = selection.scroll
+    val selectedIndex = selection.index.coerceIn(0, items.lastIndex.coerceAtLeast(0))
 
     fun select(index: Int) {
         val clamped = index.coerceIn(0, items.lastIndex.coerceAtLeast(0))
-        internalSelectedIndex = clamped
-        scroll.jumpTo(clamped)
+        selection.jumpTo(clamped)
         onSelectedChange(clamped)
     }
 
-    // 键盘事件可能在同一帧内连续到达，选中项必须以内部状态为准即时推进；
-    // controlledSelectedIndex 只用于外部（移动/删除）同步。
-    val selectedIndex = internalSelectedIndex.coerceIn(0, items.lastIndex.coerceAtLeast(0))
-
     LaunchedEffect(items.size) {
-        if (items.isEmpty()) {
-            if (internalSelectedIndex != 0) {
-                internalSelectedIndex = 0
-                scroll.jumpTo(0)
-                onSelectedChange(0)
-            }
-        } else if (controlledSelectedIndex == null) {
-            val clamped = internalSelectedIndex.coerceIn(0, items.lastIndex)
-            if (clamped != internalSelectedIndex) {
-                internalSelectedIndex = clamped
-                scroll.jumpTo(clamped)
-                onSelectedChange(clamped)
-            }
-        }
-    }
-
-    LaunchedEffect(controlledSelectedIndex, items.size) {
-        val controlled = controlledSelectedIndex ?: return@LaunchedEffect
-        if (items.isNotEmpty()) {
-            val clamped = controlled.coerceIn(0, items.lastIndex)
-            if (clamped != internalSelectedIndex) {
-                internalSelectedIndex = clamped
-                scroll.jumpTo(clamped)
-            }
+        val target = if (items.isEmpty()) 0 else selection.index.coerceIn(0, items.lastIndex)
+        if (target != selection.index) {
+            selection.jumpTo(target)
+            onSelectedChange(target)
         }
     }
     var hoveredIndex by remember { mutableIntStateOf(-1) }
@@ -120,8 +117,9 @@ fun <T> ListView(
                         val dt = (now - lastNanos) / 1_000_000_000.0.toFloat()
                         scroll.advance(dt, items.lastIndex.toFloat())
                         val index = scroll.position.roundToInt().coerceIn(0, items.lastIndex)
-                        if (index != internalSelectedIndex) {
-                            select(index)
+                        if (index != selection.index) {
+                            selection.select(index)
+                            onSelectedChange(index)
                         }
                         hoveredIndex = -1
                     }
@@ -138,13 +136,13 @@ fun <T> ListView(
                 val action =
                     dispatchListViewKey(
                         event,
-                        internalSelectedIndex,
+                        selection.index,
                         { index -> select(index) },
                         items.lastIndex,
                     )
                 when (action) {
                     ListViewScreenAction.Confirm -> {
-                        items.getOrNull(internalSelectedIndex)?.let(onConfirm); true
+                        items.getOrNull(selection.index)?.let(onConfirm); true
                     }
                     null -> false
                 }

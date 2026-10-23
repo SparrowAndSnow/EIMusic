@@ -6,8 +6,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.eimsound.eimusic.keyboard.TrackTableBindingAction
-import com.eimsound.eimusic.keyboard.TrackTableScreenAction
-import com.eimsound.eimusic.keyboard.dispatchTrackTableKey
 import com.eimsound.eimusic.keyboard.mapTrackTableKey
 import com.eimsound.eimusic.music.Track
 import com.eimsound.eimusic.music.TrackId
@@ -55,14 +53,8 @@ fun TrackTable(
     onAddLast: (Track) -> Unit = {},
     onSelectedChange: (Int) -> Unit = {},
     onConfirm: (Track) -> Unit = {},
-    rememberSelectionKey: Any? = tracks,
-    initialSelectedIndex: Int = 0,
-    controlledSelectedIndex: Int? = null,
+    selection: ListSelectionState = rememberListSelectionState(tracks),
 ) {
-    var selectedIndex by remember { mutableIntStateOf(initialSelectedIndex) }
-    val effectiveSelectedIndex = controlledSelectedIndex
-        ?.coerceIn(0, tracks.lastIndex.coerceAtLeast(0))
-        ?: selectedIndex
     val palette = LocalTuiColors.current
     val numWidth = 4
     val nameWidth = (termWidth * 0.40).toInt().coerceIn(15, 40)
@@ -80,8 +72,8 @@ fun TrackTable(
             null,
             -> false
             TrackTableBindingAction.PlayAll -> { onPlayAll(tracks); true }
-            TrackTableBindingAction.AddNext -> { tracks.getOrNull(effectiveSelectedIndex)?.let(onAddNext); true }
-            TrackTableBindingAction.AddLast -> { tracks.getOrNull(effectiveSelectedIndex)?.let(onAddLast); true }
+            TrackTableBindingAction.AddNext -> { tracks.getOrNull(selection.index)?.let(onAddNext); true }
+            TrackTableBindingAction.AddLast -> { tracks.getOrNull(selection.index)?.let(onAddLast); true }
         }
     }) {
         if (tracks.isEmpty()) {
@@ -124,13 +116,8 @@ fun TrackTable(
                 emptyMessage = emptyMessage,
                 showScrollIndicator = showScrollIndicator,
                 onConfirm = onConfirm,
-                onSelectedChange = { index ->
-                    selectedIndex = index
-                    onSelectedChange(index)
-                },
-                rememberSelectionKey = rememberSelectionKey,
-                initialSelectedIndex = initialSelectedIndex,
-                controlledSelectedIndex = controlledSelectedIndex,
+                onSelectedChange = onSelectedChange,
+                selection = selection,
                 render = { track, i, isSelected ->
                     val isCurrent = track.id == currentTrackId
                     val marker = if (isCurrent) "▶" else if (isSelected) "▸" else " "
