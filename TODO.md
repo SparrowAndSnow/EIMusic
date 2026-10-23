@@ -21,7 +21,7 @@
   - 保持键盘快捷键不变
 - [x] **通用曲目右键菜单**
   - `ContextMenu` + `TrackActionHost` 全局 overlay 渲染
-  - Search/Queue/Playlist 的曲目右键：添加到歌单、下一首播放、歌曲信息、列表额外操作
+  - Search/Queue/Playlist/Local 的曲目右键：添加到歌单、下一首播放、歌曲信息、列表额外操作
   - `ListView`/`TrackTable` 支持 onItemSecondaryClick
 - [~] **进度条点击/拖动 seek**（已实现，待真机播放验证）
   - [x] ProgressBar 拆成 bar + 时间；bar 按列映射时间，Press/Drag 调用 seek

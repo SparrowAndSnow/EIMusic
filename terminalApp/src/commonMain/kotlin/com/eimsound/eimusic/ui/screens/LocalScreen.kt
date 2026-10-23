@@ -6,14 +6,22 @@ import com.eimsound.eimusic.keyboard.LocalSongsActions
 import com.eimsound.eimusic.keyboard.dispatchLocalSongsKey
 import com.eimsound.eimusic.keyboard.localSongsStatusBarHint
 import com.jakewharton.mosaic.layout.border
+import com.eimsound.eimusic.music.Track
+import com.eimsound.eimusic.music.TrackSource
 import com.eimsound.eimusic.ui.components.InputField
+import com.eimsound.eimusic.ui.components.LocalTrackActionHost
+import com.eimsound.eimusic.ui.components.PlaylistPicker
 import com.eimsound.eimusic.ui.components.ListView
 import com.eimsound.eimusic.ui.components.ScreenFrame
 import com.eimsound.eimusic.ui.components.TrackTable
+import com.eimsound.eimusic.ui.components.rememberListSelectionState
+import com.eimsound.eimusic.ui.components.rememberPlaylistPickerState
+import com.eimsound.eimusic.ui.components.trackContextItems
 import com.eimsound.eimusic.ui.theme.LocalSafeContentSize
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
 import com.eimsound.eimusic.util.spacer
 import com.eimsound.eimusic.viewmodel.LocalViewModel
+import com.eimsound.eimusic.viewmodel.PlaylistViewModel
 import com.eimsound.eimusic.viewmodel.PlayerViewModel
 import com.jakewharton.mosaic.layout.*
 import com.jakewharton.mosaic.modifier.Modifier
@@ -26,6 +34,7 @@ import com.jakewharton.mosaic.ui.*
 fun LocalScreen(
     localViewModel: LocalViewModel,
     playerViewModel: PlayerViewModel,
+    playlistViewModel: PlaylistViewModel,
     onGoBack: () -> Unit,
 ) {
     val palette = LocalTuiColors.current
@@ -34,7 +43,19 @@ fun LocalScreen(
     val termHeight = safeArea.rows
     val termWidth = safeArea.columns
     var focus by remember { mutableStateOf(LocalFocus.Songs) }
-    var trackIndex by remember { mutableIntStateOf(0) }
+    val trackSelection = rememberListSelectionState()
+    val picker = rememberPlaylistPickerState()
+    val trackActions = LocalTrackActionHost.current
+    val showTrackMenu: (Track, Int) -> Unit = { track, _ ->
+        trackActions?.showMenu(
+            track.name,
+            trackContextItems(
+                onAddToPlaylist = { picker.open(track) },
+                onPlayNext = { playerViewModel.playNext(track) },
+                onShowInfo = { trackActions?.showInfo(track) },
+            ),
+        )
+    }
     var pathIndex by remember { mutableIntStateOf(0) }
     var showPaths by remember { mutableStateOf(false) }
 
@@ -60,6 +81,9 @@ fun LocalScreen(
                         pathIndex = (pathIndex - 1).coerceAtLeast(0)
                     },
                     refresh = { localViewModel.refreshTracks() },
+                    openMenu = {
+                        state.tracks.getOrNull(trackSelection.index)?.let { showTrackMenu(it, trackSelection.index) }
+                    },
                 ),
             )
         },
@@ -91,27 +115,39 @@ fun LocalScreen(
                     onSelectedChange = { pathIndex = it },
                 )
                 LocalFocus.Songs -> {
-                    if (state.isLoading) {
-                        Text(" Scanning...", color = palette.textDimFg)
+                    if (picker.isOpen) {
+                        PlaylistPicker(
+                            state = picker,
+                            playlists = playlistViewModel.state.collectAsState().value.playlists
+                                .filter { it.id.source == TrackSource.LOCAL },
+                            visibleLines = (termHeight - 4).coerceAtLeast(1),
+                        ) { playlist, track ->
+                            playlistViewModel.addTrackToPlaylist(playlist.id.id, track)
+                        }
+                    } else {
+                        if (state.isLoading) {
+                            Text(" Scanning...", color = palette.textDimFg)
+                        }
+                        if (state.tracks.isEmpty() && !state.isLoading) {
+                            Spacer(Modifier.height(2))
+                            Text(" No local songs found.", color = palette.textDimFg)
+                            Text(" Press '/' to manage paths.", color = palette.textDimFg)
+                        }
+                        TrackTable(
+                            tracks = state.tracks,
+                            currentTrackId = playerViewModel.state.value.current?.id,
+                            termWidth = termWidth,
+                            visibleLines = (termHeight - 2).coerceAtLeast(1),
+                            onPlayTrack = { playerViewModel.playTrack(it); onGoBack() },
+                            onPlayAll = { if (state.tracks.isNotEmpty()) { playerViewModel.playAll(state.tracks); onGoBack() } },
+                            selection = trackSelection,
+                            onSecondaryClick = showTrackMenu,
+                            onConfirm = { track ->
+                                playerViewModel.playTrack(track)
+                                onGoBack()
+                            },
+                        )
                     }
-                    if (state.tracks.isEmpty() && !state.isLoading) {
-                        Spacer(Modifier.height(2))
-                        Text(" No local songs found.", color = palette.textDimFg)
-                        Text(" Press '/' to manage paths.", color = palette.textDimFg)
-                    }
-                    TrackTable(
-                        tracks = state.tracks,
-                        currentTrackId = playerViewModel.state.value.current?.id,
-                        termWidth = termWidth,
-                        visibleLines = (termHeight - 2).coerceAtLeast(1),
-                        onPlayTrack = { playerViewModel.playTrack(it); onGoBack() },
-                        onPlayAll = { if (state.tracks.isNotEmpty()) { playerViewModel.playAll(state.tracks); onGoBack() } },
-                        onSelectedChange = { trackIndex = it },
-                        onConfirm = {
-                            playerViewModel.playTrack(state.tracks[trackIndex])
-                            onGoBack()
-                        },
-                    )
                 }
             }
         }

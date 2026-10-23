@@ -14,6 +14,7 @@ sealed interface LocalSongsAction : KeyAction {
     data object AddPath : LocalSongsAction
     data object DeletePath : LocalSongsAction
     data object GoBack : LocalSongsAction
+    data object OpenMenu : LocalSongsAction
 }
 
 val localSongsKeyBindings: List<KeyBinding<LocalSongsAction>> = listOf(
@@ -22,6 +23,7 @@ val localSongsKeyBindings: List<KeyBinding<LocalSongsAction>> = listOf(
     KeyBinding(listOf("a"), "a", LocalSongsAction.AddPath, "Add path"),
     KeyBinding(listOf("d"), "d", LocalSongsAction.DeletePath, "Delete path"),
     KeyBinding(listOf("Escape"), "Esc", LocalSongsAction.GoBack, "Back"),
+    KeyBinding(listOf("m"), "m", LocalSongsAction.OpenMenu, "Menu"),
 )
 
 private val localSongsKeyMap: Map<String, LocalSongsAction> = buildMap {
@@ -40,6 +42,7 @@ data class LocalSongsActions(
     val addPath: () -> Unit,
     val removePath: () -> Unit,
     val refresh: () -> Unit,
+    val openMenu: () -> Unit,
 )
 
 fun dispatchLocalSongsKey(
@@ -68,6 +71,7 @@ fun dispatchLocalSongsKey(
             LocalSongsAction.TogglePaths -> { actions.setShowPaths(true); actions.setFocus(LocalFocus.Paths); true }
             LocalSongsAction.AddPath -> { actions.setShowPaths(true); actions.setFocus(LocalFocus.Input); true }
             LocalSongsAction.GoBack -> { actions.goBack(); true }
+            LocalSongsAction.OpenMenu -> { actions.openMenu(); true }
             else -> false // TrackTable handles its own keys
         }
     }
@@ -76,5 +80,5 @@ fun dispatchLocalSongsKey(
 fun localSongsStatusBarHint(focus: LocalFocus): String = when (focus) {
     LocalFocus.Input -> inputFieldStatusBarHint()
     LocalFocus.Paths -> "j/k:Scroll  d:Delete  a:Add  /:Toggle  Esc:Back"
-    LocalFocus.Songs -> "j/k:Scroll  Enter:Play  p:PlayAll  r:Refresh  /:ManagePaths  Esc:Back"
+    LocalFocus.Songs -> "j/k:Scroll  Enter:Play  p:PlayAll  r:Refresh  /:ManagePaths  m:Menu  Esc:Back"
 }

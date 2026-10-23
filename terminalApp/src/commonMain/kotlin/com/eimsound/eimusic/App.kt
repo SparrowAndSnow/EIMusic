@@ -184,6 +184,7 @@ fun App(
             is Route.LocalSongs -> LocalScreen(
                 localViewModel = localViewModel,
                 playerViewModel = playerViewModel,
+                playlistViewModel = playlistViewModel,
                 onGoBack = goBack,
             )
 
