@@ -5,9 +5,11 @@ import com.eimsound.eimusic.keyboard.LocalGlobalActions
 import com.eimsound.eimusic.keyboard.dispatchMainKey
 import com.eimsound.eimusic.keyboard.mainStatusBarHint
 import com.eimsound.eimusic.music.PlayerState
+import com.eimsound.eimusic.music.Track
 import com.eimsound.eimusic.together.PlayState
 import com.eimsound.eimusic.util.bridgeToMutable
 import com.eimsound.eimusic.ui.components.AlbumArt
+import com.eimsound.eimusic.ui.components.ListView
 import com.eimsound.eimusic.ui.components.PlayerControls
 import com.eimsound.eimusic.ui.components.ScreenFrame
 import com.eimsound.eimusic.ui.components.ProgressBar
@@ -35,6 +37,7 @@ fun MainScreen(
     onQuit: () -> Unit,
 ) {
     val displayPos by playerViewModel.displayPosition.bridgeToMutable()
+    val recentTracks by playerViewModel.recentTracks.collectAsState()
     val globalActions = LocalGlobalActions.current
     ScreenFrame(
         hint = mainStatusBarHint(),
@@ -51,7 +54,13 @@ fun MainScreen(
             )
         },
     ) {
-        PlayerCenter(playerState, displayPos, onSeek = playerViewModel::seek)
+        PlayerCenter(
+            playerState = playerState,
+            displayPos = displayPos,
+            onSeek = playerViewModel::seek,
+            recentTracks = recentTracks,
+            onPlayRecent = playerViewModel::playTrack,
+        )
     }
 }
 
@@ -60,6 +69,8 @@ private fun PlayerCenter(
     playerState: PlayerState,
     displayPos: Long,
     onSeek: (Long) -> Unit,
+    recentTracks: List<Track>,
+    onPlayRecent: (Track) -> Unit,
 ) {
     val palette = LocalTuiColors.current
     val termWidth = LocalTerminalState.current.size.columns
@@ -75,7 +86,25 @@ private fun PlayerCenter(
                 Text("♪", color = palette.textDimFg)
                 Text("No track playing", color = palette.textDimFg)
                 Spacer(Modifier.height(2))
-                Text("Press 'f' to search  •  1-5 switch tabs", color = palette.textDimFg)
+                if (recentTracks.isEmpty()) {
+                    Text("Press 'f' to search  •  1-5 switch tabs", color = palette.textDimFg)
+                } else {
+                    Text("  Recent", color = palette.titleFg)
+                    ListView(
+                        items = recentTracks,
+                        visibleLines = 6,
+                        emptyMessage = "",
+                        onConfirm = onPlayRecent,
+                        render = { track, _, selected ->
+                            val marker = if (selected) "▸" else " "
+                            val artist = track.artists?.firstOrNull()?.name?.render().orEmpty()
+                            Text(
+                                " $marker ${track.name.render()}  —  $artist",
+                                color = if (selected) palette.highlightFg else palette.textDimFg,
+                            )
+                        },
+                    )
+                }
             } else {
                 // ── Album art (roughly square considering font 1:2 ratio) ──
                 val artWidth = contentWidth.coerceAtMost(40)

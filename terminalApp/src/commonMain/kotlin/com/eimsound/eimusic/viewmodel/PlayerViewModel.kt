@@ -29,6 +29,13 @@ class PlayerViewModel(
 
     val state: StateFlow<PlayerState> = controller.state
 
+    private val _recentTracks = MutableStateFlow(
+        storage.get<Settings, List<Track>>(Settings::recentTracks, emptyList()),
+    )
+
+    /** 最近播放（新→旧），用于 Main 空状态。 */
+    val recentTracks: StateFlow<List<Track>> = _recentTracks.asStateFlow()
+
     /** 积累式 seek 偏移量 */
     private val _pendingDelta = MutableStateFlow(0L)
 
@@ -50,6 +57,16 @@ class PlayerViewModel(
         controller.volume(savedVolume, savedMuted)
         controller.playMode(PlayMode.of(savedPlayMode))
 
+        // 记录最近播放
+        scope.launch {
+            controller.state
+                .map { it.current }
+                .distinctUntilChanged()
+                .collect { track ->
+                    if (track != null) recordRecentTrack(track)
+                }
+        }
+
         // 后台收集状态变化，自动持久化到配置文件
         scope.launch {
             controller.state
@@ -61,6 +78,14 @@ class PlayerViewModel(
                     storage.save(Settings::playMode, playMode)
                 }
         }
+    }
+
+    private fun recordRecentTrack(track: Track) {
+        val updated = (listOf(track) + _recentTracks.value.filterNot { it.id == track.id })
+            .take(12)
+        if (updated == _recentTracks.value) return
+        _recentTracks.value = updated
+        storage.save<Settings, List<Track>>(Settings::recentTracks, updated)
     }
 
     fun seekRelative(delta: Long) {
