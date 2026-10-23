@@ -21,6 +21,7 @@ import com.eimsound.eimusic.viewmodel.PlayerViewModel
 import com.eimsound.eimusic.viewmodel.SearchViewModel
 import com.jakewharton.mosaic.LocalTerminalState
 import com.jakewharton.mosaic.layout.clickable
+import com.jakewharton.mosaic.layout.fillMaxWidth
 import com.jakewharton.mosaic.layout.fillMaxSize
 import com.jakewharton.mosaic.layout.onPreviewKeyEvent
 import com.jakewharton.mosaic.layout.padding
@@ -87,7 +88,7 @@ fun SearchPage(
             }
         },
     ) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
             Column(
                 modifier = Modifier
                     .width(columnWidth)
@@ -107,9 +108,18 @@ fun SearchPage(
                             false
                         }
                     }
-                    .padding(2),
+                    .padding(horizontal = 2, vertical = 1),
             ) {
-            Text(" Search", color = palette.titleFg)
+            Text(
+                " Search",
+                modifier = Modifier.fillMaxWidth(),
+                color = palette.titleFg,
+                textAlign = Alignment.CenterHorizontally,
+            )
+            Text(
+                "─".repeat((columnWidth - 6).coerceAtLeast(10)),
+                color = palette.dimBorderFg,
+            )
             InputField(
                 value = searchState.query,
                 onValueChange = { searchViewModel.updateQuery(it) },
