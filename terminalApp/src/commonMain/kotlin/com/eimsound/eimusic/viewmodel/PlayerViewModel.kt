@@ -109,8 +109,8 @@ class PlayerViewModel(
     }
 
     fun toggleMute() {
-        val isMuted = state.value.volume > 0f
-        controller.volume(state.value.volume, isMuted)
+        // 切换静音，而不是“只要音量 > 0 就静音”；否则点击音量图标后无法再打开。
+        controller.volume(state.value.volume, !state.value.isMute)
     }
 
     fun playTrack(track: Track) {
