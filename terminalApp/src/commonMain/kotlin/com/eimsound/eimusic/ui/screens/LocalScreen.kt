@@ -138,12 +138,14 @@ fun LocalScreen(
                             currentTrackId = playerViewModel.state.value.current?.id,
                             termWidth = termWidth,
                             visibleLines = (termHeight - 2).coerceAtLeast(1),
-                            onPlayTrack = { playerViewModel.playTrack(it); onGoBack() },
-                            onPlayAll = { if (state.tracks.isNotEmpty()) { playerViewModel.playAll(state.tracks); onGoBack() } },
+                            onPlayTrack = {
+                                playerViewModel.playTrackFromList(state.tracks, it)
+                                onGoBack()
+                            },
                             selection = trackSelection,
                             onSecondaryClick = showTrackMenu,
                             onConfirm = { track ->
-                                playerViewModel.playTrack(track)
+                                playerViewModel.playTrackFromList(state.tracks, track)
                                 onGoBack()
                             },
                         )

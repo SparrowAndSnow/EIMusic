@@ -133,7 +133,7 @@ fun QueueScreen(
                     selection = selection,
                     onSecondaryClick = showTrackMenu,
                     onConfirm = {
-                        playerViewModel.playTrack(it)
+                        playerViewModel.playTrackFromList(playerState.queue, it)
                         onGoBack()
                     }
                 )

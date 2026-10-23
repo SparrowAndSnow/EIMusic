@@ -48,7 +48,6 @@ fun TrackTable(
     showScrollIndicator: Boolean = true,
     enabled: Boolean = true,
     onPlayTrack: (Track) -> Unit = {},
-    onPlayAll: (List<Track>) -> Unit = {},
     onAddNext: (Track) -> Unit = {},
     onAddLast: (Track) -> Unit = {},
     onSelectedChange: (Int) -> Unit = {},
@@ -72,7 +71,6 @@ fun TrackTable(
             TrackTableBindingAction.PlayTrack,
             null,
             -> false
-            TrackTableBindingAction.PlayAll -> { onPlayAll(tracks); true }
             TrackTableBindingAction.AddNext -> { tracks.getOrNull(selection.index)?.let(onAddNext); true }
             TrackTableBindingAction.AddLast -> { tracks.getOrNull(selection.index)?.let(onAddLast); true }
         }

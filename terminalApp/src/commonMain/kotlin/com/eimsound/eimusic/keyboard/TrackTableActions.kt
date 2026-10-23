@@ -6,7 +6,6 @@ sealed interface TrackTableBindingAction : KeyAction {
     data object ScrollDown : TrackTableBindingAction
     data object ScrollUp : TrackTableBindingAction
     data object PlayTrack : TrackTableBindingAction
-    data object PlayAll : TrackTableBindingAction
     data object AddNext : TrackTableBindingAction
     data object AddLast : TrackTableBindingAction
 }
@@ -15,7 +14,6 @@ val trackTableKeyBindings: List<KeyBinding<TrackTableBindingAction>> = listOf(
     KeyBinding(listOf("j", "ArrowDown"), "↓", TrackTableBindingAction.ScrollDown, "Scroll down"),
     KeyBinding(listOf("k", "ArrowUp"), "↑", TrackTableBindingAction.ScrollUp, "Scroll up"),
     KeyBinding(listOf("Enter"), "Enter", TrackTableBindingAction.PlayTrack, "Play"),
-    KeyBinding(listOf("p"), "p", TrackTableBindingAction.PlayAll, "Play all"),
     KeyBinding(listOf("n"), "n", TrackTableBindingAction.AddNext, "Add next"),
     KeyBinding(listOf("a"), "a", TrackTableBindingAction.AddLast, "Add last"),
 )
@@ -28,7 +26,7 @@ private val trackTableKeyMap: Map<String, TrackTableBindingAction> = buildMap {
 
 fun mapTrackTableKey(key: String): TrackTableBindingAction? = trackTableKeyMap[key]
 
-enum class TrackTableScreenAction { PlayTrack, PlayAll, AddNext, AddLast }
+enum class TrackTableScreenAction { PlayTrack, AddNext, AddLast }
 
 fun dispatchTrackTableKey(
     event: KeyEvent,
@@ -47,7 +45,6 @@ fun dispatchTrackTableKey(
             null
         }
         TrackTableBindingAction.PlayTrack -> TrackTableScreenAction.PlayTrack
-        TrackTableBindingAction.PlayAll -> TrackTableScreenAction.PlayAll
         TrackTableBindingAction.AddNext -> TrackTableScreenAction.AddNext
         TrackTableBindingAction.AddLast -> TrackTableScreenAction.AddLast
         null -> null
@@ -55,7 +52,7 @@ fun dispatchTrackTableKey(
 }
 
 fun trackTableStatusBarHint(): String = trackTableKeyBindings
-    .filter { it.action in setOf(TrackTableBindingAction.ScrollDown, TrackTableBindingAction.ScrollUp, TrackTableBindingAction.PlayTrack, TrackTableBindingAction.PlayAll) }
+    .filter { it.action in setOf(TrackTableBindingAction.ScrollDown, TrackTableBindingAction.ScrollUp, TrackTableBindingAction.PlayTrack) }
     .joinToString("  ") { "${it.display}:${it.description}" }
 
 val trackTableHelpEntries: List<Pair<String, String>> = trackTableKeyBindings

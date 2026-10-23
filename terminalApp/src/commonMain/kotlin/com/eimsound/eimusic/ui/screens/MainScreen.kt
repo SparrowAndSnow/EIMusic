@@ -59,7 +59,7 @@ fun MainScreen(
             displayPos = displayPos,
             onSeek = playerViewModel::seek,
             recentTracks = recentTracks,
-            onPlayRecent = playerViewModel::playTrack,
+            onPlayRecent = { playerViewModel.playTrackFromList(recentTracks, it) },
         )
     }
 }

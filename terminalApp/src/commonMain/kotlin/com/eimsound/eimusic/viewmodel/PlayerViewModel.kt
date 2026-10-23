@@ -194,6 +194,13 @@ class PlayerViewModel(
         controller.addTrack(track, index)
     }
 
+    /** 用当前列表替换队列，并播放选中曲目。 */
+    fun playTrackFromList(tracks: List<Track>, track: Track) {
+        if (tracks.isEmpty()) return
+        controller.queue(tracks)
+        controller.play(track)
+    }
+
     fun playTrack(track: Track) {
         // 已在队列里的曲目直接播放，不移动位置；新曲目才追加到末尾。
         if (state.value.queue.none { it.id == track.id }) {

@@ -218,7 +218,7 @@ fun SearchPage(
                     selection = resultSelection,
                     onItemSecondaryClick = { track, _ -> showTrackMenu(track) },
                     onConfirm = { track ->
-                        playerViewModel.playTrack(track)
+                        playerViewModel.playTrackFromList(searchState.results, track)
                         searchViewModel.reset()
                         onGoBack()
                     },

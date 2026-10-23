@@ -80,5 +80,5 @@ fun dispatchLocalSongsKey(
 fun localSongsStatusBarHint(focus: LocalFocus): String = when (focus) {
     LocalFocus.Input -> inputFieldStatusBarHint()
     LocalFocus.Paths -> "j/k:Scroll  d:Delete  a:Add  /:Toggle  Esc:Back"
-    LocalFocus.Songs -> "j/k:Scroll  Enter:Play  p:PlayAll  r:Refresh  /:ManagePaths  m:Menu  Esc:Back"
+    LocalFocus.Songs -> "j/k:Scroll  Enter:Play  r:Refresh  /:ManagePaths  m:Menu  Esc:Back"
 }

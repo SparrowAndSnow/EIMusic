@@ -97,5 +97,5 @@ fun dispatchPlaylistKey(
 fun playlistStatusBarHint(focus: PlaylistFocus): String = when (focus) {
     PlaylistFocus.Input -> inputFieldStatusBarHint()
     PlaylistFocus.List -> "j/k:Scroll  Enter:Open  a:Add  n:New  d:Delete  Tab:Open  Esc:Back"
-    PlaylistFocus.TrackList -> "j/k:Scroll  Enter:Play  p:PlayAll  K/J:Move  d:Remove  r:Refresh  m:Menu"
+    PlaylistFocus.TrackList -> "j/k:Scroll  Enter:Play  K/J:Move  d:Remove  r:Refresh  m:Menu"
 }

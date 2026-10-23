@@ -214,17 +214,11 @@ fun PlaylistScreen(
                         selection = trackSelection,
                         onSecondaryClick = showTrackMenu,
                         onPlayTrack = {
-                            playerViewModel.playTrack(it)
+                            playerViewModel.playTrackFromList(state.tracks, it)
                             onGoBack()
                         },
-                        onPlayAll = {
-                            if (state.tracks.isNotEmpty()) {
-                                playerViewModel.playAll(state.tracks)
-                                onGoBack()
-                            }
-                        },
                         onConfirm = {
-                            playerViewModel.playTrack(it)
+                            playerViewModel.playTrackFromList(state.tracks, it)
                             onGoBack()
                         },
                         onAddNext = {
