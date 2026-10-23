@@ -57,38 +57,38 @@ fun HeaderBar(
         Text(" $title", color = palette.titleFg)
         Spacer(Modifier.width(2))
         HeaderButton(onToggleTheme) {
-            Text(themeIcon, modifier = Modifier.width(1), color = palette.modeFg)
+            Text(themeIcon, color = palette.modeFg)
         }
         Spacer(Modifier.width(1))
         HeaderButton(globalActions.onTogglePlayMode) {
-            Text(controls.modeIcon, modifier = Modifier.width(3), color = palette.modeFg)
+            Text(controls.modeIcon, color = palette.modeFg)
         }
         Spacer(Modifier.width(1))
         HeaderButton(globalActions.onPlayPause) {
-            Text(controls.playIcon, modifier = Modifier.width(1), color = palette.playBtnFg)
+            Text(controls.playIcon, color = palette.playBtnFg)
         }
         Spacer(Modifier.width(1))
         HeaderButton(globalActions.onToggleMute) {
-            Text(controls.volIcon, modifier = Modifier.width(1), color = palette.textFg)
+            Text(controls.volIcon, color = palette.textFg)
             Spacer(Modifier.width(1))
-            Text(controls.volPercent, modifier = Modifier.width(4), color = palette.textDimFg)
+            Text(controls.volPercent, color = palette.textDimFg)
         }
         Spacer(Modifier.width(2))
         HeaderButton(onOpenQueue) {
-            Text(Icon.Queue.sym, modifier = Modifier.width(1), color = palette.textDimFg)
+            Text(Icon.Queue.sym, color = palette.textDimFg)
             Spacer(Modifier.width(1))
             Text(queue, color = palette.textFg)
         }
         Spacer(Modifier.width(2))
         HeaderButton(onNavigate) {
-            Text(Icon.User.sym, modifier = Modifier.width(1), color = palette.textDimFg)
+            Text(Icon.User.sym, color = palette.textDimFg)
             Spacer(Modifier.width(1))
             Text(authLabel, color = palette.highlightFg)
         }
         if (channelLabel != null) {
             Spacer(Modifier.width(2))
             HeaderButton(onOpenTogether) {
-                Text(Icon.Together.sym, modifier = Modifier.width(1), color = palette.highlightFg)
+                Text(Icon.Together.sym, color = palette.highlightFg)
                 Spacer(Modifier.width(1))
                 Text(channelLabel.take(24), color = palette.highlightFg)
             }
@@ -107,7 +107,7 @@ private fun HeaderButton(
         modifier = Modifier
             .clickable(onClick = onClick)
             .hoverable { hovered = it }
-            .then(if (hovered) Modifier.background(palette.hoverBg) else Modifier)
+            .background(if (hovered) palette.hoverBg else Color.Unspecified)
             .padding(horizontal = 1),
         content = content,
     )
