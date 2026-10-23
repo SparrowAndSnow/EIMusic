@@ -204,6 +204,11 @@ fun App(
                     channelLabel = channelLabel,
                 )
                 BoxWithConstraints(Modifier.weight(1f).onKeyEvent { event ->
+                    // Ctrl-C 是全局退出，任何页面/控件都应生效。
+                    if (event.ctrl && event.key == "c") {
+                        onQuit()
+                        return@onKeyEvent true
+                    }
                     // 数字 1-5 直达标签页；Tab / Shift+Tab 循环切换。
                     // 输入框会先消费字符，所以在输入时数字仍然是正常输入。
                     val digit = event.key.toIntOrNull()

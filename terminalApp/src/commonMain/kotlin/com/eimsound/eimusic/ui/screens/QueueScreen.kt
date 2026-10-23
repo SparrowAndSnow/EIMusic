@@ -66,6 +66,8 @@ fun QueueScreen(
                 visibleLines = visibleLines,
                 onPlayTrack = { track -> playerViewModel.playTrack(track) },
                 onSelectedChange = { queueScroll = it },
+                rememberSelectionKey = queueScroll,
+                initialSelectedIndex = queueScroll,
                 onConfirm = {
                     playerViewModel.playTrack(it)
                     onGoBack()

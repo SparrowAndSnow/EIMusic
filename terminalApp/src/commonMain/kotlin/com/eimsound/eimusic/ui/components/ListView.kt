@@ -47,9 +47,29 @@ fun <T> ListView(
     enabled: Boolean = true,
     onConfirm: (T) -> Unit = {},
     onSelectedChange: (Int) -> Unit = {},
+    /** 列表内容变化时用于保留选择；默认随 items 重置。 */
+    rememberSelectionKey: Any? = items,
+    initialSelectedIndex: Int = 0,
 ) {
-    var selectedIndex by remember(items) { mutableIntStateOf(0) }
+    var selectedIndex by remember(rememberSelectionKey) { mutableIntStateOf(initialSelectedIndex) }
     val scroll = remember(items) { MomentumScrollState() }
+
+    LaunchedEffect(items.size) {
+        if (items.isEmpty()) {
+            if (selectedIndex != 0) {
+                selectedIndex = 0
+                scroll.jumpTo(0)
+                onSelectedChange(0)
+            }
+        } else {
+            val clamped = selectedIndex.coerceIn(0, items.lastIndex)
+            if (clamped != selectedIndex) {
+                selectedIndex = clamped
+                scroll.jumpTo(clamped)
+                onSelectedChange(clamped)
+            }
+        }
+    }
     var hoveredIndex by remember { mutableIntStateOf(-1) }
     val uiInput = LocalUiInputEnabled.current
     val palette = LocalTuiColors.current

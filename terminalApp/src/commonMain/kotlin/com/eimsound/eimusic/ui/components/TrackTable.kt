@@ -53,6 +53,8 @@ fun TrackTable(
     onAddLast: (Track) -> Unit = {},
     onSelectedChange: (Int) -> Unit = {},
     onConfirm: (Track) -> Unit = {},
+    rememberSelectionKey: Any? = tracks,
+    initialSelectedIndex: Int = 0,
 ) {
     var selectedIndex by remember(tracks) { mutableIntStateOf(0) }
     val palette = LocalTuiColors.current
@@ -114,6 +116,8 @@ fun TrackTable(
                 showScrollIndicator = showScrollIndicator,
                 onConfirm = onConfirm,
                 onSelectedChange = onSelectedChange,
+                rememberSelectionKey = rememberSelectionKey,
+                initialSelectedIndex = initialSelectedIndex,
                 render = { track, i, isSelected ->
                     val isCurrent = track.id == currentTrackId
                     val marker = if (isCurrent) "▶" else if (isSelected) "▸" else " "

@@ -37,6 +37,7 @@ fun dispatchQueueKey(
     event: KeyEvent,
     actions: QueueKeyActions,
 ): Boolean {
+    if (event.ctrl || event.alt) return false // Ctrl-C 等交给全局退出
     val screenAction = mapQueueKey(event.key)
     return when (screenAction) {
         QueueAction.MoveUp -> { actions.moveUp(); true }
