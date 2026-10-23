@@ -29,6 +29,7 @@ class GlobalKeyActions(
     val onSeekForward: () -> Unit = {},
     val onSeekBackward: () -> Unit = {},
     val onTogglePlayMode: () -> Unit = {},
+    val onToggleMute: () -> Unit = {},
     val onOpenSearch: () -> Unit = {},
 )
 

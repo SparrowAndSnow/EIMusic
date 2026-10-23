@@ -14,10 +14,11 @@
 
 ## P0 / 交互体验
 
-- [ ] **Header 与播放控制可点击**
+- [x] **Header 与播放控制可点击**
   - HeaderBar / PlayerControls 从整行 AnnotatedString 改成 Row 分段
-  - 播放/暂停、上一首/下一首、模式、音量、队列、主题、登录、Together
-  - 每段 clickable + hover 高亮；保持键盘快捷键不变
+  - 已支持：播放/暂停、模式、音量静音、队列、主题、登录、Together
+  - 每段 clickable + hover 高亮；上一首/下一首仍走键盘，未加进 Header
+  - 保持键盘快捷键不变
 - [ ] **进度条点击/拖动 seek**
   - ProgressBar 按列映射时间；点击 seek，拖动持续 seek
   - hover 显示目标时间；增加 buffered 进度
@@ -51,11 +52,11 @@
   - TrackTable 列优先级：名称优先，窄屏隐藏艺术家/时长；列宽按显示宽度算
   - Dialog 宽度 clamp 到终端宽度，内容超高时滚动或截断
   - Main 高度不足时缩小/隐藏专辑图，控制条与进度条始终可见
-- [ ] **图标体系统一**
-  - `Icon.Together` 目前是 emoji 👥（双宽），与 Nerd Font 单宽图标混排会错位；换成单宽图标
-  - 所有图标集中在 `ui/Icon.kt`，统一语义、宽度、命名
-  - 无 Nerd Font / 不支持 PUA 的终端提供 ASCII 回退（配置或环境变量）
-  - Header、按钮、空状态、列表标记的图标与文字基线对齐；CJK/emoji 列宽按显示宽度
+- [~] **图标体系统一**（单宽/集中已完成，ASCII 回退待做）
+  - [x] `Icon.Together` 从 emoji 👥（双宽）换成 Nerd Font 单宽 `\uF0C0`
+  - [x] 所有图标集中在 `ui/Icon.kt`，统一用 Font Awesome 单宽码位
+  - [ ] 无 Nerd Font / 不支持 PUA 的终端提供 ASCII 回退（配置或环境变量）
+  - [ ] Header、按钮、空状态、列表标记的图标与文字基线对齐；CJK/emoji 列宽按显示宽度
 - [ ] **间距与对齐规范**
   - spacer/内边距常量统一；标题、列表头、对话框边框与内容对齐
   - 长标题 marquee 或两行截断（与响应式一起做）

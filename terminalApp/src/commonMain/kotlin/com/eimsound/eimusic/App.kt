@@ -100,6 +100,7 @@ fun App(
             onSeekForward = { playerViewModel.seekRelative(5000L) },
             onSeekBackward = { playerViewModel.seekRelative(-5000L) },
             onTogglePlayMode = { playerViewModel.togglePlayMode() },
+            onToggleMute = { playerViewModel.toggleMute() },
             onOpenSearch = { if (currentRoute !is Route.Search) navigate(Route.Search()) },
         )
     }
@@ -194,7 +195,13 @@ fun App(
                     authViewModel,
                     isDark,
                     onNavigate = { navigate(Route.Login) },
-                    channelLabel = channelLabel
+                    onOpenQueue = { if (currentRoute !is Route.Queue) navigate(Route.Queue) },
+                    onOpenTogether = { if (currentRoute !is Route.Together) navigate(Route.Together) },
+                    onToggleTheme = {
+                        isDark = !isDark
+                        storage.save(Settings::darkMode, isDark)
+                    },
+                    channelLabel = channelLabel,
                 )
                 BoxWithConstraints(Modifier.weight(1f).onKeyEvent { event ->
                     // 数字 1-5 直达标签页；Tab / Shift+Tab 循环切换。
