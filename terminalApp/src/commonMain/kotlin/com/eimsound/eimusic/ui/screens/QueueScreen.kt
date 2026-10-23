@@ -6,11 +6,14 @@ import com.eimsound.eimusic.keyboard.dispatchQueueKey
 import com.eimsound.eimusic.keyboard.queueStatusBarHint
 import com.eimsound.eimusic.music.PlayerState
 import com.eimsound.eimusic.music.TrackSource
+import com.eimsound.eimusic.ui.components.ContextMenuItem
+import com.eimsound.eimusic.ui.components.LocalTrackActionHost
 import com.eimsound.eimusic.ui.components.PlaylistPicker
 import com.eimsound.eimusic.ui.components.ScreenFrame
 import com.eimsound.eimusic.ui.components.TrackTable
 import com.eimsound.eimusic.ui.components.rememberListSelectionState
 import com.eimsound.eimusic.ui.components.rememberPlaylistPickerState
+import com.eimsound.eimusic.ui.components.trackContextItems
 import com.eimsound.eimusic.ui.theme.LocalSafeContentSize
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
 import com.eimsound.eimusic.viewmodel.PlaylistViewModel
@@ -35,6 +38,7 @@ fun QueueScreen(
     val playlistState by playlistViewModel.state.collectAsState()
     val localPlaylists = playlistState.playlists.filter { it.id.source == TrackSource.LOCAL }
     val picker = rememberPlaylistPickerState()
+    val trackActions = LocalTrackActionHost.current
 
     ScreenFrame(
         hint = queueStatusBarHint(),
@@ -116,6 +120,22 @@ fun QueueScreen(
                     visibleLines = visibleLines,
                     onPlayTrack = { track -> playerViewModel.playTrack(track) },
                     selection = selection,
+                    onSecondaryClick = { track, index ->
+                        trackActions?.showMenu(
+                            track.name,
+                            trackContextItems(
+                                onAddToPlaylist = { picker.open(track) },
+                                onPlayNext = { playerViewModel.playNext(track) },
+                                onShowInfo = { trackActions?.showInfo(track) },
+                                extra = listOf(
+                                    ContextMenuItem("Remove from queue") {
+                                        playerViewModel.removeTrack(index)
+                                        selection.jumpTo((index - 1).coerceAtLeast(0))
+                                    },
+                                ),
+                            ),
+                        )
+                    },
                     onConfirm = {
                         playerViewModel.playTrack(it)
                         onGoBack()

@@ -4,14 +4,17 @@ import androidx.compose.runtime.*
 import com.eimsound.eimusic.keyboard.SearchFocus
 import com.eimsound.eimusic.keyboard.dispatchSearchKey
 import com.eimsound.eimusic.keyboard.searchStatusBarHint
+import com.eimsound.eimusic.music.Track
 import com.eimsound.eimusic.music.TrackSource
 import com.eimsound.eimusic.ui.components.InputField
+import com.eimsound.eimusic.ui.components.LocalTrackActionHost
 import com.eimsound.eimusic.ui.components.ListView
 import com.eimsound.eimusic.ui.components.PlaylistPicker
 import com.eimsound.eimusic.ui.components.ScreenFrame
 import com.eimsound.eimusic.ui.components.TrackListItem
 import com.eimsound.eimusic.ui.components.rememberListSelectionState
 import com.eimsound.eimusic.ui.components.rememberPlaylistPickerState
+import com.eimsound.eimusic.ui.components.trackContextItems
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
 import com.eimsound.eimusic.util.bridgeToMutable
 import com.eimsound.eimusic.util.render
@@ -47,6 +50,7 @@ fun SearchPage(
     val resultSelection = rememberListSelectionState()
     val historySelection = rememberListSelectionState()
     val picker = rememberPlaylistPickerState()
+    val trackActions = LocalTrackActionHost.current
     val playlistState by playlistViewModel.state.collectAsState()
     val localPlaylists = playlistState.playlists.filter { it.id.source == TrackSource.LOCAL }
     val palette = LocalTuiColors.current
@@ -206,6 +210,16 @@ fun SearchPage(
                     visibleLines = visibleLines,
                     emptyMessage = "",
                     selection = resultSelection,
+                    onItemSecondaryClick = { track, _ ->
+                        trackActions?.showMenu(
+                            track.name,
+                            trackContextItems(
+                                onAddToPlaylist = { picker.open(track) },
+                                onPlayNext = { playerViewModel.playNext(track) },
+                                onShowInfo = { trackActions.showInfo(track) },
+                            ),
+                        )
+                    },
                     onConfirm = { track ->
                         playerViewModel.playTrack(track)
                         searchViewModel.reset()

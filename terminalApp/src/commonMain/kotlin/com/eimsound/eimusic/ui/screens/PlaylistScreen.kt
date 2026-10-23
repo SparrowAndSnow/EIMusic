@@ -6,10 +6,17 @@ import com.eimsound.eimusic.keyboard.PlaylistKeyActions
 import com.eimsound.eimusic.keyboard.dispatchPlaylistKey
 import com.eimsound.eimusic.keyboard.playlistStatusBarHint
 import com.eimsound.eimusic.music.MediaList
+import com.eimsound.eimusic.music.Track
+import com.eimsound.eimusic.music.TrackSource
 import com.eimsound.eimusic.music.displayName
 import com.eimsound.eimusic.ui.components.InputField
+import com.eimsound.eimusic.ui.components.ContextMenuItem
+import com.eimsound.eimusic.ui.components.LocalTrackActionHost
 import com.eimsound.eimusic.ui.components.ListView
+import com.eimsound.eimusic.ui.components.PlaylistPicker
 import com.eimsound.eimusic.ui.components.rememberListSelectionState
+import com.eimsound.eimusic.ui.components.rememberPlaylistPickerState
+import com.eimsound.eimusic.ui.components.trackContextItems
 import com.eimsound.eimusic.ui.components.ScreenFrame
 import com.eimsound.eimusic.ui.components.TrackTable
 import com.eimsound.eimusic.ui.theme.LocalSafeContentSize
@@ -40,6 +47,8 @@ fun PlaylistScreen(
     var focus by remember { mutableStateOf(PlaylistFocus.List) }
     var playlistIndex by remember { mutableIntStateOf(0) }
     val trackSelection = rememberListSelectionState()
+    val picker = rememberPlaylistPickerState()
+    val trackActions = LocalTrackActionHost.current
     var showTrackList by remember { mutableStateOf(false) }
     var creatingLocal by remember { mutableStateOf(false) }
 
@@ -163,7 +172,15 @@ fun PlaylistScreen(
                     Text("  Error: $error", color = palette.errorFg)
                 }
 
-                if (focus == PlaylistFocus.TrackList) {
+                if (focus == PlaylistFocus.TrackList && picker.isOpen) {
+                    PlaylistPicker(
+                        state = picker,
+                        playlists = state.playlists.filter { it.id.source == TrackSource.LOCAL },
+                        visibleLines = (visibleLines - 2).coerceAtLeast(1),
+                    ) { playlist, track ->
+                        playlistViewModel.addTrackToPlaylist(playlist.id.id, track)
+                    }
+                } else if (focus == PlaylistFocus.TrackList) {
                     TrackTable(
                         tracks = state.tracks,
                         currentTrackId = playerViewModel.state.value.current?.id,
@@ -171,6 +188,26 @@ fun PlaylistScreen(
                         visibleLines = visibleLines,
                         emptyMessage = "No tracks in this playlist.",
                         selection = trackSelection,
+                        onSecondaryClick = { track, index ->
+                            trackActions?.showMenu(
+                                track.name,
+                                trackContextItems(
+                                    onAddToPlaylist = { picker.open(track) },
+                                    onPlayNext = { playerViewModel.playNext(track) },
+                                    onShowInfo = { trackActions?.showInfo(track) },
+                                    extra = if (state.selectedPlaylist?.id?.source == TrackSource.LOCAL) {
+                                        listOf(
+                                            ContextMenuItem("Remove from playlist") {
+                                                playlistViewModel.removeTrackAt(index)
+                                                trackSelection.jumpTo((index - 1).coerceAtLeast(0))
+                                            },
+                                        )
+                                    } else {
+                                        emptyList()
+                                    },
+                                ),
+                            )
+                        },
                         onPlayTrack = {
                             playerViewModel.playTrack(it)
                             onGoBack()

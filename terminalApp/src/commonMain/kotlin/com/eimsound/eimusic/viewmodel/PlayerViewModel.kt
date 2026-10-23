@@ -171,6 +171,11 @@ class PlayerViewModel(
         controller.volume(state.value.volume, !state.value.isMute)
     }
 
+    fun playNext(track: Track) {
+        val index = (state.value.index + 1).coerceIn(0, state.value.queue.size)
+        controller.addTrack(track, index)
+    }
+
     fun playTrack(track: Track) {
         // 已在队列里的曲目直接播放，不移动位置；新曲目才追加到末尾。
         if (state.value.queue.none { it.id == track.id }) {

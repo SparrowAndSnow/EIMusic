@@ -20,6 +20,7 @@ import com.jakewharton.mosaic.layout.background
 import com.jakewharton.mosaic.layout.clickable
 import com.jakewharton.mosaic.layout.fillMaxWidth
 import com.jakewharton.mosaic.layout.hoverable
+import com.jakewharton.mosaic.layout.onGloballyPositioned
 import com.jakewharton.mosaic.layout.onKeyEvent
 import com.jakewharton.mosaic.layout.onMouseEvent
 import com.jakewharton.mosaic.layout.width
@@ -72,6 +73,7 @@ fun <T> ListView(
     enabled: Boolean = true,
     onConfirm: (T) -> Unit = {},
     onSelectedChange: (Int) -> Unit = {},
+    onItemSecondaryClick: ((T, Int) -> Unit)? = null,
     /** 选中项与滚轮位置；页面可持有一份以在外部移动/删除后跳转。 */
     selection: ListSelectionState = rememberListSelectionState(items),
 ) {
@@ -92,6 +94,7 @@ fun <T> ListView(
         }
     }
     var hoveredIndex by remember { mutableIntStateOf(-1) }
+    var listTop by remember { mutableIntStateOf(0) }
     val uiInput = LocalUiInputEnabled.current
     val palette = LocalTuiColors.current
 
@@ -131,6 +134,7 @@ fun <T> ListView(
 
     Box(
         Modifier
+            .onGloballyPositioned { position, _ -> listTop = position.y }
             .onKeyEvent { event ->
                 if (!enabled || !uiInput) return@onKeyEvent false
                 val action =
@@ -150,6 +154,13 @@ fun <T> ListView(
             .onMouseEvent { event ->
                 if (!enabled || !uiInput || items.isEmpty()) return@onMouseEvent false
                 if (event.type != MouseEvent.Type.Press) return@onMouseEvent false
+                if (event.button == MouseEvent.Button.Right && onItemSecondaryClick != null) {
+                    val row = event.y - listTop + scrollOffset
+                    val item = items.getOrNull(row) ?: return@onMouseEvent false
+                    select(row)
+                    onItemSecondaryClick(item, row)
+                    return@onMouseEvent true
+                }
                 when (event.button) {
                     MouseEvent.Button.WheelUp, MouseEvent.Button.WheelDown -> {
                         // 一次滚轮给一个约 WheelStep 行的初速度，之后由摩擦衰减形成渐停。

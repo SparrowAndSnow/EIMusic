@@ -7,6 +7,7 @@ import com.eimsound.eimusic.keyboard.dispatchGlobalKey
 import com.eimsound.eimusic.navigation.Route
 import com.eimsound.eimusic.storage.IStorage
 import com.eimsound.eimusic.db.DbSessionRepository
+import com.eimsound.eimusic.music.Track
 import com.eimsound.eimusic.storage.Settings
 import com.eimsound.eimusic.storage.get
 import com.eimsound.eimusic.storage.save
@@ -20,6 +21,11 @@ import com.eimsound.eimusic.ui.screens.LoginDialog
 import com.eimsound.eimusic.ui.screens.MainScreen
 import com.eimsound.eimusic.ui.screens.PlaylistScreen
 import com.eimsound.eimusic.ui.screens.QueueScreen
+import com.eimsound.eimusic.ui.components.ContextMenu
+import com.eimsound.eimusic.ui.components.LocalTrackActionHost
+import com.eimsound.eimusic.ui.components.TrackActionHost
+import com.eimsound.eimusic.ui.components.TrackInfoDialog
+import com.eimsound.eimusic.ui.components.rememberContextMenuState
 import com.eimsound.eimusic.ui.screens.SearchPage
 import com.eimsound.eimusic.ui.screens.TogetherScreen
 import com.eimsound.eimusic.ui.theme.LocalSafeContentSize
@@ -82,6 +88,21 @@ fun App(
     val playerState by playerViewModel.state.bridgeToMutable()
     val togetherState by channelViewModel.uiState.bridgeToMutable()
     val currentRoute = backStack.last()
+    val contextMenu = rememberContextMenuState()
+    var infoTrack by remember { mutableStateOf<Track?>(null) }
+    val dialogOpen = contextMenu.isOpen || infoTrack != null
+    val trackActionHost = remember {
+        TrackActionHost(
+            showMenu = { title, items ->
+                infoTrack = null
+                contextMenu.show(title, items)
+            },
+            showInfo = { track ->
+                contextMenu.dismiss()
+                infoTrack = track
+            },
+        )
+    }
 
     // 弹窗类路由：保留底层页面绘制，弹窗叠在上面。
     val overlayRoute = currentRoute.isOverlay
@@ -201,6 +222,7 @@ fun App(
         CompositionLocalProvider(
             LocalTuiColors provides palette,
             LocalGlobalActions provides appGlobalActions,
+            LocalTrackActionHost provides trackActionHost,
         ) {
             Column {
                 // Header
@@ -256,15 +278,16 @@ fun App(
                         LocalSafeContentSize provides SafeContentSize(maxWidth, maxHeight),
                     ) {
                         OverlayHost(
-                            overlay = if (overlayRoute && baseRoute != null) {
-                                { OverlayRouteContent(currentRoute) }
-                            } else {
-                                null
+                            overlay = when {
+                                overlayRoute && baseRoute != null -> { { OverlayRouteContent(currentRoute) } }
+                                contextMenu.isOpen -> { { ContextMenu(contextMenu) } }
+                                infoTrack != null -> { { TrackInfoDialog(infoTrack) { infoTrack = null } } }
+                                else -> null
                             },
                         ) {
                             // 库的 modal 门禁已经挡住 base 输入；这里再用 local 冻结
                             // ScreenFrame 的 hint/按键，保证弹窗关闭后 hint 会重算。
-                            CompositionLocalProvider(LocalUiInputEnabled provides !overlayRoute) {
+                            CompositionLocalProvider(LocalUiInputEnabled provides (!overlayRoute && !dialogOpen)) {
                                 RouteContent(baseRoute ?: currentRoute)
                             }
                         }

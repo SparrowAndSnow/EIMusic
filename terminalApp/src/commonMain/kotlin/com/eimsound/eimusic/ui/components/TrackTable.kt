@@ -52,6 +52,7 @@ fun TrackTable(
     onAddNext: (Track) -> Unit = {},
     onAddLast: (Track) -> Unit = {},
     onSelectedChange: (Int) -> Unit = {},
+    onSecondaryClick: ((Track, Int) -> Unit)? = null,
     onConfirm: (Track) -> Unit = {},
     selection: ListSelectionState = rememberListSelectionState(tracks),
 ) {
@@ -117,6 +118,7 @@ fun TrackTable(
                 showScrollIndicator = showScrollIndicator,
                 onConfirm = onConfirm,
                 onSelectedChange = onSelectedChange,
+                onItemSecondaryClick = onSecondaryClick,
                 selection = selection,
                 render = { track, i, isSelected ->
                     val isCurrent = track.id == currentTrackId
