@@ -31,12 +31,10 @@
 - [~] **队列增强**
   - [x] 上移/下移（K/J）、播放已存在曲目不再重排、移动/删除后选择跟随
   - [ ] `g` 跳到当前播放；队列另存为歌单
-- [ ] **收藏 / 喜欢**
-  - 本地收藏 track，列表标记，过滤“只看收藏”
-  - 需要 storage schema 扩展与迁移
-- [ ] **歌单编辑**
-  - 从 Search/Queue 把选中曲目加入歌单
-  - 歌单内删除/排序；当前只能加/删整个歌单
+- [ ] **歌单编辑（仅本地歌单）**
+  - 导入歌单（网易等）只读，不能增删曲目；本地创建的歌单才可编辑
+  - 从 Search/Queue 把选中曲目加入本地歌单；歌单内删除/排序
+  - 本地歌单可混合加入网易/Spotify 等来源的曲目
 - [ ] **会话恢复**
   - 重启恢复上次 tab、队列、音量、播放位置、主题
 
@@ -92,9 +90,11 @@
 - 目标：按领域拆分，避免单文件频繁整写：
   - `settings.json`：主题/音量/静音/播放模式/tab
   - `session.json`：队列、当前曲目、位置
-  - `playlists.json` / `favorites.json` / `recent.json`
+  - `playlists.json` / `recent.json`
   - 原子写（tmp + rename + .bak）+ version 字段 + 节流落盘
-- 换 SQLite 的触发条件：曲目/歌单达到几千条、需要关系查询/分页/歌词缓存时，用 SQLDelight；表：track / playlist / playlist_track / favorite / recent / queue_item。
+- 换 SQLite：用 SQLDelight；表：track / playlist / playlist_track / recent / queue_item / session / search_history。
+- 歌单模型：`playlist.source`（LOCAL / NETEASE / SPOTIFY…）即“本地歌单”标记；只有 `source=LOCAL` 可增删/排序曲目；导入歌单只读。
+- 曲目模型：`track.id` 全局唯一（如 `netease:123`、`spotify:...`、`local:<hash>`），本地歌单可混合加入各来源曲目。
 - 在此之前不引入数据库依赖，保持接口可替换。
 
 ## 暂不做
