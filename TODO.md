@@ -21,19 +21,16 @@
   - 保持键盘快捷键不变
 - [~] **进度条点击/拖动 seek**（已实现，待真机播放验证）
   - [x] ProgressBar 拆成 bar + 时间；bar 按列映射时间，Press/Drag 调用 seek
-  - [ ] hover 显示目标时间；buffered 进度
-- [ ] **加载 / 扫描动画**
-  - `Loading...`、`Scanning...` 改为 spinner 或扫描计数
-  - 长操作不再看起来像卡死
+  - [-] hover 目标时间 / buffered 进度（决定暂不做）
 
 ## P1 / 功能
 
 - [x] **搜索历史 + 最近播放**
   - [x] SearchViewModel 持久化最近查询；空查询显示历史，点击可直接搜索
   - [x] PlayerViewModel 记录最近播放（最近 12 首），Main 空状态 ListView 展示，回车/点击播放
-- [ ] **队列增强**
-  - 上移/下移（controller 已有 moveTrack）
-  - `g` 跳到当前播放；队列另存为歌单
+- [~] **队列增强**
+  - [x] 上移/下移（K/J）、播放已存在曲目不再重排、移动/删除后选择跟随
+  - [ ] `g` 跳到当前播放；队列另存为歌单
 - [ ] **收藏 / 喜欢**
   - 本地收藏 track，列表标记，过滤“只看收藏”
   - 需要 storage schema 扩展与迁移
@@ -89,7 +86,20 @@
   - 怀疑：Mosaic 在 if/else 分支替换时布局/测量缓存未正确失效，控件复用了旧的测量结果；hover 触发重绘后重新测量。
   - 下一步：在 Mosaic 做最小复现（分支前后同位置同控件），或临时用 `key(...)` 强制重建验证。
 
+## 存储演进（以后）
+
+- 当前：`Settings` JSON 存偏好、最近搜索、最近播放；队列只存在内存。
+- 目标：按领域拆分，避免单文件频繁整写：
+  - `settings.json`：主题/音量/静音/播放模式/tab
+  - `session.json`：队列、当前曲目、位置
+  - `playlists.json` / `favorites.json` / `recent.json`
+  - 原子写（tmp + rename + .bak）+ version 字段 + 节流落盘
+- 换 SQLite 的触发条件：曲目/歌单达到几千条、需要关系查询/分页/歌词缓存时，用 SQLDelight；表：track / playlist / playlist_track / favorite / recent / queue_item。
+- 在此之前不引入数据库依赖，保持接口可替换。
+
 ## 暂不做
 
+- 进度条 hover 目标时间 / buffered 进度
+- Loading / Scanning 动画
 - backdrop dim/invert（已决定保持 Solid 全擦）
 - 非 modal Popup 点击外部关闭（语义未定）
