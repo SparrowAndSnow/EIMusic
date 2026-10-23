@@ -4,6 +4,8 @@ import com.eimsound.eimusic.Result
 import com.eimsound.eimusic.db.DbPlaylist
 import com.eimsound.eimusic.db.DbPlaylistRepository
 import com.eimsound.eimusic.db.DbTrack
+import com.eimsound.eimusic.db.toDbTrack
+import com.eimsound.eimusic.db.toTrack
 import com.eimsound.eimusic.factory.ShareLinkResolverFactory
 import com.eimsound.eimusic.factory.TrackRepositoryFactory
 import com.eimsound.eimusic.music.Artist
@@ -266,28 +268,6 @@ private fun DbPlaylist.toMediaList(): MediaList.PlaylistMediaList {
         id = mediaListId,
     )
 }
-
-private fun DbTrack.toTrack(): Track = Track(
-    album = null,
-    artists = artist?.let { listOf(Artist(image = null, id = source.name, name = it)) },
-    duration = duration?.let(::Duration),
-    id = runCatching { TrackId.parse(id) }.getOrElse { TrackId(source, externalId) },
-    name = title,
-    uri = uri,
-    source = source,
-)
-
-private fun Track.toDbTrack(): DbTrack = DbTrack(
-    id = id.toString(),
-    source = id.source,
-    externalId = id.id,
-    title = name,
-    artist = artists?.joinToString("/") { it.name },
-    album = album?.name,
-    duration = duration?.milliseconds,
-    uri = uri,
-    artUrl = album?.image,
-)
 
 private fun MediaList.allTracks(): List<Track> = when (this) {
     is MediaList.PlaylistMediaList -> playlist.tracks

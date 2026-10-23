@@ -3,6 +3,8 @@ package com.eimsound.eimusic.viewmodel
 import com.eimsound.eimusic.db.DbLibraryRepository
 import com.eimsound.eimusic.db.DbSessionRepository
 import com.eimsound.eimusic.db.DbTrack
+import com.eimsound.eimusic.db.toDbTrack
+import com.eimsound.eimusic.db.toTrack
 import com.eimsound.eimusic.music.PlayerState
 import com.eimsound.eimusic.music.Track
 import com.eimsound.eimusic.music.PlayMode
@@ -110,29 +112,6 @@ class PlayerViewModel(
                 }
         }
     }
-
-    private fun Track.toDbTrack(): DbTrack = DbTrack(
-        id = id.toString(),
-        source = id.source,
-        externalId = id.id,
-        title = name,
-        artist = artists?.joinToString("/") { it.name },
-        album = album?.name,
-        duration = duration?.milliseconds,
-        uri = uri,
-        artUrl = album?.image,
-    )
-
-    private fun DbTrack.toTrack(): Track = Track(
-        album = null,
-        artists = artist?.let { listOf(com.eimsound.eimusic.music.Artist(null, source.name, it)) },
-        duration = duration?.let { com.eimsound.eimusic.music.Duration(it) },
-        id = runCatching { com.eimsound.eimusic.music.TrackId.parse(id) }
-            .getOrElse { com.eimsound.eimusic.music.TrackId(source, externalId) },
-        name = title,
-        uri = uri,
-        source = source,
-    )
 
     private fun recordRecentTrack(track: Track) {
         val updated = (listOf(track) + _recentTracks.value.filterNot { it.id == track.id })
