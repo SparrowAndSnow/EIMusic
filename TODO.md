@@ -93,7 +93,8 @@
   - JVM 测试覆盖本地顺序/移动/删除、导入只读、混合来源
 - [x] **接入 UI**：PlaylistViewModel/Screen 改用 DbPlaylistRepository；URL 导入写库；旧 Settings.playlists 迁移
   - [x] `n` 新建本地歌单；`a` 导入 URL；`d` 删除记录；本地歌单持久化已验证
-  - [ ] 从 Search/Queue 往本地歌单添加曲目、歌单内删除/排序 UI
+  - [x] Search/Queue 按 `l` 添加曲目到本地歌单
+  - [x] 本地歌单内 `d` 删除、`K/J` 排序；导入歌单只读
 - [ ] **会话/最近播放迁 DB**：session / recent / search_history 表，Settings 只留偏好
 
 - 当前：`Settings` JSON 存偏好、最近搜索、最近播放；队列只存在内存。

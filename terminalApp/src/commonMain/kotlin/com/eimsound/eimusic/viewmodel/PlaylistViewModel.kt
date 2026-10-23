@@ -141,6 +141,43 @@ class PlaylistViewModel(
         )
     }
 
+    fun addTrackToPlaylist(playlistId: String, track: Track) {
+        scope.launch {
+            db.addTrack(playlistId, track.toDbTrack())
+            if (_state.value.selectedPlaylist?.id?.id == playlistId) {
+                reloadSelectedTracks()
+            }
+        }
+    }
+
+    fun removeTrackAt(index: Int) {
+        val selected = _state.value.selectedPlaylist ?: return
+        val track = _state.value.tracks.getOrNull(index) ?: return
+        scope.launch {
+            db.removeTrack(selected.id.id, track.id.toString())
+            reloadSelectedTracks()
+        }
+    }
+
+    fun moveTrack(from: Int, to: Int) {
+        val selected = _state.value.selectedPlaylist ?: return
+        scope.launch {
+            db.moveTrack(selected.id.id, from, to)
+            reloadSelectedTracks()
+        }
+    }
+
+    private fun reloadSelectedTracks() {
+        val selected = _state.value.selectedPlaylist ?: return
+        val stored = db.playlist(selected.id.id) ?: return
+        _state.update {
+            it.copy(
+                selectedPlaylist = stored.toMediaList(),
+                tracks = stored.tracks.map(DbTrack::toTrack),
+            )
+        }
+    }
+
     fun removePlaylist(mediaList: MediaList) {
         scope.launch {
             db.deletePlaylistRecord(mediaList.id.id)

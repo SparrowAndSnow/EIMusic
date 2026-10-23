@@ -151,6 +151,7 @@ fun App(
             is Route.Queue -> QueueScreen(
                 playerState = playerState,
                 playerViewModel = playerViewModel,
+                playlistViewModel = playlistViewModel,
                 onGoBack = goBack,
             )
         }
@@ -164,6 +165,7 @@ fun App(
             is Route.Search -> SearchDialog(
                 searchViewModel = searchViewModel,
                 playerViewModel = playerViewModel,
+                playlistViewModel = playlistViewModel,
                 onGoBack = goBack,
             )
             is Route.Login -> LoginDialog(

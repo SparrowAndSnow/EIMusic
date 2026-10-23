@@ -8,6 +8,7 @@ import com.eimsound.eimusic.keyboard.playlistStatusBarHint
 import com.eimsound.eimusic.music.MediaList
 import com.eimsound.eimusic.ui.components.InputField
 import com.eimsound.eimusic.ui.components.ListView
+import com.eimsound.eimusic.ui.components.rememberListSelectionState
 import com.eimsound.eimusic.ui.components.ScreenFrame
 import com.eimsound.eimusic.ui.components.TrackTable
 import com.eimsound.eimusic.ui.theme.LocalSafeContentSize
@@ -37,7 +38,7 @@ fun PlaylistScreen(
 
     var focus by remember { mutableStateOf(PlaylistFocus.List) }
     var playlistIndex by remember { mutableIntStateOf(0) }
-    var trackIndex by remember { mutableIntStateOf(0) }
+    val trackSelection = rememberListSelectionState()
     var showTrackList by remember { mutableStateOf(false) }
     var creatingLocal by remember { mutableStateOf(false) }
 
@@ -70,6 +71,31 @@ fun PlaylistScreen(
                     selectPlaylist = {
                         state.playlists.getOrNull(playlistIndex)?.let { p ->
                             playlistViewModel.selectPlaylist(p)
+                        }
+                    },
+                    removeTrack = {
+                        if (state.selectedPlaylist?.id?.source == com.eimsound.eimusic.music.TrackSource.LOCAL) {
+                            val index = trackSelection.index
+                            playlistViewModel.removeTrackAt(index)
+                            trackSelection.jumpTo((index - 1).coerceAtLeast(0))
+                        }
+                    },
+                    moveTrackUp = {
+                        if (state.selectedPlaylist?.id?.source == com.eimsound.eimusic.music.TrackSource.LOCAL) {
+                            val index = trackSelection.index
+                            if (index > 0) {
+                                playlistViewModel.moveTrack(index, index - 1)
+                                trackSelection.jumpTo(index - 1)
+                            }
+                        }
+                    },
+                    moveTrackDown = {
+                        if (state.selectedPlaylist?.id?.source == com.eimsound.eimusic.music.TrackSource.LOCAL) {
+                            val index = trackSelection.index
+                            if (index < state.tracks.lastIndex) {
+                                playlistViewModel.moveTrack(index, index + 1)
+                                trackSelection.jumpTo(index + 1)
+                            }
                         }
                     },
                 ),
@@ -112,6 +138,7 @@ fun PlaylistScreen(
                         termWidth = termWidth,
                         visibleLines = visibleLines,
                         emptyMessage = "No tracks in this playlist.",
+                        selection = trackSelection,
                         onPlayTrack = {
                             playerViewModel.playTrack(it)
                             onGoBack()
@@ -122,7 +149,6 @@ fun PlaylistScreen(
                                 onGoBack()
                             }
                         },
-                        onSelectedChange = { trackIndex = it },
                         onConfirm = {
                             playerViewModel.playTrack(it)
                             onGoBack()

@@ -9,10 +9,15 @@ import com.eimsound.eimusic.ui.components.InputField
 import com.eimsound.eimusic.ui.components.ListView
 import com.eimsound.eimusic.ui.components.LocalStatusBarHint
 import com.eimsound.eimusic.ui.components.TrackListItem
+import com.eimsound.eimusic.ui.components.rememberListSelectionState
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
 import com.eimsound.eimusic.util.bridgeToMutable
 import com.eimsound.eimusic.util.render
 import com.eimsound.eimusic.util.spacer
+import com.eimsound.eimusic.music.MediaList
+import com.eimsound.eimusic.music.Track
+import com.eimsound.eimusic.music.TrackSource
+import com.eimsound.eimusic.viewmodel.PlaylistViewModel
 import com.eimsound.eimusic.viewmodel.PlayerViewModel
 import com.eimsound.eimusic.viewmodel.SearchViewModel
 import com.jakewharton.mosaic.LocalTerminalState
@@ -31,10 +36,16 @@ import com.jakewharton.mosaic.ui.Text
 fun SearchDialog(
     searchViewModel: SearchViewModel,
     playerViewModel: PlayerViewModel,
+    playlistViewModel: PlaylistViewModel,
     onGoBack: () -> Unit,
 ) {
     val searchState by searchViewModel.state.bridgeToMutable()
     var focus by remember { mutableStateOf(SearchFocus.Input) }
+    val resultSelection = rememberListSelectionState()
+    val pickerSelection = rememberListSelectionState()
+    val playlistState by playlistViewModel.state.collectAsState()
+    val localPlaylists = playlistState.playlists.filter { it.id.source == TrackSource.LOCAL }
+    var pickerTrack by remember { mutableStateOf<Track?>(null) }
     val palette = LocalTuiColors.current
     val statusBarHint = LocalStatusBarHint.current
     val termHeight = LocalTerminalState.current.size.rows
@@ -51,11 +62,24 @@ fun SearchDialog(
                 modifier = Modifier
                     .padding(2)
                     .onKeyEvent { event ->
-                        dispatchSearchKey(
-                            event = event,
-                            focus = focus,
-                            onSwitchToInput = { focus = SearchFocus.Input },
-                        )
+                        val picking = pickerTrack
+                        if (picking != null) {
+                            if (event.key == "Escape") {
+                                pickerTrack = null
+                                true
+                            } else {
+                                false // picker ListView handles j/k/Enter
+                            }
+                        } else if (event.key == "l" && focus == SearchFocus.Results && !event.ctrl && !event.alt) {
+                            pickerTrack = searchState.results.getOrNull(resultSelection.index)
+                            true
+                        } else {
+                            dispatchSearchKey(
+                                event = event,
+                                focus = focus,
+                                onSwitchToInput = { focus = SearchFocus.Input },
+                            )
+                        }
                     },
             ) {
                 InputField(
@@ -115,8 +139,34 @@ fun SearchDialog(
                     Text("  Error: $it", color = palette.errorFg)
                 }
 
+                // ── Add to playlist picker ──
+                val adding = pickerTrack
+                if (adding != null) {
+                    Text("  Add to local playlist", color = palette.titleFg)
+                    ListView(
+                        items = localPlaylists,
+                        visibleLines = visibleLines,
+                        emptyMessage = "No local playlists.",
+                        selection = pickerSelection,
+                        onConfirm = { playlist ->
+                            playlistViewModel.addTrackToPlaylist(playlist.id.id, adding)
+                            pickerTrack = null
+                        },
+                        render = { playlist, _, isSelected ->
+                            val name = when (playlist) {
+                                is MediaList.PlaylistMediaList -> playlist.playlist.name
+                                is MediaList.AlbumMediaList -> playlist.album.name
+                            }
+                            Text(
+                                (if (isSelected) " ▸ " else "   ") + name,
+                                color = if (isSelected) palette.highlightFg else palette.textDimFg,
+                            )
+                        },
+                    )
+                }
+
                 // ── Results list ──
-                if (!searchState.isLoading && searchState.results.isNotEmpty()) {
+                if (adding == null && !searchState.isLoading && searchState.results.isNotEmpty()) {
                     Text(" ", color = palette.textFg)
                     val focusLabel = if (focus == SearchFocus.Results) "▸ Results" else "Results"
                     Text("  $focusLabel", color = palette.titleFg)
@@ -124,6 +174,7 @@ fun SearchDialog(
                         items = searchState.results,
                         visibleLines = visibleLines,
                         emptyMessage = "",
+                        selection = resultSelection,
                         onConfirm = { track ->
                             playerViewModel.playTrack(track)
                             searchViewModel.reset()

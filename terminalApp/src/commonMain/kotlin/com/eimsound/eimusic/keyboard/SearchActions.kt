@@ -40,5 +40,5 @@ fun dispatchSearchKey(
 
 fun searchStatusBarHint(focus: SearchFocus): String = when (focus) {
     SearchFocus.Input -> "Enter:Search  Esc:Cancel"
-    SearchFocus.Results -> "j/k:Scroll  Enter:Play  Esc:Back"
+    SearchFocus.Results -> "j/k:Scroll  Enter:Play  l:Add  Esc:Back"
 }
