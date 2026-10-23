@@ -12,14 +12,14 @@ import com.eimsound.eimusic.storage.save
 import com.eimsound.eimusic.ui.LocalUiInputEnabled
 import com.eimsound.eimusic.ui.components.HeaderBar
 import com.eimsound.eimusic.ui.components.LocalStatusBarHint
-import com.eimsound.eimusic.ui.screens.HelpScreen
+import com.eimsound.eimusic.ui.screens.HelpDialog
 import com.eimsound.eimusic.ui.screens.LocalScreen
 import com.eimsound.eimusic.ui.screens.LogViewerScreen
-import com.eimsound.eimusic.ui.screens.LoginScreen
+import com.eimsound.eimusic.ui.screens.LoginDialog
 import com.eimsound.eimusic.ui.screens.MainScreen
 import com.eimsound.eimusic.ui.screens.PlaylistScreen
 import com.eimsound.eimusic.ui.screens.QueueScreen
-import com.eimsound.eimusic.ui.screens.SearchScreen
+import com.eimsound.eimusic.ui.screens.SearchDialog
 import com.eimsound.eimusic.ui.screens.TogetherScreen
 import com.eimsound.eimusic.ui.theme.LocalSafeContentSize
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
@@ -159,13 +159,13 @@ fun App(
     @Composable
     fun OverlayRouteContent(route: Route) {
         when (route) {
-            is Route.Help -> HelpScreen(onGoBack = goBack)
-            is Route.Search -> SearchScreen(
+            is Route.Help -> HelpDialog(onGoBack = goBack)
+            is Route.Search -> SearchDialog(
                 searchViewModel = searchViewModel,
                 playerViewModel = playerViewModel,
                 onGoBack = goBack,
             )
-            is Route.Login -> LoginScreen(
+            is Route.Login -> LoginDialog(
                 authViewModel = authViewModel,
                 onGoBack = goBack,
             )

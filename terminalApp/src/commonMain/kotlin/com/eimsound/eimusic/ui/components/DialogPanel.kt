@@ -13,7 +13,7 @@ import com.jakewharton.mosaic.ui.ColumnScope
 import com.jakewharton.mosaic.ui.Text
 
 @Composable
-fun Dialog(
+fun DialogPanel(
     title: String,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,

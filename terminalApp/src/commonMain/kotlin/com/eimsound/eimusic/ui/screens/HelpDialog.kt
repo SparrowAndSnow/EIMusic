@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import com.eimsound.eimusic.keyboard.helpStatusBarHint
 import com.eimsound.eimusic.keyboard.mainHelpEntries
-import com.eimsound.eimusic.ui.components.Dialog as DialogPanel
+import com.eimsound.eimusic.ui.components.DialogPanel
 import com.eimsound.eimusic.ui.components.LocalStatusBarHint
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
 import com.eimsound.eimusic.util.spacer
@@ -16,7 +16,7 @@ import com.jakewharton.mosaic.ui.Dialog as OverlayDialog
 import com.jakewharton.mosaic.ui.Text
 
 @Composable
-fun HelpScreen(
+fun HelpDialog(
     onGoBack: () -> Unit,
 ) {
     val palette = LocalTuiColors.current

@@ -4,7 +4,7 @@ import androidx.compose.runtime.*
 import com.eimsound.eimusic.keyboard.SearchFocus
 import com.eimsound.eimusic.keyboard.dispatchSearchKey
 import com.eimsound.eimusic.keyboard.searchStatusBarHint
-import com.eimsound.eimusic.ui.components.Dialog as DialogPanel
+import com.eimsound.eimusic.ui.components.DialogPanel
 import com.eimsound.eimusic.ui.components.InputField
 import com.eimsound.eimusic.ui.components.ListView
 import com.eimsound.eimusic.ui.components.LocalStatusBarHint
@@ -27,7 +27,7 @@ import com.jakewharton.mosaic.ui.Dialog as OverlayDialog
 import com.jakewharton.mosaic.ui.Text
 
 @Composable
-fun SearchScreen(
+fun SearchDialog(
     searchViewModel: SearchViewModel,
     playerViewModel: PlayerViewModel,
     onGoBack: () -> Unit,

@@ -4,7 +4,7 @@ import androidx.compose.runtime.*
 import com.eimsound.eimusic.auth.AuthState
 import com.eimsound.eimusic.keyboard.dispatchLoginKey
 import com.eimsound.eimusic.keyboard.loginStatusBarHint
-import com.eimsound.eimusic.ui.components.Dialog as DialogPanel
+import com.eimsound.eimusic.ui.components.DialogPanel
 import com.eimsound.eimusic.ui.components.InputField
 import com.eimsound.eimusic.ui.components.LocalStatusBarHint
 import com.eimsound.eimusic.ui.theme.LocalSafeContentSize
@@ -25,7 +25,7 @@ import com.jakewharton.mosaic.ui.TextOverflow
  * Manages its own key events and login input state.
  */
 @Composable
-fun LoginScreen(
+fun LoginDialog(
     authViewModel: AuthViewModel,
     onGoBack: () -> Unit,
 ) {
