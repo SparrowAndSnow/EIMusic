@@ -69,8 +69,11 @@
 - [ ] **歌词**
   - LRC 读取/缓存，Main 切换显示当前行；无歌词回退专辑图
   - 先确定歌词来源与缓存策略
-- [ ] **MPRIS / 媒体键完善**
-  - 检查 seek、metadata、播放模式是否都暴露
+- [x] **MPRIS / 媒体键完善**
+  - LoopStatus/Shuffle 可写，Volume 设置解除静音
+  - Metadata 使用 Track.duration 兜底，artUrl 本地路径补 file://
+  - SetPosition 校验 trackid；Seeked 信号（>2s 跳转）
+  - MPRIS 仍不提供 Quit/Raise
 
 ## 工程
 

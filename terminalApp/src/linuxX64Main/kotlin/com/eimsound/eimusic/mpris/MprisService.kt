@@ -59,12 +59,18 @@ class MprisService(private val controller: IMediaPlayerController) : MprisManage
         }
         o.addVTable(IFACE_PLAYER) {
             prop(PropertyName("PlaybackStatus")) { withGetter { playbackStatus() } }
-            prop(PropertyName("LoopStatus")) { withGetter { loopStatus() } }
-            prop(PropertyName("Shuffle")) { withGetter { isShuffle() } }
+            prop(PropertyName("LoopStatus")) {
+                withGetter { loopStatus() }
+                withSetter { value: String -> setLoopStatus(value) }
+            }
+            prop(PropertyName("Shuffle")) {
+                withGetter { isShuffle() }
+                withSetter { value: Boolean -> setShuffle(value) }
+            }
             prop(PropertyName("Metadata")) { withGetter { buildMetadata() } }
             prop(PropertyName("Volume")) {
                 withGetter { volume() }
-                withSetter { value: Double -> controller.volume(value.toFloat().coerceIn(0f, 1f), controller.state.value.isMute) }
+                withSetter { value: Double -> controller.volume(value.toFloat().coerceIn(0f, 1f), false) }
             }
             prop(PropertyName("Position")) { withGetter { positionUs() } }
             prop(PropertyName("MinimumRate")) { withGetter { 1.0 } }
@@ -82,7 +88,13 @@ class MprisService(private val controller: IMediaPlayerController) : MprisManage
             method(MethodName("PlayPause")) { call { -> controller.playState(if (controller.state.value.playState == PlayState.PLAYING) PlayState.PAUSED else PlayState.PLAYING) } }
             method(MethodName("Stop")) { call { -> controller.playState(PlayState.STOPPED) } }
             method(MethodName("Seek")) { inputParamNames = listOf("Offset"); call { offset: Long -> val pos = (controller.state.value.position + offset / 1000L).coerceAtLeast(0); controller.seek(pos) } }
-            method(MethodName("SetPosition")) { inputParamNames = listOf("TrackId", "Position"); call { trackId: ObjectPath, pos: Long -> controller.seek(pos / 1000L) } }
+            method(MethodName("SetPosition")) {
+                inputParamNames = listOf("TrackId", "Position")
+                call { trackId: ObjectPath, pos: Long ->
+                    if (trackId.value == currentTrackPath()) controller.seek(pos / 1000L)
+                }
+            }
+            signal(SignalName("Seeked")) { with<Long>("Position") }
         }
     }
 
@@ -94,6 +106,11 @@ class MprisService(private val controller: IMediaPlayerController) : MprisManage
         if (state.current?.id != prev.current?.id || state.duration != prev.duration) changed.add(PropertyName("Metadata"))
         if (kotlin.math.abs(state.volume - prev.volume) > 0.01f) changed.add(PropertyName("Volume"))
         if (changed.isNotEmpty()) dbusObj.emitPropertiesChangedSignal(IFACE_PLAYER, changed)
+        if (kotlin.math.abs(state.position - prev.position) > 2000L) {
+            dbusObj.emitSignal(IFACE_PLAYER, SignalName("Seeked")) {
+                call { positionUs() }
+            }
+        }
     }
 
     private fun playbackStatus(): String = when (controller.state.value.playState) { PlayState.PLAYING -> "Playing"; PlayState.PAUSED -> "Paused"; PlayState.STOPPED -> "Stopped" }
@@ -106,13 +123,43 @@ class MprisService(private val controller: IMediaPlayerController) : MprisManage
         val track = controller.state.value.current ?: return emptyMap()
         val st = controller.state.value
         val m = mutableMapOf<String, Variant>()
-        m["mpris:trackid"] = Variant(ObjectPath("/org/eimusic/track/${track.id.source}/${sanitizeObjectPathElement(track.id.id)}"))
-        m["mpris:length"] = Variant((st.duration * 1000L).coerceAtLeast(0))
+        m["mpris:trackid"] = Variant(ObjectPath(currentTrackPath()))
+        val lengthMs = track.duration?.milliseconds ?: st.duration
+        m["mpris:length"] = Variant((lengthMs * 1000L).coerceAtLeast(0))
         m["xesam:title"] = Variant(track.name)
         track.artists?.let { m["xesam:artist"] = Variant(it.map { a -> a.name }) }
-        track.album?.let { m["xesam:album"] = Variant(it.name); it.image?.let { img -> m["mpris:artUrl"] = Variant(img) } }
+        track.album?.let {
+            m["xesam:album"] = Variant(it.name)
+            it.image?.let { img -> m["mpris:artUrl"] = Variant(if (img.contains("://")) img else "file://$img") }
+        }
         track.uri?.let { m["xesam:url"] = Variant(if (it.contains("://")) it else "file://$it") }
         return m
+    }
+
+    private fun currentTrackPath(): String {
+        val track = controller.state.value.current ?: return "/org/mpris/MediaPlayer2/TrackList/NoTrack"
+        return "/org/eimusic/track/${track.id.source}/${sanitizeObjectPathElement(track.id.id)}"
+    }
+
+    private fun setLoopStatus(value: String) {
+        val mode = when (value) {
+            "Track" -> PlayMode.RepeatOne
+            "Playlist" -> PlayMode.Loop
+            else -> return
+        }
+        controller.playMode(mode)
+    }
+
+    private fun setShuffle(value: Boolean) {
+        if (value) {
+            if (controller.state.value.playMode !is PlayMode.Shuffle) {
+                val count = controller.state.value.queue.size
+                val seed = kotlin.random.Random.nextLong()
+                controller.playMode(PlayMode.Shuffle(seed, com.eimsound.eimusic.music.generateShuffleIndices(count, seed)))
+            }
+        } else if (controller.state.value.playMode is PlayMode.Shuffle) {
+            controller.playMode(PlayMode.Loop)
+        }
     }
 
     private fun sanitizeObjectPathElement(value: String): String =
