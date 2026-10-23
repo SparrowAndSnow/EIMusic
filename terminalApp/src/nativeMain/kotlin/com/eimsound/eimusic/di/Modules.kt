@@ -4,6 +4,8 @@ import com.eimsound.eimusic.audio.NativeAudioEngine
 import com.eimsound.eimusic.audio.PlayerController
 import com.eimsound.eimusic.auth.AuthStore
 import com.eimsound.eimusic.config.AppConfig
+import com.eimsound.eimusic.db.DbPlaylistRepository
+import com.eimsound.eimusic.db.createEIMusicDatabase
 import com.eimsound.eimusic.factory.ShareLinkResolverFactory
 import com.eimsound.eimusic.factory.TrackRepositoryFactory
 import com.eimsound.eimusic.factory.TrackUriResolverFactory
@@ -41,6 +43,8 @@ fun systemModule() = module {
     single { NativeAudioEngine() }
     single<IMediaPlayerController> { PlayerController(get(), get<HttpClientProvider>().client) }
     single<IStorage> { NativeStorage() }
+    single { createEIMusicDatabase() }
+    single { DbPlaylistRepository(get()) }
     single<AppConfig> { get<IStorage>().get(AppConfig()) }
     single { HttpClientProvider("${get<AppConfig>().server.http}/auth/refresh", get()) }
     single<AuthApi> { AuthApiImpl(get<AppConfig>().server.http, get()) }

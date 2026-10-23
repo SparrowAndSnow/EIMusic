@@ -1,0 +1,64 @@
+CREATE TABLE playlist (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    source TEXT NOT NULL,
+    external_id TEXT,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+);
+
+CREATE UNIQUE INDEX playlist_source_external ON playlist(source, external_id);
+
+CREATE TABLE playlist_track (
+    playlist_id TEXT NOT NULL,
+    track_id TEXT NOT NULL,
+    position INTEGER NOT NULL,
+    added_at INTEGER NOT NULL,
+    PRIMARY KEY(playlist_id, track_id)
+);
+
+CREATE INDEX playlist_track_order ON playlist_track(playlist_id, position);
+
+createPlaylist:
+INSERT INTO playlist(id, name, source, external_id, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?);
+
+selectLocalPlaylists:
+SELECT * FROM playlist WHERE source = 'LOCAL' ORDER BY name COLLATE NOCASE;
+
+selectImportedPlaylists:
+SELECT * FROM playlist WHERE source != 'LOCAL' ORDER BY name COLLATE NOCASE;
+
+selectPlaylist:
+SELECT * FROM playlist WHERE id = ?;
+
+selectPlaylistByExternal:
+SELECT * FROM playlist WHERE source = ? AND external_id = ?;
+
+renamePlaylist:
+UPDATE playlist SET name = ?, updated_at = ? WHERE id = ?;
+
+deletePlaylist:
+DELETE FROM playlist WHERE id = ?;
+
+insertPlaylistTrack:
+INSERT OR REPLACE INTO playlist_track(playlist_id, track_id, position, added_at)
+VALUES (?, ?, ?, ?);
+
+deletePlaylistTrack:
+DELETE FROM playlist_track WHERE playlist_id = ? AND track_id = ?;
+
+deletePlaylistTracks:
+DELETE FROM playlist_track WHERE playlist_id = ?;
+
+selectPlaylistTracks:
+SELECT track.* FROM playlist_track
+JOIN track ON track.id = playlist_track.track_id
+WHERE playlist_track.playlist_id = ?
+ORDER BY playlist_track.position;
+
+maxPlaylistPosition:
+SELECT COALESCE(MAX(position), -1) FROM playlist_track WHERE playlist_id = ?;
+
+updatePlaylistTrackPosition:
+UPDATE playlist_track SET position = ? WHERE playlist_id = ? AND track_id = ?;

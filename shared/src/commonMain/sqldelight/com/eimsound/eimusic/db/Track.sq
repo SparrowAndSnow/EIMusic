@@ -1,0 +1,23 @@
+CREATE TABLE track (
+    id TEXT NOT NULL PRIMARY KEY,
+    source TEXT NOT NULL,
+    external_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    artist TEXT,
+    album TEXT,
+    duration INTEGER,
+    uri TEXT,
+    art_url TEXT
+);
+
+CREATE UNIQUE INDEX track_source_external ON track(source, external_id);
+
+upsertTrack:
+INSERT OR REPLACE INTO track(id, source, external_id, title, artist, album, duration, uri, art_url)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+selectTrack:
+SELECT * FROM track WHERE id = ?;
+
+selectAllTracks:
+SELECT * FROM track;

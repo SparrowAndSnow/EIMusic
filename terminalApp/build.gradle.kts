@@ -36,6 +36,7 @@ kotlin {
 
         nativeMain.dependencies {
             implementation(libs.ktor.client.curl)
+            implementation(libs.sqldelight.native.driver)
         }
 
         // Platform-specific MPRIS only on Linux

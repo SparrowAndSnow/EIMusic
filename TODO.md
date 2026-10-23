@@ -84,7 +84,15 @@
   - 怀疑：Mosaic 在 if/else 分支替换时布局/测量缓存未正确失效，控件复用了旧的测量结果；hover 触发重绘后重新测量。
   - 下一步：在 Mosaic 做最小复现（分支前后同位置同控件），或临时用 `key(...)` 强制重建验证。
 
-## 存储演进（以后）
+## 存储演进
+
+- [x] **SQLDelight 接入（基础）**
+  - `shared` 增加 `app.cash.sqldelight` 2.4.1，schema：track / playlist / playlist_track
+  - `DbPlaylistRepository`：本地歌单 CRUD、混合来源曲目、导入歌单只读/同步替换
+  - terminalApp native 使用 `NativeSqliteDriver`，写入 `defaultConfigDir()/eimusic.db`
+  - JVM 测试覆盖本地顺序/移动/删除、导入只读、混合来源
+- [ ] **接入 UI**：PlaylistViewModel/Screen 改用 DbPlaylistRepository；网易导入写库；旧 Settings.playlists 迁移
+- [ ] **会话/最近播放迁 DB**：session / recent / search_history 表，Settings 只留偏好
 
 - 当前：`Settings` JSON 存偏好、最近搜索、最近播放；队列只存在内存。
 - 目标：按领域拆分，避免单文件频繁整写：
