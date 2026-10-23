@@ -19,7 +19,7 @@ import com.jakewharton.mosaic.layout.padding
 import com.jakewharton.mosaic.layout.width
 import com.jakewharton.mosaic.modifier.Modifier
 import com.jakewharton.mosaic.ui.Alignment
-import com.jakewharton.mosaic.ui.Box
+import com.jakewharton.mosaic.ui.Arrangement
 import com.jakewharton.mosaic.ui.Color
 import com.jakewharton.mosaic.ui.Row
 import com.jakewharton.mosaic.ui.Spacer
@@ -57,21 +57,23 @@ fun PlayerControls(state: PlayerState) {
     val globalActions = LocalGlobalActions.current
     val controls = playControlData(state)
 
-    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-        Row {
-            ControlButton(globalActions.onTogglePlayMode) {
-                Text(controls.modeIcon, color = palette.modeFg)
-            }
-            Spacer(Modifier.width(3))
-            ControlButton(globalActions.onPlayPause) {
-                Text(controls.playIcon, color = palette.playBtnFg)
-            }
-            Spacer(Modifier.width(2))
-            ControlButton(globalActions.onToggleMute) {
-                Text(controls.volIcon, color = palette.textFg)
-                Spacer(Modifier.width(1))
-                Text(controls.volPercent, color = palette.textDimFg)
-            }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        ControlButton(globalActions.onTogglePlayMode) {
+            Text(controls.modeIcon, modifier = Modifier.width(3), color = palette.modeFg)
+        }
+        Spacer(Modifier.width(3))
+        ControlButton(globalActions.onPlayPause) {
+            Text(controls.playIcon, modifier = Modifier.width(1), color = palette.playBtnFg)
+        }
+        Spacer(Modifier.width(2))
+        ControlButton(globalActions.onToggleMute) {
+            Text(controls.volIcon, modifier = Modifier.width(1), color = palette.textFg)
+            Spacer(Modifier.width(1))
+            Text(controls.volPercent, modifier = Modifier.width(4), color = palette.textDimFg)
         }
     }
 }
@@ -87,7 +89,7 @@ private fun ControlButton(
         modifier = Modifier
             .clickable(onClick = onClick)
             .hoverable { hovered = it }
-            .background(if (hovered) palette.hoverBg else Color.Unspecified)
+            .then(if (hovered) Modifier.background(palette.hoverBg) else Modifier)
             .padding(horizontal = 1),
     ) {
         content()
