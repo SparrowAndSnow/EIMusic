@@ -20,7 +20,7 @@ import com.eimsound.eimusic.ui.screens.LoginDialog
 import com.eimsound.eimusic.ui.screens.MainScreen
 import com.eimsound.eimusic.ui.screens.PlaylistScreen
 import com.eimsound.eimusic.ui.screens.QueueScreen
-import com.eimsound.eimusic.ui.screens.SearchDialog
+import com.eimsound.eimusic.ui.screens.SearchPage
 import com.eimsound.eimusic.ui.screens.TogetherScreen
 import com.eimsound.eimusic.ui.theme.LocalSafeContentSize
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
@@ -97,6 +97,7 @@ fun App(
         "3 Local" to Route.LocalSongs,
         "4 Together" to Route.Together,
         "5 Queue" to Route.Queue,
+        "6 Search" to Route.Search(),
     )
     val activeTabRoute = baseRoute ?: currentRoute
 
@@ -116,7 +117,7 @@ fun App(
             onSeekBackward = { playerViewModel.seekRelative(-5000L) },
             onTogglePlayMode = { playerViewModel.togglePlayMode() },
             onToggleMute = { playerViewModel.toggleMute() },
-            onOpenSearch = { if (currentRoute !is Route.Search) navigate(Route.Search()) },
+            onOpenSearch = { backStack = listOf(Route.Search()) },
         )
     }
 
@@ -128,7 +129,7 @@ fun App(
                     playerState = playerState,
                     playerViewModel = playerViewModel,
                     onOpenHelp = { navigate(Route.Help) },
-                    onOpenSearch = { navigate(Route.Search()) },
+                    onOpenSearch = { backStack = listOf(Route.Search()) },
                     onOpenLogin = { navigate(Route.Login) },
                     onOpenLogs = { navigate(Route.LogViewer) },
                     onToggleTheme = {
@@ -140,7 +141,14 @@ fun App(
             }
 
             // 弹层路由只通过 OverlayHost 的 overlay 槽渲染，不作为 base 页面。
-            is Route.Help, is Route.Search, is Route.Login -> Unit
+            is Route.Help, is Route.Login -> Unit
+
+            is Route.Search -> SearchPage(
+                searchViewModel = searchViewModel,
+                playerViewModel = playerViewModel,
+                playlistViewModel = playlistViewModel,
+                onGoBack = { backStack = listOf(Route.Main) },
+            )
 
             is Route.LogViewer -> LogViewerScreen(
                 onGoBack = goBack,
@@ -177,12 +185,6 @@ fun App(
     fun OverlayRouteContent(route: Route) {
         when (route) {
             is Route.Help -> HelpDialog(onGoBack = goBack)
-            is Route.Search -> SearchDialog(
-                searchViewModel = searchViewModel,
-                playerViewModel = playerViewModel,
-                playlistViewModel = playlistViewModel,
-                onGoBack = goBack,
-            )
             is Route.Login -> LoginDialog(
                 authViewModel = authViewModel,
                 onGoBack = goBack,

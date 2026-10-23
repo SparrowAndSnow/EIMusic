@@ -2,7 +2,7 @@ package com.eimsound.eimusic.navigation
 
 sealed interface Route {
     /** 弹层路由：底层页面保留绘制，只有这层接收输入。 */
-    val isOverlay: Boolean get() = this is Search || this is Login || this is Help
+    val isOverlay: Boolean get() = this is Login || this is Help
 
     data object Main : Route
     data class Search(val initialQuery: String = "") : Route
