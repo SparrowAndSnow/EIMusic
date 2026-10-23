@@ -186,8 +186,7 @@ fun SearchPage(
                         withStyle(SpanStyle(color = palette.textDimFg)) { append("⏎ search") }
                         withStyle(SpanStyle(color = palette.textDimFg)) { append("  ⎋ cancel") }
                     } else {
-                        withStyle(SpanStyle(color = palette.highlightFg)) { append("▸ select") }
-                        withStyle(SpanStyle(color = palette.textDimFg)) { append("  ⏎ play") }
+                        withStyle(SpanStyle(color = palette.textDimFg)) { append("⏎ play") }
                         withStyle(SpanStyle(color = palette.textDimFg)) { append("  ⎋ back") }
                     }
                 },
