@@ -26,8 +26,6 @@ fun QueueScreen(
     val termWidth = safeArea.columns
     val visibleLines = (termHeight - 4).coerceAtLeast(1)
     var queueScroll by remember { mutableIntStateOf(0) }
-    // 只在移动/删除后强制列表按新位置重建选择；键盘移动不改 key。
-    var selectionEpoch by remember { mutableIntStateOf(0) }
     ScreenFrame(
         hint = queueStatusBarHint(),
         onKey = { event ->
@@ -38,21 +36,18 @@ fun QueueScreen(
                         if (queueScroll > 0 && queueScroll < playerState.queue.size) {
                             playerViewModel.moveTrack(queueScroll, queueScroll - 1)
                             queueScroll -= 1
-                            selectionEpoch++
                         }
                     },
                     moveDown = {
                         if (queueScroll >= 0 && queueScroll < playerState.queue.size - 1) {
                             playerViewModel.moveTrack(queueScroll, queueScroll + 1)
                             queueScroll += 1
-                            selectionEpoch++
                         }
                     },
                     removeTrack = {
                         if (!playerState.queue.isEmpty() && queueScroll < playerState.queue.size) {
                             playerViewModel.removeTrack(queueScroll)
                             queueScroll = (queueScroll - 1).coerceAtLeast(0)
-                            selectionEpoch++
                         }
                     },
                     clearQueue = { playerViewModel.clearQueue() },
@@ -71,8 +66,7 @@ fun QueueScreen(
                 visibleLines = visibleLines,
                 onPlayTrack = { track -> playerViewModel.playTrack(track) },
                 onSelectedChange = { queueScroll = it },
-                rememberSelectionKey = selectionEpoch,
-                initialSelectedIndex = queueScroll,
+                controlledSelectedIndex = queueScroll,
                 onConfirm = {
                     playerViewModel.playTrack(it)
                     onGoBack()

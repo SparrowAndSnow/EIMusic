@@ -50,24 +50,46 @@ fun <T> ListView(
     /** 列表内容变化时用于保留选择；默认随 items 重置。 */
     rememberSelectionKey: Any? = items,
     initialSelectedIndex: Int = 0,
+    /** 受控选择；非 null 时由调用方决定选中项（Queue 用）。 */
+    controlledSelectedIndex: Int? = null,
 ) {
-    var selectedIndex by remember(rememberSelectionKey) { mutableIntStateOf(initialSelectedIndex) }
+    var internalSelectedIndex by remember(rememberSelectionKey) { mutableIntStateOf(initialSelectedIndex) }
     val scroll = remember(items) { MomentumScrollState() }
+
+    fun select(index: Int) {
+        val clamped = index.coerceIn(0, items.lastIndex.coerceAtLeast(0))
+        internalSelectedIndex = clamped
+        scroll.jumpTo(clamped)
+        onSelectedChange(clamped)
+    }
+
+    val selectedIndex = controlledSelectedIndex
+        ?.coerceIn(0, items.lastIndex.coerceAtLeast(0))
+        ?: internalSelectedIndex
 
     LaunchedEffect(items.size) {
         if (items.isEmpty()) {
-            if (selectedIndex != 0) {
-                selectedIndex = 0
+            if (internalSelectedIndex != 0) {
+                internalSelectedIndex = 0
                 scroll.jumpTo(0)
                 onSelectedChange(0)
             }
-        } else {
-            val clamped = selectedIndex.coerceIn(0, items.lastIndex)
-            if (clamped != selectedIndex) {
-                selectedIndex = clamped
+        } else if (controlledSelectedIndex == null) {
+            val clamped = internalSelectedIndex.coerceIn(0, items.lastIndex)
+            if (clamped != internalSelectedIndex) {
+                internalSelectedIndex = clamped
                 scroll.jumpTo(clamped)
                 onSelectedChange(clamped)
             }
+        }
+    }
+
+    LaunchedEffect(controlledSelectedIndex, items.size) {
+        val controlled = controlledSelectedIndex ?: return@LaunchedEffect
+        if (items.isNotEmpty()) {
+            val clamped = controlled.coerceIn(0, items.lastIndex)
+            internalSelectedIndex = clamped
+            scroll.jumpTo(clamped)
         }
     }
     var hoveredIndex by remember { mutableIntStateOf(-1) }
@@ -97,8 +119,7 @@ fun <T> ListView(
                         scroll.advance(dt, items.lastIndex.toFloat())
                         val index = scroll.position.roundToInt().coerceIn(0, items.lastIndex)
                         if (index != selectedIndex) {
-                            selectedIndex = index
-                            onSelectedChange(index)
+                            select(index)
                         }
                         hoveredIndex = -1
                     }
@@ -116,11 +137,7 @@ fun <T> ListView(
                     dispatchListViewKey(
                         event,
                         selectedIndex,
-                        { index ->
-                            selectedIndex = index
-                            scroll.jumpTo(index)
-                            onSelectedChange(index)
-                        },
+                        { index -> select(index) },
                         items.lastIndex,
                     )
                 when (action) {
@@ -173,11 +190,7 @@ fun <T> ListView(
                         .clickable(
                             enabled = uiInput && enabled,
                             onDoubleClick = { onConfirm(item) },
-                            onClick = {
-                                selectedIndex = i
-                                scroll.jumpTo(i)
-                                onSelectedChange(i)
-                            },
+                            onClick = { select(i) },
                         )
                 ) {
                     render(item, i, isSelected)
