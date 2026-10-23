@@ -23,6 +23,8 @@ fun main() {
 
     val koinApp = initKoin()
     val koin = koinApp.koin
+    // 启动时打开 SQLite（schema/migration），避免首次查询才建文件。
+    koin.get<com.eimsound.eimusic.db.DbPlaylistRepository>()
 
     val playerViewModel = try {
         koin.get<PlayerViewModel>()

@@ -43,7 +43,7 @@ fun systemModule() = module {
     single { NativeAudioEngine() }
     single<IMediaPlayerController> { PlayerController(get(), get<HttpClientProvider>().client) }
     single<IStorage> { NativeStorage() }
-    single { createEIMusicDatabase() }
+    single(createdAtStart = true) { createEIMusicDatabase() }
     single { DbPlaylistRepository(get()) }
     single<AppConfig> { get<IStorage>().get(AppConfig()) }
     single { HttpClientProvider("${get<AppConfig>().server.http}/auth/refresh", get()) }

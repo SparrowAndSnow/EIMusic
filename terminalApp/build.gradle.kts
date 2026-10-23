@@ -57,6 +57,7 @@ kotlin {
                 linkerOpts.add("-lm")
                 linkerOpts.add("-ldl")
                 linkerOpts.add("-lpthread")
+                linkerOpts.add("-lsqlite3")
                 linkerOpts.add("-L/usr/lib")
                 linkerOpts.add("-lsystemd")
                 linkerOpts.add("--allow-shlib-undefined")
@@ -85,6 +86,7 @@ kotlin {
                 linkerOpts.add("-lanyascii")
                 linkerOpts.add("-lm")
                 linkerOpts.add("-lpthread")
+                linkerOpts.add("-lsqlite3")
             }
         }
         compilations["main"].cinterops {
