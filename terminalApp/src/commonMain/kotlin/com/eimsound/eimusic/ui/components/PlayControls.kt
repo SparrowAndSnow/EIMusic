@@ -62,9 +62,17 @@ fun PlayerControls(state: PlayerState) {
             ControlButton(globalActions.onTogglePlayMode) {
                 Text(controls.modeIcon, color = palette.modeFg)
             }
-            Spacer(Modifier.width(3))
+            Spacer(Modifier.width(2))
+            ControlButton(globalActions.onPrevious) {
+                Text(Icon.Previous.sym, color = palette.textFg)
+            }
+            Spacer(Modifier.width(1))
             ControlButton(globalActions.onPlayPause) {
                 Text(controls.playIcon, color = palette.playBtnFg)
+            }
+            Spacer(Modifier.width(1))
+            ControlButton(globalActions.onNext) {
+                Text(Icon.Next.sym, color = palette.textFg)
             }
             Spacer(Modifier.width(2))
             ControlButton(globalActions.onToggleMute) {

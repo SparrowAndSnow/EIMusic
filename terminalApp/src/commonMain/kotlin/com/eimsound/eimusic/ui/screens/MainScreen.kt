@@ -51,12 +51,16 @@ fun MainScreen(
             )
         },
     ) {
-        PlayerCenter(playerState, displayPos)
+        PlayerCenter(playerState, displayPos, onSeek = playerViewModel::seek)
     }
 }
 
 @Composable
-private fun PlayerCenter(playerState: PlayerState, displayPos: Long) {
+private fun PlayerCenter(
+    playerState: PlayerState,
+    displayPos: Long,
+    onSeek: (Long) -> Unit,
+) {
     val palette = LocalTuiColors.current
     val termWidth = LocalTerminalState.current.size.columns
     val termHeight = LocalTerminalState.current.size.rows
@@ -119,13 +123,12 @@ private fun PlayerCenter(playerState: PlayerState, displayPos: Long) {
 
                 // ── Progress bar ──
                 val barWidth = contentWidth.coerceIn(20, 50)
-                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    ProgressBar(
-                        current = displayPos,
-                        total = playerState.duration,
-                        width = barWidth,
-                    )
-                }
+                ProgressBar(
+                    current = displayPos,
+                    total = playerState.duration,
+                    width = barWidth,
+                    onSeek = onSeek,
+                )
 
                 if (playerState.isLoading) {
                     Text(

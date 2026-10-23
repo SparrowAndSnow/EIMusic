@@ -16,12 +16,12 @@
 
 - [x] **Header 与播放控制可点击**
   - HeaderBar / PlayerControls 从整行 AnnotatedString 改成 Row 分段
-  - 已支持：播放/暂停、模式、音量静音、队列、主题、登录、Together
-  - 每段 clickable + hover 高亮；上一首/下一首仍走键盘，未加进 Header
+  - 已支持：播放/暂停、上一首/下一首（Main 控件）、模式、音量静音、队列、主题、登录、Together
+  - 每段 clickable + hover 高亮；Header 未加 prev/next
   - 保持键盘快捷键不变
-- [ ] **进度条点击/拖动 seek**
-  - ProgressBar 按列映射时间；点击 seek，拖动持续 seek
-  - hover 显示目标时间；增加 buffered 进度
+- [~] **进度条点击/拖动 seek**（已实现，待真机播放验证）
+  - [x] ProgressBar 拆成 bar + 时间；bar 按列映射时间，Press/Drag 调用 seek
+  - [ ] hover 显示目标时间；buffered 进度
 - [ ] **加载 / 扫描动画**
   - `Loading...`、`Scanning...` 改为 spinner 或扫描计数
   - 长操作不再看起来像卡死

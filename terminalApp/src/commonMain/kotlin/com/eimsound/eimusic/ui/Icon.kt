@@ -8,9 +8,11 @@ package com.eimsound.eimusic.ui
  * placeholders; an ASCII fallback is tracked in TODO.md.
  */
 enum class Icon(val sym: String) {
+    Previous("\uF048"),
     Play("\uF04B"),
     Pause("\uF04C"),
     Stop("\uF04D"),
+    Next("\uF051"),
     Repeat("\uF01E"),
     Shuffle("\uF074"),
     VolumeOff("\uF026"),
