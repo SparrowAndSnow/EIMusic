@@ -4,14 +4,13 @@ import androidx.compose.runtime.*
 import com.eimsound.eimusic.keyboard.QueueKeyActions
 import com.eimsound.eimusic.keyboard.dispatchQueueKey
 import com.eimsound.eimusic.keyboard.queueStatusBarHint
-import com.eimsound.eimusic.music.MediaList
 import com.eimsound.eimusic.music.PlayerState
-import com.eimsound.eimusic.music.Track
 import com.eimsound.eimusic.music.TrackSource
-import com.eimsound.eimusic.ui.components.ListView
+import com.eimsound.eimusic.ui.components.PlaylistPicker
 import com.eimsound.eimusic.ui.components.ScreenFrame
 import com.eimsound.eimusic.ui.components.TrackTable
 import com.eimsound.eimusic.ui.components.rememberListSelectionState
+import com.eimsound.eimusic.ui.components.rememberPlaylistPickerState
 import com.eimsound.eimusic.ui.theme.LocalSafeContentSize
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
 import com.eimsound.eimusic.viewmodel.PlaylistViewModel
@@ -35,22 +34,20 @@ fun QueueScreen(
     val selection = rememberListSelectionState()
     val playlistState by playlistViewModel.state.collectAsState()
     val localPlaylists = playlistState.playlists.filter { it.id.source == TrackSource.LOCAL }
-    var pickerTrack by remember { mutableStateOf<Track?>(null) }
-    val pickerSelection = rememberListSelectionState()
+    val picker = rememberPlaylistPickerState()
 
     ScreenFrame(
         hint = queueStatusBarHint(),
         onKey = { event ->
-            val picking = pickerTrack
-            if (picking != null) {
+            if (picker.isOpen) {
                 if (event.key == "Escape") {
-                    pickerTrack = null
+                    picker.close()
                     true
                 } else {
                     false // picker ListView handles j/k/Enter
                 }
             } else if (event.key == "l" && !event.ctrl && !event.alt) {
-                pickerTrack = playerState.queue.getOrNull(selection.index)
+                playerState.queue.getOrNull(selection.index)?.let(picker::open)
                 true
             } else {
                 dispatchQueueKey(
@@ -90,26 +87,14 @@ fun QueueScreen(
         Column {
             Text(" Queue", color = palette.titleFg)
 
-            val track = pickerTrack
-            if (track != null) {
-                Text("  Add to local playlist", color = palette.titleFg)
-                ListView(
-                    items = localPlaylists,
+            if (picker.isOpen) {
+                PlaylistPicker(
+                    state = picker,
+                    playlists = localPlaylists,
                     visibleLines = (visibleLines - 2).coerceAtLeast(1),
-                    emptyMessage = "No local playlists. Press n on Playlists to create one.",
-                    selection = pickerSelection,
-                    onConfirm = { playlist ->
-                        playlistViewModel.addTrackToPlaylist(playlist.id.id, track)
-                        pickerTrack = null
-                    },
-                    render = { playlist, _, selected ->
-                        val marker = if (selected) "▸" else " "
-                        Text(
-                            " $marker " + playlist.displayName(),
-                            color = if (selected) palette.highlightFg else palette.textDimFg,
-                        )
-                    },
-                )
+                ) { playlist, track ->
+                    playlistViewModel.addTrackToPlaylist(playlist.id.id, track)
+                }
             } else {
                 TrackTable(
                     tracks = playerState.queue,
@@ -128,7 +113,3 @@ fun QueueScreen(
     }
 }
 
-private fun MediaList.displayName(): String = when (this) {
-    is MediaList.PlaylistMediaList -> playlist.name
-    is MediaList.AlbumMediaList -> album.name
-}

@@ -58,6 +58,11 @@ enum class MediaListType {
     PLAYLIST, ALBUM
 }
 
+fun MediaList.displayName(): String = when (this) {
+    is MediaList.PlaylistMediaList -> playlist.name
+    is MediaList.AlbumMediaList -> album.name
+}
+
 data class UniversalMediaList(
     val id: MediaListId,
     val tracks: List<Track> = emptyList(),
