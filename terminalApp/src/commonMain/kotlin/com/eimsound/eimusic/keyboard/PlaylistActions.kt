@@ -30,26 +30,31 @@ fun mapPlaylistKey(key: String): PlaylistAction? = playlistKeyMap[key]
 
 // ── Dispatch ──
 
+/** Playlists 页面按键回调集合。 */
+data class PlaylistKeyActions(
+    val setShowTrackList: (Boolean) -> Unit,
+    val setFocus: (PlaylistFocus) -> Unit,
+    val goBack: () -> Unit,
+    val addPlaylist: () -> Unit,
+    val removePlaylist: () -> Unit,
+    val selectPlaylist: () -> Unit,
+)
+
 fun dispatchPlaylistKey(
     event: KeyEvent,
     focus: PlaylistFocus,
     showTrackList: Boolean,
-    onSetShowTrackList: (Boolean) -> Unit,
-    onSetFocus: (PlaylistFocus) -> Unit,
-    onGoBack: () -> Unit,
-    onAddPlaylist: () -> Unit,
-    onRemovePlaylist: () -> Unit,
-    onSelectPlaylist: () -> Unit,
+    actions: PlaylistKeyActions,
 ): Boolean = when (focus) {
     PlaylistFocus.Input -> false // InputField handles its own keys
 
     PlaylistFocus.List -> {
         val screenAction = mapPlaylistKey(event.key)
         when (screenAction) {
-            PlaylistAction.AddPlaylist -> { onSetFocus(PlaylistFocus.Input); true }
-            PlaylistAction.DeletePlaylist -> { onRemovePlaylist(); true }
-            PlaylistAction.ToggleTrackList -> { onSelectPlaylist(); onSetShowTrackList(true); onSetFocus(PlaylistFocus.TrackList); true }
-            PlaylistAction.GoBack -> { onGoBack(); true }
+            PlaylistAction.AddPlaylist -> { actions.setFocus(PlaylistFocus.Input); true }
+            PlaylistAction.DeletePlaylist -> { actions.removePlaylist(); true }
+            PlaylistAction.ToggleTrackList -> { actions.selectPlaylist(); actions.setShowTrackList(true); actions.setFocus(PlaylistFocus.TrackList); true }
+            PlaylistAction.GoBack -> { actions.goBack(); true }
             else -> false // ListView handles its own keys via onConfirm
         }
     }
@@ -57,7 +62,7 @@ fun dispatchPlaylistKey(
     PlaylistFocus.TrackList -> {
         val screenAction = mapPlaylistKey(event.key)
         when (screenAction) {
-            PlaylistAction.GoBack -> { onSetShowTrackList(false); onSetFocus(PlaylistFocus.List); true }
+            PlaylistAction.GoBack -> { actions.setShowTrackList(false); actions.setFocus(PlaylistFocus.List); true }
             else -> false // TrackTable handles its own keys
         }
     }

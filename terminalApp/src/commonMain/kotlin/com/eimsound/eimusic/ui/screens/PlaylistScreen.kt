@@ -2,6 +2,7 @@ package com.eimsound.eimusic.ui.screens
 
 import androidx.compose.runtime.*
 import com.eimsound.eimusic.keyboard.PlaylistFocus
+import com.eimsound.eimusic.keyboard.PlaylistKeyActions
 import com.eimsound.eimusic.keyboard.dispatchPlaylistKey
 import com.eimsound.eimusic.keyboard.playlistStatusBarHint
 import com.eimsound.eimusic.music.MediaList
@@ -43,27 +44,29 @@ fun PlaylistScreen(
         hint = playlistStatusBarHint(focus),
         onKey = { event ->
             dispatchPlaylistKey(
-            event = event,
-            focus = focus,
-            showTrackList = showTrackList,
-            onSetShowTrackList = { showTrackList = it },
-            onSetFocus = { focus = it },
-            onGoBack = onGoBack,
-            onAddPlaylist = {
-                if (state.addUrlInput.isNotBlank()) {
-                    playlistViewModel.addPlaylist(state.addUrlInput.trim())
-                    playlistViewModel.updateAddUrl("")
-                }
-            },
-            onRemovePlaylist = {
-                state.playlists.getOrNull(playlistIndex)?.let { playlistViewModel.removePlaylist(it) }
-                playlistIndex = (playlistIndex - 1).coerceAtLeast(0)
-            },
-                onSelectPlaylist = {
-                    state.playlists.getOrNull(playlistIndex)?.let { p ->
-                        playlistViewModel.selectPlaylist(p)
-                    }
-                },
+                event = event,
+                focus = focus,
+                showTrackList = showTrackList,
+                actions = PlaylistKeyActions(
+                    setShowTrackList = { showTrackList = it },
+                    setFocus = { focus = it },
+                    goBack = onGoBack,
+                    addPlaylist = {
+                        if (state.addUrlInput.isNotBlank()) {
+                            playlistViewModel.addPlaylist(state.addUrlInput.trim())
+                            playlistViewModel.updateAddUrl("")
+                        }
+                    },
+                    removePlaylist = {
+                        state.playlists.getOrNull(playlistIndex)?.let { playlistViewModel.removePlaylist(it) }
+                        playlistIndex = (playlistIndex - 1).coerceAtLeast(0)
+                    },
+                    selectPlaylist = {
+                        state.playlists.getOrNull(playlistIndex)?.let { p ->
+                            playlistViewModel.selectPlaylist(p)
+                        }
+                    },
+                ),
             )
         },
     ) {

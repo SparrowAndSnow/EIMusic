@@ -32,26 +32,31 @@ fun mapLocalSongsKey(key: String): LocalSongsAction? = localSongsKeyMap[key]
 
 // ── Dispatch ──
 
+/** Local 页面按键回调集合，避免 dispatch 函数参数继续膨胀。 */
+data class LocalSongsActions(
+    val setShowPaths: (Boolean) -> Unit,
+    val setFocus: (LocalFocus) -> Unit,
+    val goBack: () -> Unit,
+    val addPath: () -> Unit,
+    val removePath: () -> Unit,
+    val refresh: () -> Unit,
+)
+
 fun dispatchLocalSongsKey(
     event: KeyEvent,
     focus: LocalFocus,
     showPaths: Boolean,
-    onSetShowPaths: (Boolean) -> Unit,
-    onSetFocus: (LocalFocus) -> Unit,
-    onGoBack: () -> Unit,
-    onAddPath: () -> Unit,
-    onRemovePath: () -> Unit,
-    onRefresh: () -> Unit,
+    actions: LocalSongsActions,
 ): Boolean = when (focus) {
     LocalFocus.Input -> false // InputField handles its own keys
 
     LocalFocus.Paths -> {
         val screenAction = mapLocalSongsKey(event.key)
         when (screenAction) {
-            LocalSongsAction.DeletePath -> { onRemovePath(); true }
-            LocalSongsAction.AddPath -> { onSetFocus(LocalFocus.Input); true }
-            LocalSongsAction.TogglePaths -> { onSetShowPaths(false); onSetFocus(LocalFocus.Songs); true }
-            LocalSongsAction.GoBack -> { onSetShowPaths(false); onSetFocus(LocalFocus.Songs); true }
+            LocalSongsAction.DeletePath -> { actions.removePath(); true }
+            LocalSongsAction.AddPath -> { actions.setFocus(LocalFocus.Input); true }
+            LocalSongsAction.TogglePaths -> { actions.setShowPaths(false); actions.setFocus(LocalFocus.Songs); true }
+            LocalSongsAction.GoBack -> { actions.setShowPaths(false); actions.setFocus(LocalFocus.Songs); true }
             else -> false // ListView handles its own keys
         }
     }
@@ -59,10 +64,10 @@ fun dispatchLocalSongsKey(
     LocalFocus.Songs -> {
         val screenAction = mapLocalSongsKey(event.key)
         when (screenAction) {
-            LocalSongsAction.Refresh -> { onRefresh(); true }
-            LocalSongsAction.TogglePaths -> { onSetShowPaths(true); onSetFocus(LocalFocus.Paths); true }
-            LocalSongsAction.AddPath -> { onSetShowPaths(true); onSetFocus(LocalFocus.Input); true }
-            LocalSongsAction.GoBack -> { onGoBack(); true }
+            LocalSongsAction.Refresh -> { actions.refresh(); true }
+            LocalSongsAction.TogglePaths -> { actions.setShowPaths(true); actions.setFocus(LocalFocus.Paths); true }
+            LocalSongsAction.AddPath -> { actions.setShowPaths(true); actions.setFocus(LocalFocus.Input); true }
+            LocalSongsAction.GoBack -> { actions.goBack(); true }
             else -> false // TrackTable handles its own keys
         }
     }

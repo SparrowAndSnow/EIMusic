@@ -2,6 +2,7 @@ package com.eimsound.eimusic.ui.screens
 
 import androidx.compose.runtime.*
 import com.eimsound.eimusic.keyboard.LocalFocus
+import com.eimsound.eimusic.keyboard.LocalSongsActions
 import com.eimsound.eimusic.keyboard.dispatchLocalSongsKey
 import com.eimsound.eimusic.keyboard.localSongsStatusBarHint
 import com.jakewharton.mosaic.layout.border
@@ -41,23 +42,25 @@ fun LocalScreen(
         hint = localSongsStatusBarHint(focus),
         onKey = { event ->
             dispatchLocalSongsKey(
-            event = event,
-            focus = focus,
-            showPaths = showPaths,
-            onSetShowPaths = { showPaths = it },
-            onSetFocus = { focus = it },
-            onGoBack = onGoBack,
-            onAddPath = {
-                if (state.pathInput.isNotBlank()) {
-                    localViewModel.addPath(state.pathInput.trim())
-                    localViewModel.updatePathInput("")
-                }
-            },
-            onRemovePath = {
-                state.localPaths.toList().getOrNull(pathIndex)?.let { localViewModel.removePath(it) }
-                pathIndex = (pathIndex - 1).coerceAtLeast(0)
-            },
-                onRefresh = { localViewModel.refreshTracks() },
+                event = event,
+                focus = focus,
+                showPaths = showPaths,
+                actions = LocalSongsActions(
+                    setShowPaths = { showPaths = it },
+                    setFocus = { focus = it },
+                    goBack = onGoBack,
+                    addPath = {
+                        if (state.pathInput.isNotBlank()) {
+                            localViewModel.addPath(state.pathInput.trim())
+                            localViewModel.updatePathInput("")
+                        }
+                    },
+                    removePath = {
+                        state.localPaths.toList().getOrNull(pathIndex)?.let { localViewModel.removePath(it) }
+                        pathIndex = (pathIndex - 1).coerceAtLeast(0)
+                    },
+                    refresh = { localViewModel.refreshTracks() },
+                ),
             )
         },
     ) {
