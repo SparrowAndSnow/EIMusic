@@ -105,11 +105,16 @@ class PlaylistViewModel(
 
     fun createLocalPlaylist(name: String) {
         scope.launch {
-            if (name.isNotBlank()) {
-                db.createLocal(name.trim())
-                reloadFromDb("create")
-            }
+            if (name.isBlank()) return@launch
+            runCatching { db.createLocal(name.trim()) }
+                .onSuccess { reloadFromDb("create") }
+                .onFailure(::reportError)
         }
+    }
+
+    private fun reportError(error: Throwable) {
+        com.eimsound.eimusic.util.TuiLogger.log("Playlist error: ${error::class.simpleName}: ${error.message}")
+        _state.update { it.copy(error = error.message ?: error::class.simpleName ?: "unknown error") }
     }
 
     private suspend fun fetchMediaList(url: String): MediaList? {
@@ -143,10 +148,13 @@ class PlaylistViewModel(
 
     fun addTrackToPlaylist(playlistId: String, track: Track) {
         scope.launch {
-            db.addTrack(playlistId, track.toDbTrack())
-            if (_state.value.selectedPlaylist?.id?.id == playlistId) {
-                reloadSelectedTracks()
-            }
+            runCatching { db.addTrack(playlistId, track.toDbTrack()) }
+                .onSuccess {
+                    if (_state.value.selectedPlaylist?.id?.id == playlistId) {
+                        reloadSelectedTracks()
+                    }
+                }
+                .onFailure(::reportError)
         }
     }
 

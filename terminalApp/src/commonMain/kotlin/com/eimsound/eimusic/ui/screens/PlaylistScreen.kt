@@ -130,6 +130,9 @@ fun PlaylistScreen(
                     else -> "My Playlists"
                 }
                 Text(" $title", color = palette.titleFg)
+                state.error?.let { error ->
+                    Text("  Error: $error", color = palette.errorFg)
+                }
 
                 if (focus == PlaylistFocus.TrackList) {
                     TrackTable(
