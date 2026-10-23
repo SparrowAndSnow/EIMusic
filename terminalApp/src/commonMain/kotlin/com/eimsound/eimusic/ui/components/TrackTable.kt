@@ -5,8 +5,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.eimsound.eimusic.keyboard.TrackTableBindingAction
 import com.eimsound.eimusic.keyboard.TrackTableScreenAction
 import com.eimsound.eimusic.keyboard.dispatchTrackTableKey
+import com.eimsound.eimusic.keyboard.mapTrackTableKey
 import com.eimsound.eimusic.music.Track
 import com.eimsound.eimusic.music.TrackId
 import com.eimsound.eimusic.ui.LocalUiInputEnabled
@@ -57,7 +59,10 @@ fun TrackTable(
     initialSelectedIndex: Int = 0,
     controlledSelectedIndex: Int? = null,
 ) {
-    var selectedIndex by remember(tracks) { mutableIntStateOf(0) }
+    var selectedIndex by remember { mutableIntStateOf(initialSelectedIndex) }
+    val effectiveSelectedIndex = controlledSelectedIndex
+        ?.coerceIn(0, tracks.lastIndex.coerceAtLeast(0))
+        ?: selectedIndex
     val palette = LocalTuiColors.current
     val numWidth = 4
     val nameWidth = (termWidth * 0.40).toInt().coerceIn(15, 40)
@@ -67,13 +72,16 @@ fun TrackTable(
     val uiInput = LocalUiInputEnabled.current
     Box(Modifier.onKeyEvent { event ->
         if (!enabled || !uiInput) return@onKeyEvent false
-        val action = dispatchTrackTableKey(event, selectedIndex, { selectedIndex = it; onSelectedChange(it) }, tracks.lastIndex)
-        when (action) {
-            TrackTableScreenAction.PlayTrack -> { tracks.getOrNull(selectedIndex)?.let(onPlayTrack); true }
-            TrackTableScreenAction.PlayAll -> { onPlayAll(tracks); true }
-            TrackTableScreenAction.AddNext -> { tracks.getOrNull(selectedIndex)?.let(onAddNext); true }
-            TrackTableScreenAction.AddLast -> { tracks.getOrNull(selectedIndex)?.let(onAddLast); true }
-            null -> false
+        // j/k/Enter 交给 ListView（子节点先处理）；这里只处理表格专有动作。
+        when (mapTrackTableKey(event.key)) {
+            TrackTableBindingAction.ScrollDown,
+            TrackTableBindingAction.ScrollUp,
+            TrackTableBindingAction.PlayTrack,
+            null,
+            -> false
+            TrackTableBindingAction.PlayAll -> { onPlayAll(tracks); true }
+            TrackTableBindingAction.AddNext -> { tracks.getOrNull(effectiveSelectedIndex)?.let(onAddNext); true }
+            TrackTableBindingAction.AddLast -> { tracks.getOrNull(effectiveSelectedIndex)?.let(onAddLast); true }
         }
     }) {
         if (tracks.isEmpty()) {
@@ -116,7 +124,10 @@ fun TrackTable(
                 emptyMessage = emptyMessage,
                 showScrollIndicator = showScrollIndicator,
                 onConfirm = onConfirm,
-                onSelectedChange = onSelectedChange,
+                onSelectedChange = { index ->
+                    selectedIndex = index
+                    onSelectedChange(index)
+                },
                 rememberSelectionKey = rememberSelectionKey,
                 initialSelectedIndex = initialSelectedIndex,
                 controlledSelectedIndex = controlledSelectedIndex,

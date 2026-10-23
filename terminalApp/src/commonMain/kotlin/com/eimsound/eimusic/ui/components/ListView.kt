@@ -63,9 +63,9 @@ fun <T> ListView(
         onSelectedChange(clamped)
     }
 
-    val selectedIndex = controlledSelectedIndex
-        ?.coerceIn(0, items.lastIndex.coerceAtLeast(0))
-        ?: internalSelectedIndex
+    // 键盘事件可能在同一帧内连续到达，选中项必须以内部状态为准即时推进；
+    // controlledSelectedIndex 只用于外部（移动/删除）同步。
+    val selectedIndex = internalSelectedIndex.coerceIn(0, items.lastIndex.coerceAtLeast(0))
 
     LaunchedEffect(items.size) {
         if (items.isEmpty()) {
@@ -88,8 +88,10 @@ fun <T> ListView(
         val controlled = controlledSelectedIndex ?: return@LaunchedEffect
         if (items.isNotEmpty()) {
             val clamped = controlled.coerceIn(0, items.lastIndex)
-            internalSelectedIndex = clamped
-            scroll.jumpTo(clamped)
+            if (clamped != internalSelectedIndex) {
+                internalSelectedIndex = clamped
+                scroll.jumpTo(clamped)
+            }
         }
     }
     var hoveredIndex by remember { mutableIntStateOf(-1) }
@@ -118,7 +120,7 @@ fun <T> ListView(
                         val dt = (now - lastNanos) / 1_000_000_000.0.toFloat()
                         scroll.advance(dt, items.lastIndex.toFloat())
                         val index = scroll.position.roundToInt().coerceIn(0, items.lastIndex)
-                        if (index != selectedIndex) {
+                        if (index != internalSelectedIndex) {
                             select(index)
                         }
                         hoveredIndex = -1
@@ -136,13 +138,13 @@ fun <T> ListView(
                 val action =
                     dispatchListViewKey(
                         event,
-                        selectedIndex,
+                        internalSelectedIndex,
                         { index -> select(index) },
                         items.lastIndex,
                     )
                 when (action) {
                     ListViewScreenAction.Confirm -> {
-                        items.getOrNull(selectedIndex)?.let(onConfirm); true
+                        items.getOrNull(internalSelectedIndex)?.let(onConfirm); true
                     }
                     null -> false
                 }
