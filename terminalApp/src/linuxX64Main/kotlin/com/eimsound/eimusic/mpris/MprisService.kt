@@ -108,7 +108,7 @@ class MprisService(private val controller: IMediaPlayerController) : MprisManage
         if (changed.isNotEmpty()) dbusObj.emitPropertiesChangedSignal(IFACE_PLAYER, changed)
         if (kotlin.math.abs(state.position - prev.position) > 2000L) {
             dbusObj.emitSignal(IFACE_PLAYER, SignalName("Seeked")) {
-                call { positionUs() }
+                call(positionUs())
             }
         }
     }
