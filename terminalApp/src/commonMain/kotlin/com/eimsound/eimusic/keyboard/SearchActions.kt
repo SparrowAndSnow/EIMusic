@@ -4,7 +4,7 @@ import com.jakewharton.mosaic.layout.KeyEvent
 
 // ── Screen focus ──
 
-enum class SearchFocus { Input, Results }
+enum class SearchFocus { Input, History, Results }
 
 // ── Screen-specific actions ──
 
@@ -29,7 +29,7 @@ fun dispatchSearchKey(
     focus: SearchFocus,
     onSwitchToInput: () -> Unit = {},
 ): Boolean = when (focus) {
-    SearchFocus.Input -> false
+    SearchFocus.Input, SearchFocus.History -> false
     SearchFocus.Results -> {
         when (mapSearchKey(event.key)) {
             SearchAction.SwitchToInput -> { onSwitchToInput(); true }
@@ -39,6 +39,7 @@ fun dispatchSearchKey(
 }
 
 fun searchStatusBarHint(focus: SearchFocus): String = when (focus) {
-    SearchFocus.Input -> "Enter:Search  Esc:Cancel"
+    SearchFocus.Input -> "Enter:Search  ↓:History  Esc:Cancel"
+    SearchFocus.History -> "↑/↓:Select  Enter:Search  Esc:Back"
     SearchFocus.Results -> "j/k:Scroll  Enter:Play  l:Add  Esc:Back"
 }

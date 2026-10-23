@@ -22,11 +22,15 @@ import com.eimsound.eimusic.viewmodel.SearchViewModel
 import com.jakewharton.mosaic.LocalTerminalState
 import com.jakewharton.mosaic.layout.clickable
 import com.jakewharton.mosaic.layout.fillMaxSize
+import com.jakewharton.mosaic.layout.onPreviewKeyEvent
 import com.jakewharton.mosaic.layout.padding
+import com.jakewharton.mosaic.layout.width
 import com.jakewharton.mosaic.modifier.Modifier
 import com.jakewharton.mosaic.text.SpanStyle
 import com.jakewharton.mosaic.text.buildAnnotatedString
 import com.jakewharton.mosaic.text.withStyle
+import com.jakewharton.mosaic.ui.Alignment
+import com.jakewharton.mosaic.ui.Box
 import com.jakewharton.mosaic.ui.Column
 import com.jakewharton.mosaic.ui.Text
 
@@ -40,17 +44,31 @@ fun SearchPage(
     val searchState by searchViewModel.state.bridgeToMutable()
     var focus by remember { mutableStateOf(SearchFocus.Input) }
     val resultSelection = rememberListSelectionState()
+    val historySelection = rememberListSelectionState()
     val picker = rememberPlaylistPickerState()
     val playlistState by playlistViewModel.state.collectAsState()
     val localPlaylists = playlistState.playlists.filter { it.id.source == TrackSource.LOCAL }
     val palette = LocalTuiColors.current
+    val termWidth = LocalTerminalState.current.size.columns
     val termHeight = LocalTerminalState.current.size.rows
-    val visibleLines = (termHeight - 10).coerceIn(3, 20)
+    val visibleLines = (termHeight - 12).coerceIn(3, 18)
+    val columnWidth = (termWidth * 0.7f).toInt().coerceIn(30, termWidth - 4)
+
+    LaunchedEffect(searchState.query) {
+        if (searchState.query.isNotBlank() && focus == SearchFocus.History) focus = SearchFocus.Input
+    }
 
     ScreenFrame(
         hint = searchStatusBarHint(focus),
         onKey = { event ->
-            if (picker.isOpen) {
+            if (focus == SearchFocus.History) {
+                if (event.key == "Escape") {
+                    focus = SearchFocus.Input
+                    true
+                } else {
+                    false // history ListView handles arrows/Enter
+                }
+            } else if (picker.isOpen) {
                 if (event.key == "Escape") {
                     picker.close()
                     true
@@ -69,11 +87,28 @@ fun SearchPage(
             }
         },
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(2),
-        ) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Column(
+                modifier = Modifier
+                    .width(columnWidth)
+                    .onPreviewKeyEvent { event ->
+                        if (
+                            focus == SearchFocus.Input &&
+                            searchState.query.isBlank() &&
+                            searchState.recentSearches.isNotEmpty() &&
+                            (event.key == "ArrowDown" || event.key == "ArrowUp")
+                        ) {
+                            focus = SearchFocus.History
+                            historySelection.jumpTo(
+                                if (event.key == "ArrowDown") 0 else searchState.recentSearches.lastIndex,
+                            )
+                            true
+                        } else {
+                            false
+                        }
+                    }
+                    .padding(2),
+            ) {
             Text(" Search", color = palette.titleFg)
             InputField(
                 value = searchState.query,
@@ -95,18 +130,24 @@ fun SearchPage(
                 },
             )
             if (searchState.query.isBlank() && searchState.recentSearches.isNotEmpty()) {
-                Text("  Recent", color = palette.titleFg)
-                searchState.recentSearches.take(6).forEach { recent ->
-                    Text(
-                        "  $recent",
-                        modifier = Modifier.clickable {
-                            searchViewModel.updateQuery(recent)
-                            searchViewModel.submitSearch()
-                            focus = SearchFocus.Results
-                        },
-                        color = palette.textDimFg,
-                    )
-                }
+                ListView(
+                    items = searchState.recentSearches.take(6),
+                    visibleLines = (visibleLines - 2).coerceAtLeast(1),
+                    emptyMessage = "",
+                    enabled = focus == SearchFocus.History,
+                    selection = historySelection,
+                    onConfirm = { recent ->
+                        searchViewModel.updateQuery(recent)
+                        searchViewModel.submitSearch()
+                        focus = SearchFocus.Results
+                    },
+                    render = { recent, _, selected ->
+                        Text(
+                            (if (selected) " ▸ " else "   ") + recent,
+                            color = if (selected) palette.highlightFg else palette.textDimFg,
+                        )
+                    },
+                )
                 Text(" ", color = palette.textFg)
             }
             Text(
@@ -177,5 +218,6 @@ fun SearchPage(
                 )
             }
         }
+    }
     }
 }
