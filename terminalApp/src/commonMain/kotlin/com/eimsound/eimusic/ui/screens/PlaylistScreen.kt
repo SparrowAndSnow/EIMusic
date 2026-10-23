@@ -6,6 +6,7 @@ import com.eimsound.eimusic.keyboard.PlaylistKeyActions
 import com.eimsound.eimusic.keyboard.dispatchPlaylistKey
 import com.eimsound.eimusic.keyboard.playlistStatusBarHint
 import com.eimsound.eimusic.music.MediaList
+import com.eimsound.eimusic.music.displayName
 import com.eimsound.eimusic.ui.components.InputField
 import com.eimsound.eimusic.ui.components.ListView
 import com.eimsound.eimusic.ui.components.rememberListSelectionState
@@ -42,6 +43,17 @@ fun PlaylistScreen(
     var showTrackList by remember { mutableStateOf(false) }
     var creatingLocal by remember { mutableStateOf(false) }
 
+    val startLocal = {
+        creatingLocal = true
+        playlistViewModel.updateAddUrl("")
+        focus = PlaylistFocus.Input
+    }
+    val startImport = {
+        creatingLocal = false
+        playlistViewModel.updateAddUrl("")
+        focus = PlaylistFocus.Input
+    }
+
     ScreenFrame(
         hint = playlistStatusBarHint(focus),
         onKey = { event ->
@@ -53,16 +65,8 @@ fun PlaylistScreen(
                     setShowTrackList = { showTrackList = it },
                     setFocus = { focus = it },
                     goBack = onGoBack,
-                    beginImport = {
-                        creatingLocal = false
-                        playlistViewModel.updateAddUrl("")
-                        focus = PlaylistFocus.Input
-                    },
-                    beginLocal = {
-                        creatingLocal = true
-                        playlistViewModel.updateAddUrl("")
-                        focus = PlaylistFocus.Input
-                    },
+                    beginImport = startImport,
+                    beginLocal = startLocal,
                     removePlaylist = {
                         state.playlists.getOrNull(playlistIndex)?.let { playlistViewModel.removePlaylist(it) }
                         playlistIndex = (playlistIndex - 1).coerceAtLeast(0)
@@ -135,10 +139,26 @@ fun PlaylistScreen(
             else -> Column {
                 // Title bar
                 val title = when (focus) {
-                    PlaylistFocus.TrackList -> "Playlist Tracks"
+                    PlaylistFocus.TrackList -> (state.selectedPlaylist?.displayName() ?: "Playlist") + " · tracks"
                     else -> "My Playlists"
                 }
                 Text(" $title", color = palette.titleFg)
+                if (focus != PlaylistFocus.TrackList) {
+                    Row(Modifier.fillMaxWidth()) {
+                        Spacer(Modifier.width(2))
+                        Text(
+                            "+ New local",
+                            modifier = Modifier.clickable(onClick = startLocal),
+                            color = palette.highlightFg,
+                        )
+                        Spacer(Modifier.width(3))
+                        Text(
+                            "+ Import URL",
+                            modifier = Modifier.clickable(onClick = startImport),
+                            color = palette.highlightFg,
+                        )
+                    }
+                }
                 state.error?.let { error ->
                     Text("  Error: $error", color = palette.errorFg)
                 }
@@ -233,7 +253,7 @@ private fun PlaylistListView(
     if (playlists.isEmpty() && !isLoading) {
         Spacer(Modifier.height(2))
         Text(" No playlists saved.", color = palette.textDimFg)
-        Text(" Press 'a' to add a playlist URL.", color = palette.textDimFg)
+        Text(" Press 'a' to import, 'n' or + New local to create.", color = palette.textDimFg)
         return
     }
 
@@ -251,7 +271,7 @@ private fun PlaylistListView(
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        Text("   Tracks", color = palette.textDimFg)
+        Text("  Tracks", color = palette.textDimFg)
     }
 
     ListView(
@@ -261,10 +281,7 @@ private fun PlaylistListView(
         onSelectedChange = onSelectedChange,
         onConfirm = onConfirm,
         render = { playlist, i, isSelected ->
-            val name = when (playlist) {
-                is MediaList.PlaylistMediaList -> playlist.playlist.name
-                is MediaList.AlbumMediaList -> playlist.album.name
-            }
+            val name = playlist.displayName()
             val trackCount = when (playlist) {
                 is MediaList.PlaylistMediaList -> "${playlist.playlist.tracks.size}"
                 is MediaList.AlbumMediaList -> "${playlist.album.tracks.size}"
