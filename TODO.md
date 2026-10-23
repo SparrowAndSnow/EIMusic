@@ -80,6 +80,15 @@
 - [ ] **安装/打包**
   - Linux release 二进制安装脚本、README 使用说明
 
+## 已知问题 / 待查
+
+- [ ] **主页 PlayerControls 在空状态→播放切换后尺寸错误（kitty）**
+  - 现象：Main 从空状态切到播放状态后，播放/音量控件看起来变小；鼠标悬停一次后恢复。仅在 kitty 复现，alacritty 正常。
+  - 已排除：不是图标字形（同一套 Icon 在 Header 正常）；hover 前后控件 cell 内容完全一致。
+  - 规避：去掉 `PlayerControls` 所在的 if/else 空状态分支，让控件常驻/不参与分支切换后正常。
+  - 怀疑：Mosaic 在 if/else 分支替换时布局/测量缓存未正确失效，控件复用了旧的测量结果；hover 触发重绘后重新测量。
+  - 下一步：在 Mosaic 做最小复现（分支前后同位置同控件），或临时用 `key(...)` 强制重建验证。
+
 ## 暂不做
 
 - backdrop dim/invert（已决定保持 Solid 全擦）
