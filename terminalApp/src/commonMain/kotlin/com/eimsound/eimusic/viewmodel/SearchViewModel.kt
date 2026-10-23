@@ -4,6 +4,10 @@ import com.eimsound.eimusic.Result
 import com.eimsound.eimusic.factory.TrackRepositoryFactory
 import com.eimsound.eimusic.music.Track
 import com.eimsound.eimusic.music.TrackSource
+import com.eimsound.eimusic.storage.IStorage
+import com.eimsound.eimusic.storage.Settings
+import com.eimsound.eimusic.storage.get
+import com.eimsound.eimusic.storage.save
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.CoroutineScope
@@ -19,14 +23,18 @@ data class SearchUiState(
     val results: List<Track> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
+    val recentSearches: List<String> = emptyList(),
 )
 
 class SearchViewModel(
     private val trackRepositoryFactory: TrackRepositoryFactory,
+    private val storage: IStorage,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    private val _state = MutableStateFlow(SearchUiState())
+    private val _state = MutableStateFlow(
+        SearchUiState(recentSearches = storage.get(Settings::recentSearches, emptyList())),
+    )
     val state: StateFlow<SearchUiState> = _state.asStateFlow()
 
     fun updateQuery(query: String) {
@@ -36,6 +44,7 @@ class SearchViewModel(
     fun submitSearch() {
         val query = _state.value.query
         if (query.isBlank()) return
+        recordRecentSearch(query)
         _state.update { it.copy(isLoading = true, error = null) }
         scope.launch {
             try {
@@ -50,8 +59,18 @@ class SearchViewModel(
         }
     }
 
+    private fun recordRecentSearch(query: String) {
+        val recent = (listOf(query) + _state.value.recentSearches.filterNot { it.equals(query, ignoreCase = true) })
+            .take(8)
+        _state.update { it.copy(recentSearches = recent) }
+        runCatching {
+            val settings = storage.get(Settings.DEFAULT)
+            storage.save(settings.copy(recentSearches = recent))
+        }
+    }
+
     fun reset() {
-        _state.update { SearchUiState() }
+        _state.update { SearchUiState(recentSearches = _state.value.recentSearches) }
     }
 
     fun release() { scope.cancel() }

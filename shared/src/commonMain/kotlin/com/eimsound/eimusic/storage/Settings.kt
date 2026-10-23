@@ -18,7 +18,8 @@ data class Settings(
     var proxyPort: Int = 8080,
     var proxyEnabled: Boolean = false,
     var enabledNotification: Boolean = true,
-    var enabledNotificationSound: Boolean = true
+    var enabledNotificationSound: Boolean = true,
+    var recentSearches: List<String> = emptyList(),
 ) : Store {
     companion object {
         val DEFAULT = Settings(

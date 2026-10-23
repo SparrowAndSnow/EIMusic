@@ -16,6 +16,7 @@ import com.eimsound.eimusic.util.spacer
 import com.eimsound.eimusic.viewmodel.PlayerViewModel
 import com.eimsound.eimusic.viewmodel.SearchViewModel
 import com.jakewharton.mosaic.LocalTerminalState
+import com.jakewharton.mosaic.layout.clickable
 import com.jakewharton.mosaic.layout.onKeyEvent
 import com.jakewharton.mosaic.layout.padding
 import com.jakewharton.mosaic.modifier.Modifier
@@ -76,6 +77,21 @@ fun SearchDialog(
                         }
                     },
                 )
+                if (searchState.query.isBlank() && searchState.recentSearches.isNotEmpty()) {
+                    Text("  Recent", color = palette.titleFg)
+                    searchState.recentSearches.take(6).forEach { recent ->
+                        Text(
+                            "  $recent",
+                            modifier = Modifier.clickable {
+                                searchViewModel.updateQuery(recent)
+                                searchViewModel.submitSearch()
+                                focus = SearchFocus.Results
+                            },
+                            color = palette.textDimFg,
+                        )
+                    }
+                    Text(" ", color = palette.textFg)
+                }
                 Text(
                     buildAnnotatedString {
                         spacer(2)

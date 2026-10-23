@@ -66,7 +66,7 @@ val repositoryModule = module {
 
 fun viewModelModule() = module {
     single { PlayerViewModel(get(), get()) }
-    single { SearchViewModel(get()) }
+    single { SearchViewModel(get(), get()) }
     single { AuthViewModel(get()) }
     single { TogetherWebSocketClient(get<AppConfig>().server.ws, get(), get()) }
     single { TogetherSyncManager(get(), get()) }
