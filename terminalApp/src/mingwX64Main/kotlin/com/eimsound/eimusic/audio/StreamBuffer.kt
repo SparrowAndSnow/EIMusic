@@ -70,7 +70,7 @@ actual class StreamBuffer {
 
     actual fun available(): Int = writePos.load() - readPos.load()
 
-    actual fun isClosed(): Boolean = !closed.load()
+    actual fun isClosed(): Boolean = closed.load()
 
     actual fun dispose() {
         close()

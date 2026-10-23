@@ -54,8 +54,9 @@ class NetworkStream(
                     if (size <= 0) continue
                     val bytes = if (size == chunk.size) chunk else chunk.copyOf(size)
 
-                    cacheSink?.write(bytes)
+                    // 音频优先：先喂解码缓冲，再写缓存，避免磁盘慢时饿死播放。
                     innerBuffer.append(bytes)
+                    cacheSink?.write(bytes)
                 }
                 TuiLogger.log("NetworkStream: download complete")
             }
@@ -75,7 +76,7 @@ class NetworkStream(
     suspend fun waitForPrebuffer(minBytes: Int = prebufferThreshold) {
         TuiLogger.log("NetworkStream: waiting for prebuffer ($minBytes bytes)...")
         while (innerBuffer.available() < minBytes && !isClosed()) {
-            delay(100)
+            delay(20)
         }
         val available = innerBuffer.available()
         TuiLogger.log("NetworkStream: prebuffer done ($available bytes available)")
@@ -90,7 +91,7 @@ class NetworkStream(
     }
 
     companion object {
-        const val MIN_PREBUFFER = 65536 // 64KB
+        const val MIN_PREBUFFER = 262144 // 256KB，约 5–6 秒 320kbps 缓冲
         private const val CHUNK_SIZE = 65536 // 下载块大小
     }
 }

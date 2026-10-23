@@ -2,6 +2,7 @@ package com.eimsound.eimusic.audio
 
 import com.eimsound.eimusic.util.TuiLogger
 import kotlinx.cinterop.*
+import kotlinx.cinterop.usePinned
 import platform.posix.*
 import kotlin.math.min
 
@@ -58,8 +59,8 @@ actual class StreamBuffer {
             val available = min(bytesToRead.toInt(), writePos - readPos)
             if (available > 0 && pBufferOut != null) {
                 val dst = pBufferOut.reinterpret<ByteVar>()
-                for (i in 0 until available) {
-                    dst[i] = buffer[readPos + i]
+                buffer.usePinned { pinned ->
+                    memcpy(dst, pinned.addressOf(readPos), available.convert())
                 }
                 readPos += available
             }
