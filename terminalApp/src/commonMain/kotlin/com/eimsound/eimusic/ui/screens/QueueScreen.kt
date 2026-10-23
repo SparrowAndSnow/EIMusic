@@ -94,15 +94,6 @@ fun QueueScreen(
     ) {
         Column {
             Text(" Queue", color = palette.titleFg)
-            if (!picker.isOpen) {
-                Text(
-                    "  + Add to playlist",
-                    modifier = Modifier.clickable {
-                        playerState.queue.getOrNull(selection.index)?.let(picker::open)
-                    },
-                    color = palette.highlightFg,
-                )
-            }
 
             if (picker.isOpen) {
                 PlaylistPicker(

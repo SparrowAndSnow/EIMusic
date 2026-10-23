@@ -198,13 +198,6 @@ fun SearchPage(
                 Text(" ", color = palette.textFg)
                 val focusLabel = if (focus == SearchFocus.Results) "▸ Results" else "Results"
                 Text("  $focusLabel", color = palette.titleFg)
-                Text(
-                    "  + Add to playlist",
-                    modifier = Modifier.clickable {
-                        searchState.results.getOrNull(resultSelection.index)?.let(picker::open)
-                    },
-                    color = palette.highlightFg,
-                )
                 ListView(
                     items = searchState.results,
                     visibleLines = visibleLines,
