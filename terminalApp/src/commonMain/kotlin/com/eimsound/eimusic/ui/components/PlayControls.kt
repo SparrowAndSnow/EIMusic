@@ -45,7 +45,11 @@ fun playControlData(
         state.volume < 0.34f -> Icon.VolumeLow.sym
         else -> Icon.VolumeHigh.sym
     }
-    val volPercent = "${(state.volume * 100f + 0.5f).toInt()}%"
+    val volPercent = if (state.isMute) {
+        "mute"
+    } else {
+        "${(state.volume * 100f + 0.5f).toInt()}%".padStart(4)
+    }
 
     return PlayControlData(modeIcon, playIcon, volIcon, volPercent)
 }
