@@ -10,7 +10,11 @@ import com.eimsound.eimusic.music.MediaList
 import com.eimsound.eimusic.music.Track
 import com.eimsound.eimusic.music.displayName
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
+import com.jakewharton.mosaic.ui.Row
 import com.jakewharton.mosaic.ui.Text
+import com.jakewharton.mosaic.layout.clickable
+import com.jakewharton.mosaic.layout.fillMaxWidth
+import com.jakewharton.mosaic.modifier.Modifier
 
 /** 统一的“把曲目加入本地歌单”选择器状态。 */
 @Stable
@@ -57,10 +61,21 @@ fun PlaylistPicker(
             state.close()
         },
         render = { playlist, _, selected ->
-            Text(
-                (if (selected) " ▸ " else "   ") + playlist.displayName(),
-                color = if (selected) palette.highlightFg else palette.textDimFg,
-            )
+            Row(Modifier.fillMaxWidth()) {
+                Text(
+                    (if (selected) " ▸ " else "   ") + playlist.displayName(),
+                    modifier = Modifier.weight(1f),
+                    color = if (selected) palette.highlightFg else palette.textDimFg,
+                )
+                Text(
+                    " +Add ",
+                    modifier = Modifier.clickable {
+                        onAdd(playlist, track)
+                        state.close()
+                    },
+                    color = palette.highlightFg,
+                )
+            }
         },
     )
 }
