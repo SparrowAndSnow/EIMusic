@@ -96,7 +96,7 @@
   - [x] Search/Queue 按 `l` 添加曲目到本地歌单
   - [x] 本地歌单内 `d` 删除、`K/J` 排序；导入歌单只读
 - [x] **最近播放/搜索历史迁 DB**：recent / search_history 表 + 迁移；Settings 只留偏好
-- [ ] **会话恢复（DB session）**：lastTab / 队列 / 当前曲目 / 位置
+- [x] **会话恢复（DB session）**：lastTab / 队列 / 当前曲目（暂停恢复，不记录位置）
 
 - 当前：`Settings` JSON 存偏好、最近搜索、最近播放；队列只存在内存。
 - 目标：按领域拆分，避免单文件频繁整写：

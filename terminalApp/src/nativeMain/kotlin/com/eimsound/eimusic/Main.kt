@@ -1,5 +1,6 @@
 package com.eimsound.eimusic
 
+import com.eimsound.eimusic.db.DbSessionRepository
 import com.eimsound.eimusic.di.initKoin
 import com.eimsound.eimusic.mpris.createMprisManager
 import com.eimsound.eimusic.util.initTuiLogging
@@ -40,6 +41,8 @@ fun main() {
     val channelViewModel = koin.get<ChannelViewModel>()
     val controller = try { koin.get<IMediaPlayerController>() } catch (_: Exception) { null }
     val storage = koin.get<IStorage>()
+    val sessionRepository = koin.get<DbSessionRepository>()
+    val initialTab = sessionRepository.load().lastTab
     // Install CJK→ASCII transliteration for terminal display
 //    Renderer.install(AnyAsciiProcessor())
 
@@ -67,6 +70,8 @@ fun main() {
                 runMosaic(mouse = true, alternateScreen = true) {
                     App(
                         storage = storage,
+                        initialTab = initialTab,
+                        sessionRepository = sessionRepository,
                         playerViewModel = playerViewModel,
                         searchViewModel = searchViewModel,
                         authViewModel = authViewModel,

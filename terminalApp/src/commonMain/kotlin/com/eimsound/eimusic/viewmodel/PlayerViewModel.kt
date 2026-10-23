@@ -1,6 +1,7 @@
 package com.eimsound.eimusic.viewmodel
 
 import com.eimsound.eimusic.db.DbLibraryRepository
+import com.eimsound.eimusic.db.DbSessionRepository
 import com.eimsound.eimusic.db.DbTrack
 import com.eimsound.eimusic.music.PlayerState
 import com.eimsound.eimusic.music.Track
@@ -27,6 +28,7 @@ class PlayerViewModel(
     private val controller: IMediaPlayerController,
     private val storage: IStorage,
     private val library: DbLibraryRepository,
+    private val session: DbSessionRepository,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -58,12 +60,32 @@ class PlayerViewModel(
         controller.volume(savedVolume, savedMuted)
         controller.playMode(PlayMode.of(savedPlayMode))
 
+        // 恢复上次队列与当前曲目（暂停，不恢复位置）。
+        val savedSession = session.load()
+        if (savedSession.queue.isNotEmpty() || savedSession.currentTrackId != null) {
+            val queue = savedSession.queue.map { it.toTrack() }
+            val currentId = savedSession.currentTrackId?.let {
+                runCatching { com.eimsound.eimusic.music.TrackId.parse(it) }.getOrNull()
+            }
+            controller.restore(queue, currentId)
+        }
+
         // 首次启动把旧 Settings 中的最近播放迁到 DB。
         if (_recentTracks.value.isEmpty()) {
             storage.get<Settings, List<Track>>(Settings::recentTracks, emptyList()).forEach {
                 library.recordRecent(it.toDbTrack())
             }
             _recentTracks.value = library.recentTracks().map { it.toTrack() }
+        }
+
+        // 队列/当前曲目变化时持久化到 session。
+        scope.launch {
+            controller.state
+                .map { it.queue to it.current?.id }
+                .distinctUntilChanged()
+                .collect { (queue, currentId) ->
+                    session.savePlayback(queue.map { it.toDbTrack() }, currentId?.toString())
+                }
         }
 
         // 记录最近播放

@@ -4,6 +4,7 @@ import com.eimsound.eimusic.events.PlaybackEvent
 import com.eimsound.eimusic.music.PlayMode
 import com.eimsound.eimusic.music.PlayerState
 import com.eimsound.eimusic.music.Track
+import com.eimsound.eimusic.music.TrackId
 import com.eimsound.eimusic.together.PlayState
 import com.eimsound.eimusic.together.SyncState
 import kotlinx.coroutines.flow.SharedFlow
@@ -45,4 +46,7 @@ interface IMediaPlayerController {
     fun release()
 
     fun sync(syncState: SyncState)
+
+    /** 恢复队列与当前曲目（暂停，不自动播放）。 */
+    fun restore(queue: List<Track>, currentId: TrackId?) {}
 }

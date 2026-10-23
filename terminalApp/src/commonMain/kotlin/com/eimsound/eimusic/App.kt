@@ -6,6 +6,7 @@ import com.eimsound.eimusic.keyboard.LocalGlobalActions
 import com.eimsound.eimusic.keyboard.dispatchGlobalKey
 import com.eimsound.eimusic.navigation.Route
 import com.eimsound.eimusic.storage.IStorage
+import com.eimsound.eimusic.db.DbSessionRepository
 import com.eimsound.eimusic.storage.Settings
 import com.eimsound.eimusic.storage.get
 import com.eimsound.eimusic.storage.save
@@ -43,6 +44,8 @@ import kotlinx.coroutines.awaitCancellation
 @Composable
 fun App(
     storage: IStorage,
+    initialTab: Int,
+    sessionRepository: DbSessionRepository,
     playerViewModel: PlayerViewModel,
     searchViewModel: SearchViewModel,
     authViewModel: AuthViewModel,
@@ -68,7 +71,14 @@ fun App(
     val palette = remember(isDark) { if (isDark) TuiColors.dark() else TuiColors.light() }
     val statusHint by LocalStatusBarHint.current
 
-    var backStack by remember { mutableStateOf(listOf<Route>(Route.Main)) }
+    val initialRoute = when (initialTab) {
+        1 -> Route.Playlists
+        2 -> Route.LocalSongs
+        3 -> Route.Together
+        4 -> Route.Queue
+        else -> Route.Main
+    }
+    var backStack by remember { mutableStateOf(listOf(initialRoute)) }
     val playerState by playerViewModel.state.bridgeToMutable()
     val togetherState by channelViewModel.uiState.bridgeToMutable()
     val currentRoute = backStack.last()
@@ -89,6 +99,11 @@ fun App(
         "5 Queue" to Route.Queue,
     )
     val activeTabRoute = baseRoute ?: currentRoute
+
+    LaunchedEffect(activeTabRoute) {
+        val index = tabRoutes.indexOfFirst { it.second == activeTabRoute }
+        if (index >= 0) sessionRepository.saveTab(index)
+    }
 
     val appGlobalActions = remember(playerViewModel) {
         GlobalKeyActions(

@@ -291,6 +291,26 @@ class PlayerController(
         _state.update { it.copy(queue = emptyList(), current = null, playState = PlayState.STOPPED, position = 0) }
     }
 
+    override fun restore(queue: List<Track>, currentId: com.eimsound.eimusic.music.TrackId?) {
+        val index = queue.indexOfFirst { it.id == currentId }
+        val current = queue.getOrNull(index)
+        _state.update {
+            it.copy(
+                queue = queue,
+                index = index,
+                current = current,
+                playState = PlayState.PAUSED,
+                position = 0,
+                isLoading = current != null,
+            )
+        }
+        if (current != null) {
+            syncPendingPlayState = PlayState.PAUSED
+            syncPendingPosition = null
+            play(current)
+        }
+    }
+
     // ── Lifecycle ──
 
     override fun release() {

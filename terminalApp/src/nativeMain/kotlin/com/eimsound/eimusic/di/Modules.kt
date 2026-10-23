@@ -6,6 +6,7 @@ import com.eimsound.eimusic.auth.AuthStore
 import com.eimsound.eimusic.config.AppConfig
 import com.eimsound.eimusic.db.DbLibraryRepository
 import com.eimsound.eimusic.db.DbPlaylistRepository
+import com.eimsound.eimusic.db.DbSessionRepository
 import com.eimsound.eimusic.db.createEIMusicDatabase
 import com.eimsound.eimusic.factory.ShareLinkResolverFactory
 import com.eimsound.eimusic.factory.TrackRepositoryFactory
@@ -47,6 +48,7 @@ fun systemModule() = module {
     single(createdAtStart = true) { createEIMusicDatabase() }
     single { DbPlaylistRepository(get()) }
     single { DbLibraryRepository(get()) }
+    single { DbSessionRepository(get()) }
     single<AppConfig> { get<IStorage>().get(AppConfig()) }
     single { HttpClientProvider("${get<AppConfig>().server.http}/auth/refresh", get()) }
     single<AuthApi> { AuthApiImpl(get<AppConfig>().server.http, get()) }
@@ -71,7 +73,7 @@ val repositoryModule = module {
 }
 
 fun viewModelModule() = module {
-    single { PlayerViewModel(get(), get(), get()) }
+    single { PlayerViewModel(get(), get(), get(), get()) }
     single { SearchViewModel(get(), get(), get()) }
     single { AuthViewModel(get()) }
     single { TogetherWebSocketClient(get<AppConfig>().server.ws, get(), get()) }

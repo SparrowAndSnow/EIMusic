@@ -1,0 +1,10 @@
+CREATE TABLE session (
+    id INTEGER NOT NULL PRIMARY KEY CHECK (id = 1),
+    last_tab INTEGER NOT NULL,
+    current_track_id TEXT
+);
+
+CREATE TABLE queue_item (
+    position INTEGER NOT NULL PRIMARY KEY,
+    track_id TEXT NOT NULL
+);

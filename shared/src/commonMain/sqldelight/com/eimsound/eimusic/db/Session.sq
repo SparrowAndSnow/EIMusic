@@ -1,0 +1,27 @@
+CREATE TABLE session (
+    id INTEGER NOT NULL PRIMARY KEY CHECK (id = 1),
+    last_tab INTEGER NOT NULL,
+    current_track_id TEXT
+);
+
+CREATE TABLE queue_item (
+    position INTEGER NOT NULL PRIMARY KEY,
+    track_id TEXT NOT NULL
+);
+
+selectSession:
+SELECT * FROM session WHERE id = 1;
+
+upsertSession:
+INSERT OR REPLACE INTO session(id, last_tab, current_track_id) VALUES (1, ?, ?);
+
+deleteQueueItems:
+DELETE FROM queue_item;
+
+insertQueueItem:
+INSERT INTO queue_item(position, track_id) VALUES (?, ?);
+
+selectQueue:
+SELECT track.* FROM queue_item
+JOIN track ON track.id = queue_item.track_id
+ORDER BY queue_item.position;
