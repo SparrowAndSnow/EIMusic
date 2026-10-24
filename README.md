@@ -34,6 +34,13 @@ git clone https://github.com/SparrowAndSnow/mosaic
 ./gradlew :server:run
 ```
 
+构建服务端镜像（镜像只打包产物，不在容器里跑 Gradle）：
+
+```bash
+./gradlew :server:buildFatJar
+docker build -f server/Dockerfile -t eimusic-backend:dev server/build/libs
+```
+
 ### 桌面客户端
 
 ```bash

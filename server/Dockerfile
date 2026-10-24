@@ -1,39 +1,12 @@
+# 服务端镜像只负责运行产物，jar 由宿主 / CI 预先生成（容器内不跑 Gradle）：
+#   ./gradlew :server:buildFatJar
+#   docker build -f server/Dockerfile -t eimusic-backend:$(git rev-parse --short HEAD) server/build/libs
 ARG MIRROR=docker.io
-FROM ${MIRROR}/gradle:9.4.0-jdk25-noble AS builder
-
-ARG BUILD_PROXY
-ARG BUILD_PROXY_PORT
-
-WORKDIR /app
-
-COPY gradlew gradlew.bat settings.gradle.kts build.gradle.kts version.toml ./
-COPY gradle ./gradle
-COPY shared/build.gradle.kts ./shared/
-COPY server/build.gradle.kts ./server/
-
-# 下载依赖
-RUN gradle server:dependencies -x test --no-daemon --info --parallel \
-    -Dhttp.proxyHost=${BUILD_PROXY} \
-    -Dhttp.proxyPort=${BUILD_PROXY_PORT} \
-    -Dhttps.proxyHost=${BUILD_PROXY} \
-    -Dhttps.proxyPort=${BUILD_PROXY_PORT}
-
-# 3. 复制所有源代码
-COPY . .
-
-# 构建服务端
-RUN gradle server:build -x test --no-daemon --parallel \
-    -Dhttp.proxyHost=${BUILD_PROXY} \
-    -Dhttp.proxyPort=${BUILD_PROXY_PORT} \
-    -Dhttps.proxyHost=${BUILD_PROXY} \
-    -Dhttps.proxyPort=${BUILD_PROXY_PORT}
-
-# Runner
 FROM ${MIRROR}/eclipse-temurin:25.0.2_10-jre-noble
 
 WORKDIR /app
 
-COPY --from=builder /app/server/build/libs/server-all.jar app.jar
+COPY server-all.jar app.jar
 
 ENV TZ=Asia/Shanghai
 
