@@ -11,8 +11,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.eimsound.eimusic.AppStateProvider
 import com.eimsound.eimusic.EIMusicApplication
-import com.eimsound.eimusic.MainActivity
-import com.eimsound.eimusic.R
+import com.eimsound.eimusic.composeapp.R
 import com.eimsound.eimusic.viewmodel.NotificationState
 import kotlinx.coroutines.flow.StateFlow
 
@@ -29,8 +28,8 @@ actual class NotificationService actual constructor(
 
     private fun backgroundNotify(title: String, content: String, sound: Boolean) {
         val context = EIMusicApplication.instance
-        val intent = Intent(context, MainActivity::class.java).apply {
-            // 关键：如果 Activity 已经在运行，则直接唤醒它，而不是新建
+        // 关键：如果 Activity 已经在运行，则直接唤醒它，而不是新建
+        val intent = (context.packageManager.getLaunchIntentForPackage(context.packageName) ?: return).apply {
             action = Intent.ACTION_MAIN
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }

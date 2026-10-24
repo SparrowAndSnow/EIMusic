@@ -13,7 +13,6 @@ pluginManagement {
         maven("https://packages.jetbrains.team/maven/p/firework/dev")
         google()
         mavenCentral()
-        mavenLocal()
         gradlePluginPortal()
     }
 }
@@ -28,7 +27,6 @@ dependencyResolutionManagement {
 //        maven { url = uri("https://maven.aliyun.com/repository/public") }
         maven("https://packages.jetbrains.team/maven/p/firework/dev")
         google()
-        mavenLocal()
         mavenCentral()
     }
 }
@@ -36,11 +34,17 @@ dependencyResolutionManagement {
 plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
+// 只构建服务端 / TUI 时可用 -DincludeClient=false 跳过客户端模块（server/Dockerfile 依赖这个开关）
 val includeClient = System.getProperty("includeClient") ?: "true"
 if (includeClient.toBoolean()) {
     include(":composeApp")
+    include(":androidApp")
 }
 include(":shared")
 include("server")
 include("terminalApp")
-includeBuild("./mosaic")
+// mosaic 复合构建：优先项目根目录，其次是相邻目录
+val mosaicDir = listOf("mosaic", "../mosaic", "../../mosaic")
+    .map { file(it) }
+    .firstOrNull { it.isDirectory }
+includeBuild(mosaicDir ?: file("mosaic"))
