@@ -76,8 +76,6 @@ macOS（Apple Silicon）：
 ./gradlew :terminalApp:linkReleaseExecutableMacosArm64
 ```
 
-> 只编译服务端 / TUI 时，可加 `-DincludeClient=false` 跳过客户端模块（`server/Dockerfile` 依赖这个开关）。
-
 Windows：
 
 ```bash

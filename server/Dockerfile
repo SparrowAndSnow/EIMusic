@@ -12,7 +12,7 @@ COPY shared/build.gradle.kts ./shared/
 COPY server/build.gradle.kts ./server/
 
 # 下载依赖
-RUN gradle server:dependencies -DincludeClient=false -x test --no-daemon --info --parallel \
+RUN gradle server:dependencies -x test --no-daemon --info --parallel \
     -Dhttp.proxyHost=${BUILD_PROXY} \
     -Dhttp.proxyPort=${BUILD_PROXY_PORT} \
     -Dhttps.proxyHost=${BUILD_PROXY} \
@@ -22,7 +22,7 @@ RUN gradle server:dependencies -DincludeClient=false -x test --no-daemon --info 
 COPY . .
 
 # 构建服务端
-RUN gradle server:build -DincludeClient=false -x test --no-daemon --parallel \
+RUN gradle server:build -x test --no-daemon --parallel \
     -Dhttp.proxyHost=${BUILD_PROXY} \
     -Dhttp.proxyPort=${BUILD_PROXY_PORT} \
     -Dhttps.proxyHost=${BUILD_PROXY} \

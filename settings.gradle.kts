@@ -34,12 +34,8 @@ dependencyResolutionManagement {
 plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
-// 只构建服务端 / TUI 时可用 -DincludeClient=false 跳过客户端模块（server/Dockerfile 依赖这个开关）
-val includeClient = System.getProperty("includeClient") ?: "true"
-if (includeClient.toBoolean()) {
-    include(":composeApp")
-    include(":androidApp")
-}
+include(":composeApp")
+include(":androidApp")
 include(":shared")
 include("server")
 include("terminalApp")
