@@ -4,8 +4,8 @@
 
 ## 模块
 
-- `composeApp` — Compose Multiplatform 共享客户端（Android / iOS / Desktop / Web 的 UI 与逻辑）
-- `androidApp` — Android 应用入口（Manifest、启动 Activity、签名与打包配置），依赖 `composeApp`
+- `composeApp` — Compose Multiplatform 共享客户端，支持 Android / iOS / Desktop / Web
+- `androidApp` — Android 应用入口，依赖 `composeApp`
 - `shared` — 各端共享的核心代码（数据模型、网络、认证等）
 - `server` — Ktor 服务端，提供房间同步等能力
 - `terminalApp` — 基于 Mosaic 的终端（TUI）客户端，支持 Linux / macOS / Windows
@@ -18,9 +18,8 @@
 
 ### mosaic（编译 terminalApp 的必需依赖）
 
-`settings.gradle.kts` 通过 `includeBuild(...)` 引入本地复合构建，且该行无条件生效——
-**找不到 `mosaic` 目录会导致任何 Gradle 构建直接配置失败**。编译/运行前先克隆 mosaic
-（脚本会依次尝试 `mosaic`、`../mosaic`、`../../mosaic` 三个位置）：
+`settings.gradle.kts` 通过 `includeBuild(...)` 引入本地复合构建，且无条件生效——
+**找不到 `mosaic` 目录会导致任何 Gradle 构建直接配置失败**（项目根目录或相邻目录均可）：
 
 ```bash
 git clone https://github.com/SparrowAndSnow/mosaic
@@ -32,13 +31,6 @@ git clone https://github.com/SparrowAndSnow/mosaic
 
 ```bash
 ./gradlew :server:run
-```
-
-构建服务端镜像（镜像只打包产物，不在容器里跑 Gradle）：
-
-```bash
-./gradlew :server:buildFatJar
-docker build -f server/Dockerfile -t eimusic-backend:dev server/build/libs
 ```
 
 ### 桌面客户端
@@ -88,9 +80,6 @@ Windows：
 ```bash
 ./gradlew :terminalApp:linkReleaseExecutableMingwX64
 ```
-
-> Windows 没有系统 libsqlite3，仓库内自带 SQLite amalgamation（`terminalApp/src/nativeInterop/cinterop/sqlite3.c`），
-> 由 `compileSqliteMingwX64` 任务编成静态库后参与链接。
 
 ## 配置
 
