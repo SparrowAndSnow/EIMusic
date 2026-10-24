@@ -31,7 +31,7 @@ kotlin {
             implementation("com.jakewharton.mosaic:mosaic-runtime:0.19.0-SNAPSHOT")
             implementation(libs.koin.core)
             implementation(libs.kotlinx.datetime)
-            implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.9.1")
+            implementation(libs.kotlinx.io)
         }
 
         nativeMain.dependencies {
@@ -110,6 +110,8 @@ kotlin {
                 linkerOpts.add("-L${cinteropDir.absolutePath}")
                 linkerOpts.add("-lminiaudio")
                 linkerOpts.add("-lanyascii")
+                // Windows 没有系统 libsqlite3，使用下方 compileSqliteMingwX64 构建的静态库
+                linkerOpts.add("-lsqlite3")
             }
         }
         compilations["main"].cinterops {
@@ -190,6 +192,20 @@ val compileMiniaudioLinux = compileMiniaudioTask("compileMiniaudioLinux", "Linux
 val compileMiniaudioMacosArm64 = compileMiniaudioTask("compileMiniaudioMacosArm64", "macOS", "clang", "")
 val compileMiniaudioMingwX64 = compileMiniaudioTask("compileMiniaudioMingwX64", "Windows", "x86_64-w64-mingw32-gcc", "")
 
+/** Compile the vendored SQLite amalgamation into a static library for Windows (no system libsqlite3 there). */
+val compileSqliteMingwX64 = tasks.register("compileSqliteMingwX64", Exec::class) {
+    val dir = project.file("src/nativeInterop/cinterop")
+    description = "Compiles sqlite3.c into libsqlite3.a (Windows)"
+    workingDir = dir
+    commandLine(
+        "cmd", "/c",
+        "x86_64-w64-mingw32-gcc -c -O2 -DSQLITE_THREADSAFE=1 -DSQLITE_ENABLE_COLUMN_METADATA " +
+            "sqlite3.c -o sqlite3.o && ar rcs libsqlite3.a sqlite3.o"
+    )
+    inputs.files(dir.resolve("sqlite3.c"), dir.resolve("sqlite3.h"))
+    outputs.file(dir.resolve("libsqlite3.a"))
+}
+
 tasks.matching { it.name.startsWith("link") && it.name.contains("LinuxX64") }.configureEach {
     dependsOn(compileMiniaudioLinux)
 }
@@ -198,4 +214,5 @@ tasks.matching { it.name.startsWith("link") && it.name.contains("MacosArm64") }.
 }
 tasks.matching { it.name.startsWith("link") && it.name.contains("MingwX64") }.configureEach {
     dependsOn(compileMiniaudioMingwX64)
+    dependsOn(compileSqliteMingwX64)
 }

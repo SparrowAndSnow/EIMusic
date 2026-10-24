@@ -78,6 +78,15 @@ macOS（Apple Silicon）：
 
 > 只编译服务端 / TUI 时，可加 `-DincludeClient=false` 跳过客户端模块（`server/Dockerfile` 依赖这个开关）。
 
+Windows：
+
+```bash
+./gradlew :terminalApp:linkReleaseExecutableMingwX64
+```
+
+> Windows 没有系统 libsqlite3，仓库内自带 SQLite amalgamation（`terminalApp/src/nativeInterop/cinterop/sqlite3.c`），
+> 由 `compileSqliteMingwX64` 任务编成静态库后参与链接。
+
 ## 配置
 
 - 服务端配置：`server/src/main/resources/application.conf`
