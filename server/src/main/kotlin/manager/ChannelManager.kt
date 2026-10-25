@@ -88,15 +88,15 @@ class ChannelManager(
     /**
      * 获取频道信息
      */
-    fun getChannel(channelId: String): Channel? {
-        return channels[channelId]?.channel
+    suspend fun getChannel(channelId: String): Channel? = mutex.withLock {
+        channels[channelId]?.channel
     }
 
     /**
      * 获取服务器频道（包含额外信息）
      */
-    fun getServerChannel(channelId: String): ServerChannel? {
-        return channels[channelId]
+    suspend fun getServerChannel(channelId: String): ServerChannel? = mutex.withLock {
+        channels[channelId]
     }
 
     /**
@@ -175,27 +175,27 @@ class ChannelManager(
     /**
      * 更新频道房主逻辑
      */
-    fun updateOwner(channelId: String, newOwner: UserSession): Boolean {
-        val serverChannel = channels[channelId] ?: return false
+    suspend fun updateOwner(channelId: String, newOwner: UserSession): Boolean = mutex.withLock {
+        val serverChannel = channels[channelId] ?: return@withLock false
 
         if (serverChannel.members.none { it.sessionId == newOwner.sessionId }) {
             logger.warn("User ${newOwner.user.id} is not in channel $channelId, cannot promote to owner")
-            return false
+            return@withLock false
         }
 
         serverChannel.changeOwner(newOwner)
 
         logger.info("Channel $channelId owner updated to ${newOwner.user.username}")
-        return true
+        true
     }
 
     /**
      * 获取频道统计信息
      */
-    fun getChannelStats(channelId: String): Map<String, Any>? {
-        val serverChannel = channels[channelId] ?: return null
+    suspend fun getChannelStats(channelId: String): Map<String, Any?>? = mutex.withLock {
+        val serverChannel = channels[channelId] ?: return@withLock null
 
-        return mapOf(
+        mapOf(
             "channelId" to channelId,
             "memberCount" to serverChannel.channel.members.size,
             "onlineCount" to serverChannel.members.size,
@@ -203,14 +203,14 @@ class ChannelManager(
             "currentTrack" to serverChannel.channel.currentTrack,
             "createTime" to serverChannel.createTime.toString(),
             "lastActivity" to serverChannel.lastActivity.toString()
-        ) as? Map<String, Any>?
+        )
     }
 
     /**
      * 获取所有频道列表
      */
-    fun getAllChannels(): List<Channel> {
-        return channels.values.map { it.channel }
+    suspend fun getAllChannels(): List<Channel> = mutex.withLock {
+        channels.values.map { it.channel }
     }
 
 
@@ -312,7 +312,8 @@ class ChannelManager(
         )
     }
 
-    fun deleteChannel(channelId: String) {
+    suspend fun deleteChannel(channelId: String) = mutex.withLock {
         channels.remove(channelId)
+        Unit
     }
 }

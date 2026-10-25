@@ -115,7 +115,9 @@ class UserSessionManager(
         allSessions.forEach { it.session.close(CloseReason(CloseReason.Codes.GOING_AWAY, "Server shutting down")) }
     }
 
-    fun getAllSessions(): List<UserSession> = sessions.values.toList()
+    suspend fun getAllSessions(): List<UserSession> = mutex.withLock {
+        sessions.values.toList()
+    }
 
     private fun addSessionInternal(userSession: UserSession) {
         sessions[userSession.sessionId] = userSession
@@ -148,16 +150,25 @@ class UserSessionManager(
     }
 
 
-    fun getSession(sessionId: String) = sessions[sessionId]
+    suspend fun getSession(sessionId: String): UserSession? = mutex.withLock {
+        sessions[sessionId]
+    }
 
-    fun getSessionByUserId(userId: String) = userToSession[userId]?.let { sessions[it] }
+    suspend fun getSessionByUserId(userId: String): UserSession? = mutex.withLock {
+        userToSession[userId]?.let { sessions[it] }
+    }
 
-    fun getSessionsInChannel(channelId: String): Set<String> =
+    suspend fun getSessionsInChannel(channelId: String): Set<String> = mutex.withLock {
         channelSessions[channelId]?.toSet() ?: emptySet()
+    }
 
-    fun getActiveSessionCount(): Int {
+    private fun activeSessionCountUnlocked(): Int {
         val now = Clock.System.now()
         return sessions.values.count { now - it.lastHeartbeat < heartbeatTimeout }
+    }
+
+    suspend fun getActiveSessionCount(): Int = mutex.withLock {
+        activeSessionCountUnlocked()
     }
 
     suspend fun getStatistics(): Map<String, Any> = mutex.withLock {
@@ -165,8 +176,8 @@ class UserSessionManager(
             "totalSessions" to sessions.size,
             "uniqueUsers" to userToSession.size,
             "activeChannels" to channelSessions.size,
-            "activeSessions" to getActiveSessionCount(),
-            "connectionRate" to getActiveSessionCount() / sessions.size.toDouble(),
+            "activeSessions" to activeSessionCountUnlocked(),
+            "connectionRate" to activeSessionCountUnlocked() / sessions.size.toDouble(),
             "sessionsPerChannel" to channelSessions.mapValues { it.value.size }
         )
     }
