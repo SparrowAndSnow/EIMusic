@@ -55,6 +55,7 @@ import com.eimsound.eimusic.resolver.track.LocalUriResolver
 import com.eimsound.eimusic.resolver.track.NeteaseUriResolver
 import com.eimsound.eimusic.resolver.track.TrackUriResolver
 import com.eimsound.eimusic.route.SearchResultRoute
+import com.eimsound.eimusic.route.routes
 import com.eimsound.eimusic.util.ProxyUtils
 import com.eimsound.eimusic.factory.ShareLinkResolverFactory
 import com.eimsound.eimusic.factory.TrackRepositoryFactory
@@ -112,8 +113,9 @@ fun App(
             val sideBarState by defaultLayoutViewModel.sideBarState.collectAsState()
             val navigationDrawerState by defaultLayoutViewModel.navigationDrawerState.collectAsState()
             val showFullScreenPlayer by defaultLayoutViewModel.fullScreenPlayerState.collectAsState()
+            val sessionRepository = koinInject<DbSessionRepository>()
             val backStack: MutableList<Route> = rememberSerializable(serializer = SnapshotStateListSerializer()) {
-                mutableStateListOf(WelcomeRoute)
+                mutableStateListOf(routes.getOrNull(sessionRepository.load().lastTab) ?: WelcomeRoute)
             }
 //            authStore.onUnauthenticated {
 //                Toast.show(

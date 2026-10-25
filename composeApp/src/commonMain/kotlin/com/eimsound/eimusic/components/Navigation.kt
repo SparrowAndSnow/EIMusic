@@ -48,12 +48,14 @@ import com.eimsound.eimusic.route.Route
 import com.eimsound.eimusic.route.TopLevelRoute
 import com.eimsound.eimusic.route.WelcomeRoute
 import com.eimsound.eimusic.route.localizedRouteName
+import com.eimsound.eimusic.db.DbSessionRepository
 import com.eimsound.eimusic.route.routes
 import com.eimsound.eimusic.theme.LocalPalette
 import eimusic.composeapp.generated.resources.Res
 import eimusic.composeapp.generated.resources.chevron_left_24px
 import eimusic.composeapp.generated.resources.chevron_right_24px
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
 
 private val RailExpandedWidth = 236.dp
 private val RailCollapsedWidth = 90.dp
@@ -72,11 +74,14 @@ fun Navigation(
     content: @Composable () -> Unit = {}
 ) {
     var selected by rememberSerializable { mutableStateOf<TopLevelRoute>(WelcomeRoute) }
+    val sessionRepository = koinInject<DbSessionRepository>()
 
     LaunchedEffect(backStack.lastOrNull()) {
         val currentRoute = backStack.lastOrNull()
         if (currentRoute is TopLevelRoute) {
             selected = currentRoute
+            val index = routes.indexOf(currentRoute)
+            if (index >= 0) sessionRepository.saveTab(index)
         }
     }
 
