@@ -93,13 +93,6 @@ class ChannelManager(
     }
 
     /**
-     * 获取服务器频道（包含额外信息）
-     */
-    suspend fun getServerChannel(channelId: String): ServerChannel? = mutex.withLock {
-        channels[channelId]
-    }
-
-    /**
      * 用户加入频道
      */
     suspend fun joinChannel(channelId: String, userSession: UserSession): JoinChannelResult = mutex.withLock {
@@ -189,6 +182,16 @@ class ChannelManager(
         true
     }
 
+    /** 房主离开后，在同一把锁内选出新房主，避免把内部可变对象暴露给调用方。 */
+    suspend fun promoteNextOwner(channelId: String, oldOwnerId: String): UserSession? = mutex.withLock {
+        val serverChannel = channels[channelId] ?: return@withLock null
+        if (serverChannel.owner.user.id != oldOwnerId) return@withLock null
+        val newOwner = serverChannel.members.firstOrNull() ?: return@withLock null
+        serverChannel.changeOwner(newOwner)
+        logger.info("Channel $channelId owner updated to ${newOwner.user.username}")
+        newOwner
+    }
+
     /**
      * 获取频道统计信息
      */
@@ -217,13 +220,14 @@ class ChannelManager(
     /**
      * 清理不活跃的频道
      */
-    suspend fun cleanupInactiveChannels(sessionManager: UserSessionManager, timeoutSeconds: Long = 30): Int =
-        mutex.withLock {
-            val allSessions = sessionManager.getAllSessions()
-            val activeSessionIds = allSessions.map { it.sessionId }.toSet()
+    suspend fun cleanupInactiveChannels(sessionManager: UserSessionManager, timeoutSeconds: Long = 30): Int {
+        // 会话快照在频道锁外获取，避免长时间持有频道锁等待 session 锁。
+        val activeSessionIds = sessionManager.getAllSessions().map { it.sessionId }.toSet()
+
+        val (cleanedCount, broadcasts) = mutex.withLock {
+            val pending = mutableListOf<PendingBroadcast>()
 
             channels.values.forEach { channel ->
-                sessionManager.getSessionsInChannel(channel.channel.id)
                 val (activeSessions, expiredSessions) = channel.members.partition { member ->
                     member.sessionId in activeSessionIds
                 }
@@ -235,63 +239,71 @@ class ChannelManager(
                 logger.info("Cleaned up inactive channel ${channel.channel.id} members: $expiredUserNameString")
 
                 val currentUsers = activeSessions.map { it.user }
+                val channelId = channel.channel.id
 
                 val ownerStillPresent = activeSessions.any { it.user.id == channel.channel.owner.id }
                 if (!ownerStillPresent) {
-                    activeSessions.firstOrNull()?.let {
-                        channel.changeOwner(it)
-                        sessionManager.broadcast(
-                            channel.channel.id, TogetherProtocol.MessageReceived(
+                    activeSessions.firstOrNull()?.let { newOwner ->
+                        channel.changeOwner(newOwner)
+                        pending += PendingBroadcast(
+                            channelId,
+                            TogetherProtocol.MessageReceived(
                                 ChannelMessage.System(
-                                    channel.channel.id,
+                                    channelId,
                                     SYSTEM,
-                                    content = "${it.user.username} 自动成为新房主",
-                                    messageType = SystemMessageType.JOIN
-                                )
-                            )
+                                    content = "${newOwner.user.username} 自动成为新房主",
+                                    messageType = SystemMessageType.JOIN,
+                                ),
+                            ),
                         )
                     }
                 }
 
-
-                sessionManager.broadcast(
-                    channel.channel.id,
+                pending += PendingBroadcast(
+                    channelId,
                     TogetherProtocol.ServerEvent(
-                        ChannelEvent.UserLeft(
-                            channel.channel.id, expiredSessions[0].user, currentUsers
-                        )
-                    )
+                        ChannelEvent.UserLeft(channelId, expiredSessions[0].user, currentUsers),
+                    ),
                 )
-                sessionManager.broadcast(
-                    channel.channel.id,
+                pending += PendingBroadcast(
+                    channelId,
                     TogetherProtocol.MessageReceived(
                         ChannelMessage.System(
-                            channel.channel.id,
+                            channelId,
                             SYSTEM,
                             content = "$expiredUserNameString 已断开",
-                            messageType = SystemMessageType.LEAVE
-                        )
-                    )
+                            messageType = SystemMessageType.LEAVE,
+                        ),
+                    ),
                 )
-
             }
 
             val inactiveChannels = channels.filter { (_, serverChannel) ->
                 serverChannel.isInactive(timeoutSeconds)
             }
-
             inactiveChannels.forEach { (channelId, _) ->
                 channels.remove(channelId)
                 logger.info("Cleaned up inactive channel: $channelId")
             }
 
-            val cleanedCount = inactiveChannels.size
-            if (cleanedCount > 0) {
-                logger.info("Cleaned up $cleanedCount inactive channels")
+            if (inactiveChannels.isNotEmpty()) {
+                logger.info("Cleaned up ${inactiveChannels.size} inactive channels")
             }
-
-            return cleanedCount
+            inactiveChannels.size to pending
         }
+
+        // 广播放到频道锁外，避免网络发送阻塞频道管理。
+        broadcasts.forEach { pending ->
+            runCatching { sessionManager.broadcast(pending.channelId, pending.message) }
+                .onFailure { logger.warn("Cleanup broadcast failed for ${pending.channelId}: ${it.message}") }
+        }
+        return cleanedCount
+    }
+
+    private data class PendingBroadcast(
+        val channelId: String,
+        val message: TogetherProtocol,
+    )
 
     /**
      * 获取系统统计信息

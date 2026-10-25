@@ -552,26 +552,17 @@ class WebSocketHandler(
      * (进阶) 处理房主转让
      */
     private suspend fun handleOwnerChange(channelId: String, oldOwnerId: String) {
-        val serverChannel = channelManager.getServerChannel(channelId) ?: return
-        if (serverChannel.owner.user.id == oldOwnerId) {
-            serverChannel.members.firstOrNull()?.let { newOwner ->
-                if (channelManager.updateOwner(channelId, newOwner)) {
-//                    broadcast(
-//                        channelId,
-//                        TogetherProtocol.ServerEvent(ChannelEvent.RoomMetadataChanged(channelId, serverChannel.channel))
-//                    )
-                    broadcast(
-                        channelId, TogetherProtocol.MessageReceived(
-                            ChannelMessage.System(
-                                channelId,
-                                SYSTEM,
-                                content = "${newOwner.user.username} 自动成为新房主",
-                                messageType = SystemMessageType.JOIN
-                            )
-                        )
-                    )
-                }
-            }
-        }
+        val newOwner = channelManager.promoteNextOwner(channelId, oldOwnerId) ?: return
+        broadcast(
+            channelId,
+            TogetherProtocol.MessageReceived(
+                ChannelMessage.System(
+                    channelId,
+                    SYSTEM,
+                    content = newOwner.user.username + " 自动成为新房主",
+                    messageType = SystemMessageType.JOIN,
+                ),
+            ),
+        )
     }
 }
