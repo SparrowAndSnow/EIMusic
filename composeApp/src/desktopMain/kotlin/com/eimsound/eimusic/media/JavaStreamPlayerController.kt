@@ -360,6 +360,15 @@ open class JavaStreamPlayerController(
         _state.update { it.withTrackAdded(media, index) }
     }
 
+    override fun updateQueue(tracks: List<Track>) {
+        _state.update { state ->
+            state.copy(
+                queue = tracks,
+                index = tracks.indexOfFirst { it.id == state.current?.id }.coerceAtLeast(0),
+            )
+        }
+    }
+
     override fun removeTrack(index: Int) {
         _state.update { it.withTrackRemoved(index) }
     }

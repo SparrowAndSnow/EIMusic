@@ -29,6 +29,10 @@ expect class MediaPlayerController(trackUriResolverFactory: TrackUriResolverFact
 
     override fun removeTrack(index: Int)
 
+    override fun updateQueue(tracks: List<Track>)
+
+    override fun moveTrack(from: Int, to: Int)
+
     override fun nextTrack(): Track?
 
     override fun previous(origin: PlaybackOrigin)

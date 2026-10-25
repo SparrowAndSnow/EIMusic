@@ -215,10 +215,10 @@ class PlaybackStore(
 
     /** compose 的事件桥：应用来自 EventBus 的队列事件，不触发本地入队拦截。 */
     fun applyTrackListChanged(tracks: List<Track>, track: Track?, source: EventSource) {
-        controller.queue(tracks) {
-            if (source != EventSource.Player) {
-                track?.let { controller.play(it, source.toPlaybackOrigin()) }
-            }
+        val currentId = state.value.current?.id
+        controller.updateQueue(tracks)
+        if (track != null && track.id != currentId && source != EventSource.Player) {
+            controller.play(track, source.toPlaybackOrigin())
         }
     }
 

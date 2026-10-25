@@ -431,6 +431,67 @@ actual class MediaPlayerController actual constructor(val trackUriResolverFactor
         }
     }
 
+    actual override fun updateQueue(tracks: List<Track>) {
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            progressUpdateHandler.post { updateQueue(tracks) }
+            return
+        }
+        val controller = mediaController ?: return
+        val targetIds = tracks.map { it.id.toString() }
+
+        // 先删除目标队列不存在的项。
+        for (i in controller.mediaItemCount - 1 downTo 0) {
+            if (controller.getMediaItemAt(i).mediaId !in targetIds) {
+                controller.removeMediaItem(i)
+            }
+        }
+
+        // 再按目标顺序移动/插入，避免 setMediaItems 重载当前曲目。
+        val working = (0 until controller.mediaItemCount)
+            .map { controller.getMediaItemAt(it).mediaId }
+            .toMutableList()
+        tracks.forEachIndexed { targetIndex, track ->
+            val id = track.id.toString()
+            val from = working.indexOf(id)
+            if (from == -1) {
+                track.parse()?.let {
+                    controller.addMediaItem(targetIndex, it)
+                    working.add(targetIndex, id)
+                }
+            } else if (from != targetIndex) {
+                controller.moveMediaItem(from, targetIndex)
+                working.add(targetIndex, working.removeAt(from))
+            }
+        }
+
+        _state.update { state ->
+            val currentId = state.current?.id
+            state.copy(
+                queue = tracks,
+                index = if (currentId == null) 0 else tracks.indexOfFirst { it.id == currentId }.coerceAtLeast(0),
+            )
+        }
+    }
+
+    actual override fun moveTrack(from: Int, to: Int) {
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            progressUpdateHandler.post { moveTrack(from, to) }
+            return
+        }
+        val current = _state.value
+        if (from !in current.queue.indices || to !in current.queue.indices || from == to) return
+        val moved = current.queue.toMutableList()
+        val track = moved.removeAt(from)
+        moved.add(to, track)
+        mediaController?.moveMediaItem(from, to)
+        _state.update { state ->
+            state.copy(
+                queue = moved,
+                index = moved.indexOfFirst { it.id == state.current?.id }.coerceAtLeast(0),
+            )
+        }
+    }
+
     actual override fun removeTrack(index: Int) {
         _state.update {
             val updatedQueue = it.queue.filterIndexed { i, _ -> i != index }

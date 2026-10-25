@@ -40,10 +40,15 @@ class PlayingListViewModel(
     }
 
     fun sendRemoveTrack(track: Track, source: EventSource = EventSource.User) {
+        if (source == EventSource.User) {
+            val index = state.value.queue.indexOfFirst { it.id == track.id }
+            if (index >= 0) controller.removeTrack(index)
+        }
         EventBus.PlayingListEventBus.send(PlayingListEvent.TrackRemoved(track, source = source))
     }
 
     fun sendMoveTrack(from: Int, to: Int, source: EventSource = EventSource.User) {
+        if (source == EventSource.User) controller.moveTrack(from, to)
         EventBus.PlayingListEventBus.send(PlayingListEvent.TrackMoved(from, to, source = source))
     }
 

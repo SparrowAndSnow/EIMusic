@@ -66,6 +66,10 @@ actual class MediaPlayerController actual constructor(val trackUriResolverFactor
     actual override fun addTrack(media: Track, index: Int) {
     }
 
+    actual override fun updateQueue(tracks: List<Track>) {}
+
+    actual override fun moveTrack(from: Int, to: Int) {}
+
     actual override fun removeTrack(index: Int) {
     }
 

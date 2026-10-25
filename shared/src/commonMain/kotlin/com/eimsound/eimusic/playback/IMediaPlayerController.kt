@@ -29,6 +29,9 @@ interface IMediaPlayerController {
 
     fun removeTrack(index: Int)
 
+    /** 只重排队列，不停止/重载当前曲目。 */
+    fun updateQueue(tracks: List<Track>) {}
+
     /** 在队列内移动曲目；平台不支持时默认忽略。 */
     fun moveTrack(from: Int, to: Int) {}
 

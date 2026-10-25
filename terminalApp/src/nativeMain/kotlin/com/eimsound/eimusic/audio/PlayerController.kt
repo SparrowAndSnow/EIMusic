@@ -301,6 +301,15 @@ class PlayerController(
         )
     }
 
+    override fun updateQueue(tracks: List<Track>) {
+        _state.update { state ->
+            state.copy(
+                queue = tracks,
+                index = tracks.indexOfFirst { it.id == state.current?.id }.coerceAtLeast(0),
+            )
+        }
+    }
+
     override fun removeTrack(index: Int) {
         val removed = _state.value.queue.getOrNull(index)
         _state.update { it.withTrackRemoved(index) }
