@@ -51,6 +51,7 @@ class TogetherWebSocketClient(
     private var session: DefaultClientWebSocketSession? = null
     private val eventChannel = MutableSharedFlow<ChannelEvent>()
     private val messageChannel = MutableSharedFlow<ChannelMessage>()
+    private val ackChannel = MutableSharedFlow<TogetherProtocol.CommandAck>()
     private val connectionState = MutableStateFlow(ConnectionState.DISCONNECTED)
     private val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
@@ -102,6 +103,8 @@ class TogetherWebSocketClient(
      * 监听消息流
      */
     fun messages(): Flow<ChannelMessage> = messageChannel
+
+    fun commandAcks(): Flow<TogetherProtocol.CommandAck> = ackChannel
 
     /**
      * 连接到WebSocket服务器
@@ -313,6 +316,7 @@ class TogetherWebSocketClient(
             when (message) {
                 is TogetherProtocol.ServerEvent -> serverEvent(message)
                 is TogetherProtocol.MessageReceived -> messageReceived(message)
+                is TogetherProtocol.CommandAck -> ackChannel.emit(message)
                 is TogetherProtocol.ErrorResponse -> println("Error: ${message.message}")
                 else -> {
                     // 处理其他类型的消息

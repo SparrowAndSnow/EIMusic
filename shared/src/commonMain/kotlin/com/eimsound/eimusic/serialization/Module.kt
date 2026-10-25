@@ -38,6 +38,7 @@ val module = SerializersModule {
     polymorphic(TogetherProtocol::class){
         subclass(TogetherProtocol.ServerEvent::class)
         subclass(TogetherProtocol.MessageReceived::class)
+        subclass(TogetherProtocol.CommandAck::class)
         subclass(TogetherProtocol.ErrorResponse::class)
         subclass(TogetherProtocol.JoinChannel::class)
         subclass(TogetherProtocol.LeaveChannel::class)

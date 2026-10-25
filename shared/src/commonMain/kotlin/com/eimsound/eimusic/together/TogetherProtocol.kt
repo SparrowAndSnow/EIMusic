@@ -59,6 +59,15 @@ sealed interface TogetherProtocol {
         TogetherProtocol
 
     @Serializable
+    @SerialName("res_ack")
+    data class CommandAck(
+        val commandId: String,
+        val revision: Long = 0L,
+        val success: Boolean = true,
+        override val timestamp: Instant = Clock.System.now(),
+    ) : TogetherProtocol
+
+    @Serializable
     @SerialName("res_error")
     data class ErrorResponse(
         val message: String,

@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlin.math.abs
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 /**
@@ -32,6 +33,15 @@ class TogetherSyncManager(
     private var lastSyncState: SyncState? = null
     private var queueRevision = 0L
     private val pendingCommands = MutableStateFlow<Set<String>>(emptySet())
+
+    init {
+        coroutineScope.launch {
+            webSocketClient.commandAcks().collect { ack ->
+                pendingCommands.update { it - ack.commandId }
+                if (ack.revision > queueRevision) queueRevision = ack.revision
+            }
+        }
+    }
 
     private val _channelState = MutableStateFlow<ChannelState>(ChannelState.Disconnected)
     val channelState: StateFlow<ChannelState> = _channelState.asStateFlow()
@@ -206,6 +216,10 @@ class TogetherSyncManager(
     suspend fun sendPlayCommand(event: PlayControlEvent) {
         val commandId = "${webSocketClient.currentUserId()}-${Clock.System.now().toEpochMilliseconds()}-${kotlin.random.Random.nextLong().toULong().toString(16)}"
         pendingCommands.update { it + commandId }
+        coroutineScope.launch {
+            delay(15.seconds)
+            pendingCommands.update { it - commandId }
+        }
         val result = webSocketClient.sendPlayControl(event, commandId)
         if (result.isFailure) pendingCommands.update { it - commandId }
     }

@@ -39,6 +39,7 @@ class WebSocketHandler(
     private val connectionMonitor: ConnectionMonitor? = null,
 ) {
     private val logger = LoggerFactory.getLogger(WebSocketHandler::class.java)
+    private val commandCache = java.util.concurrent.ConcurrentHashMap<String, SyncState>()
 
     /**
      * 处理WebSocket会话
@@ -138,6 +139,13 @@ class WebSocketHandler(
 
     private suspend fun handleControl(session: UserSession, action: TogetherProtocol.PlayControlAction) {
         if (!ensureMember(session, action.channelId)) return
+        action.commandId?.let { commandId ->
+            val cached = commandCache[commandId]
+            if (cached != null) {
+                sendToUser(session, TogetherProtocol.CommandAck(commandId, cached.queueRevision, true))
+                return
+            }
+        }
         val event = action.event
         var isShowMessage = true
         val state = when (event) {
@@ -330,10 +338,25 @@ class WebSocketHandler(
 
         if (state != null) {
             val stateWithCommand = state.copy(commandId = action.commandId)
+            action.commandId?.let { commandId ->
+                if (commandCache.size > 512) commandCache.clear()
+                commandCache[commandId] = stateWithCommand
+            }
             broadcast(
                 action.channelId,
                 TogetherProtocol.ServerEvent(ChannelEvent.PlayStateChanged(action.channelId, event, stateWithCommand)),
             )
+
+            action.commandId?.let { commandId ->
+                sendToUser(
+                    session,
+                    TogetherProtocol.CommandAck(
+                        commandId = commandId,
+                        revision = stateWithCommand.queueRevision,
+                        success = true,
+                    ),
+                )
+            }
 
             if (isShowMessage) {
                 broadcast(
@@ -345,6 +368,10 @@ class WebSocketHandler(
                         )
                     )
                 )
+            }
+        } else {
+            action.commandId?.let { commandId ->
+                sendToUser(session, TogetherProtocol.CommandAck(commandId, success = false))
             }
         }
     }
