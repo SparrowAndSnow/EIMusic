@@ -12,6 +12,7 @@ import com.eimsound.eimusic.network.TogetherWebSocketClient
 import com.eimsound.eimusic.playback.IMediaPlayerController
 import com.eimsound.eimusic.playback.PlaybackOrigin
 import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,9 +28,10 @@ import kotlin.time.Instant
  */
 class TogetherSyncManager(
     private val controller: IMediaPlayerController,
-    private val webSocketClient: TogetherWebSocketClient
+    private val webSocketClient: TogetherWebSocketClient,
+    dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
-    private val coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private val coroutineScope = CoroutineScope(dispatcher + SupervisorJob())
     private var lastSyncState: SyncState? = null
     private var queueRevision = 0L
     private val pendingCommands = MutableStateFlow<Map<String, PlayControlEvent>>(emptyMap())

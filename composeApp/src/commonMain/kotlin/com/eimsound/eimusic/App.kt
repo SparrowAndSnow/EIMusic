@@ -221,7 +221,7 @@ val systemModule = module {
 
     single<AuthStore> { AuthStore(lazy { get() }, get()) }
 
-    single<TogetherSyncManager> { TogetherSyncManager(get(), get()) }
+    single<TogetherSyncManager> { TogetherSyncManager(get(), get(), Dispatchers.Main.immediate) }
     single { TogetherStore(get(), get(), get(), dispatcher = Dispatchers.Main.immediate) }
 
     single<NotificationService> {
