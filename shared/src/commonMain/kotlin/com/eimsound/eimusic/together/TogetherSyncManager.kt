@@ -29,6 +29,7 @@ class TogetherSyncManager(
     private val coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var lastSyncState: SyncState? = null
     private var queueRevision = 0L
+    private var suppressForwardUntil = 0L
 
     private val _channelState = MutableStateFlow<ChannelState>(ChannelState.Disconnected)
     val channelState: StateFlow<ChannelState> = _channelState.asStateFlow()
@@ -54,6 +55,8 @@ class TogetherSyncManager(
         // 自己操作的回显只用来更新 revision，不再重复应用，避免重新加载/重置进度。
         if (remoteState.controlledBy?.id == webSocketClient.currentUserId()) return
 
+        // 应用远端命令时，controller 会再次发出 Player 事件；短时间内禁止回传，避免 Next 循环。
+        suppressForwardUntil = Clock.System.now().toEpochMilliseconds() + 250
         val event = remoteStateEvent.event
         try {
             when (event) {
@@ -266,6 +269,9 @@ class TogetherSyncManager(
     }
 
     fun currentQueueRevision(): Long = queueRevision
+
+    fun isApplyingRemote(): Boolean =
+        Clock.System.now().toEpochMilliseconds() < suppressForwardUntil
 
     /** 混合本地曲目时索引操作不可靠，退回整队列快照。 */
     fun hasLocalTracks(): Boolean =
