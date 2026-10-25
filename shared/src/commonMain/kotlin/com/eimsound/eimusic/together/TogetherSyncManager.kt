@@ -241,15 +241,21 @@ class TogetherSyncManager(
     }
 
     fun collectCurrentState(): SyncState {
-        val syncState = SyncState(
-            track = controller.state.value.current,
-            trackList = controller.state.value.queue,
-            playMode = controller.state.value.playMode,
-            playState = controller.state.value.playState,
-            position = controller.state.value.position,
+        val state = controller.state.value
+        // Together 只同步可跨端解析的在线曲目；本地路径对其他人无意义。
+        val shareableQueue = state.queue.filter { it.source != com.eimsound.eimusic.music.TrackSource.LOCAL }
+        val shareableCurrent = state.current?.takeIf { it.source != com.eimsound.eimusic.music.TrackSource.LOCAL }
+        return SyncState(
+            track = shareableCurrent,
+            trackList = shareableQueue,
+            playMode = state.playMode,
+            playState = if (shareableCurrent == null) PlayState.STOPPED else state.playState,
+            position = if (shareableCurrent == null) 0L else state.position,
         )
-        return syncState
     }
+
+    fun isCurrentTrackLocal(): Boolean =
+        controller.state.value.current?.source == com.eimsound.eimusic.music.TrackSource.LOCAL
 
     fun shouldIgnoreEventSource(source: EventSource): Boolean =
         channelState.value is ChannelState.Joined && source is EventSource.User

@@ -15,6 +15,9 @@ import com.eimsound.eimusic.together.DEFAULT_CHANNEL_ID
 import com.eimsound.eimusic.together.PlayControlEvent
 import com.eimsound.eimusic.together.SyncState
 import com.eimsound.eimusic.together.TogetherSyncManager
+import com.eimsound.eimusic.together.SystemMessageType
+import com.eimsound.eimusic.music.TrackSource
+import kotlin.time.Clock
 import com.eimsound.eimusic.together.User
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -51,6 +54,7 @@ class ChannelViewModel(
     val uiState: StateFlow<TogetherUiState> = _uiState.asStateFlow()
 
     private val _currentChannelId = MutableStateFlow<String?>(null)
+    private var localNoticeShown = false
 
     init { startObserving() }
 
@@ -77,6 +81,7 @@ class ChannelViewModel(
             val result = webSocketClient.joinChannel(channelId, syncState)
             result.onSuccess { channel ->
                 _currentChannelId.value = channel.id
+                localNoticeShown = false
                 syncManager.updateChannelState(ChannelState.Joined(channel))
                 syncManager.initializeState(channel)
             }.onFailure { error ->
@@ -127,6 +132,20 @@ class ChannelViewModel(
         )
     }
 
+    private fun notifyLocalUnsupported() {
+        if (localNoticeShown || _uiState.value.channelState !is ChannelState.Joined) return
+        localNoticeShown = true
+        addMessage(
+            ChannelMessage.System(
+                channelId = _currentChannelId.value ?: DEFAULT_CHANNEL_ID,
+                sender = User("SYSTEM", "SYSTEM"),
+                timestamp = Clock.System.now(),
+                content = "本地曲目无法一起听，请切换到在线曲目",
+                messageType = SystemMessageType.LEAVE,
+            ),
+        )
+    }
+
     private fun startObserving() {
         // Observe playback events from local player → forward to WebSocket
         scope.launch {
@@ -136,6 +155,22 @@ class ChannelViewModel(
                     || event.source == EventSource.Player
                 ) {
                     if (_uiState.value.channelState !is ChannelState.Joined) return@receive
+                    val track = when (event) {
+                        is PlaybackEvent.Next -> event.track
+                        is PlaybackEvent.Previous -> event.track
+                        is PlaybackEvent.TrackChanged -> event.track
+                        else -> null
+                    }
+                    if (track?.source == TrackSource.LOCAL) {
+                        notifyLocalUnsupported()
+                        return@receive
+                    }
+                    if ((event is PlaybackEvent.PlayStateChanged || event is PlaybackEvent.Seek) &&
+                        syncManager.isCurrentTrackLocal()
+                    ) {
+                        notifyLocalUnsupported()
+                        return@receive
+                    }
                     scope.launch {
                         when (event) {
                             is PlaybackEvent.PlayStateChanged -> {
@@ -165,11 +200,25 @@ class ChannelViewModel(
                     scope.launch {
                         when (event) {
                             is PlayingListEvent.TrackAdded ->
-                                syncManager.sendPlayCommand(PlayControlEvent.AddToQueue(event.track, event.strategy))
-                            is PlayingListEvent.TrackListChanged ->
-                                syncManager.sendPlayCommand(PlayControlEvent.ChangeTrackList(event.tracks, event.track))
+                                if (event.track.source == TrackSource.LOCAL) {
+                                    notifyLocalUnsupported()
+                                } else {
+                                    syncManager.sendPlayCommand(PlayControlEvent.AddToQueue(event.track, event.strategy))
+                                }
+                            is PlayingListEvent.TrackListChanged -> {
+                                val shareable = event.tracks.filter { it.source != TrackSource.LOCAL }
+                                if (shareable.isEmpty()) {
+                                    notifyLocalUnsupported()
+                                } else {
+                                    val play = event.track?.takeIf { it.source != TrackSource.LOCAL }
+                                        ?: shareable.first()
+                                    syncManager.sendPlayCommand(PlayControlEvent.ChangeTrackList(shareable, play))
+                                }
+                            }
                             is PlayingListEvent.TrackRemoved ->
-                                syncManager.sendPlayCommand(PlayControlEvent.RemoveFromQueue(event.track))
+                                if (event.track.source != TrackSource.LOCAL) {
+                                    syncManager.sendPlayCommand(PlayControlEvent.RemoveFromQueue(event.track))
+                                }
                         }
                     }
                 }

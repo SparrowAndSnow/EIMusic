@@ -2,6 +2,8 @@ package com.eimsound.eimusic.server.handler
 
 import com.eimsound.eimusic.cycle
 import com.eimsound.eimusic.music.AddTrackStrategy
+import com.eimsound.eimusic.music.Track
+import com.eimsound.eimusic.music.TrackSource
 import com.eimsound.eimusic.server.manager.ChannelManager
 import com.eimsound.eimusic.together.CreateChannelResult
 import com.eimsound.eimusic.server.manager.CreateUserSessionResult
@@ -138,6 +140,20 @@ class WebSocketHandler(
     private suspend fun handleControl(session: UserSession, action: TogetherProtocol.PlayControlAction) {
         if (!ensureMember(session, action.channelId)) return
         val event = action.event
+        val localTrack: Track? = when (event) {
+            is PlayControlEvent.ChangeTrack -> event.track
+            is PlayControlEvent.AddToQueue -> event.track
+            is PlayControlEvent.Next -> event.track
+            is PlayControlEvent.Previous -> event.track
+            is PlayControlEvent.ChangeTrackList ->
+                event.trackList.firstOrNull { it.source == TrackSource.LOCAL }
+                    ?: event.play?.takeIf { it.source == TrackSource.LOCAL }
+            else -> null
+        }
+        if (localTrack != null) {
+            sendErrorResponse(session, "本地曲目无法一起听")
+            return
+        }
         var isShowMessage = true
         val state = when (event) {
             is PlayControlEvent.Play -> {
