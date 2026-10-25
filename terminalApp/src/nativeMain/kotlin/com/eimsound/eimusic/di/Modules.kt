@@ -22,6 +22,7 @@ import com.eimsound.eimusic.network.RequestUrlProvider
 import com.eimsound.eimusic.playback.IMediaPlayerController
 import com.eimsound.eimusic.playback.PlaybackStore
 import com.eimsound.eimusic.playlist.PlaylistStore
+import com.eimsound.eimusic.search.SearchStore
 import com.eimsound.eimusic.repository.NeteaseTrackRepository
 import com.eimsound.eimusic.repository.TrackRepository
 import com.eimsound.eimusic.resolver.track.LocalUriResolver
@@ -78,7 +79,8 @@ val repositoryModule = module {
 fun viewModelModule() = module {
     single { PlaybackStore(get(), get(), get(), get(), get()) }
     single { PlayerViewModel(get()) }
-    single { SearchViewModel(get(), get(), get()) }
+    single { SearchStore(get(), get(), get()) }
+    single { SearchViewModel(get()) }
     single { AuthViewModel(get()) }
     single { TogetherWebSocketClient(get<AppConfig>().server.ws, get(), get()) }
     single { TogetherSyncManager(get(), get()) }
