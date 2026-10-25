@@ -19,7 +19,9 @@ import com.eimsound.eimusic.storage.IStorage
 import com.eimsound.eimusic.storage.Settings
 import com.eimsound.eimusic.storage.get
 import com.eimsound.eimusic.storage.save
+import com.eimsound.eimusic.together.ChannelState
 import com.eimsound.eimusic.together.PlayState
+import com.eimsound.eimusic.music.TrackSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -35,6 +37,7 @@ class PlayerViewModel(
     private val storage: IStorage,
     private val library: DbLibraryRepository,
     private val session: DbSessionRepository,
+    private val channelViewModel: ChannelViewModel,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -193,7 +196,19 @@ class PlayerViewModel(
         controller.volume(state.value.volume, !state.value.isMute)
     }
 
+    private fun togetherJoined(): Boolean =
+        channelViewModel.uiState.value.channelState is ChannelState.Joined
+
+    private fun rejectLocalTrack(track: Track): Boolean {
+        if (togetherJoined() && track.source == TrackSource.LOCAL) {
+            channelViewModel.notifyLocalUnsupported()
+            return true
+        }
+        return false
+    }
+
     fun playNext(track: Track) {
+        if (rejectLocalTrack(track)) return
         val index = (state.value.index + 1).coerceIn(0, state.value.queue.size)
         controller.addTrack(track, index)
         EventBus.PlayingListEventBus.send(
@@ -204,12 +219,22 @@ class PlayerViewModel(
     /** 用当前列表替换队列，并播放选中曲目。 */
     fun playTrackFromList(tracks: List<Track>, track: Track) {
         if (tracks.isEmpty()) return
-        controller.queue(tracks)
+        val playable = if (togetherJoined()) {
+            tracks.filter { it.source != TrackSource.LOCAL }
+        } else {
+            tracks
+        }
+        if (playable.isEmpty() || (togetherJoined() && track.source == TrackSource.LOCAL)) {
+            channelViewModel.notifyLocalUnsupported()
+            return
+        }
+        controller.queue(playable)
         controller.play(track)
         announceQueueChange()
     }
 
     fun playTrack(track: Track) {
+        if (rejectLocalTrack(track)) return
         // 已在队列里的曲目直接播放，不移动位置；新曲目才追加到末尾。
         val added = state.value.queue.none { it.id == track.id }
         if (added) {
@@ -225,8 +250,17 @@ class PlayerViewModel(
 
     fun playAll(tracks: List<Track>) {
         if (tracks.isEmpty()) return
-        controller.queue(tracks) {
-            controller.play(tracks.first())
+        val playable = if (togetherJoined()) {
+            tracks.filter { it.source != TrackSource.LOCAL }
+        } else {
+            tracks
+        }
+        if (playable.isEmpty()) {
+            channelViewModel.notifyLocalUnsupported()
+            return
+        }
+        controller.queue(playable) {
+            controller.play(playable.first())
         }
         announceQueueChange()
     }

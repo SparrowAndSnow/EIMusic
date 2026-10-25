@@ -132,7 +132,7 @@ class ChannelViewModel(
         )
     }
 
-    private fun notifyLocalUnsupported() {
+    fun notifyLocalUnsupported() {
         if (localNoticeShown || _uiState.value.channelState !is ChannelState.Joined) return
         localNoticeShown = true
         addMessage(
