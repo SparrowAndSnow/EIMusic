@@ -66,10 +66,9 @@ fun Application.configureRouting() {
             get("/check") {
                 val currentVersion = call.request.queryParameters["version"]
                     ?: return@get call.response.status(HttpStatusCode.BadRequest)
-                val platform = PlatformType.valueOf(
-                    call.request.queryParameters["platform"]
-                        ?: return@get call.response.status(HttpStatusCode.BadRequest)
-                )
+                val platform = call.request.queryParameters["platform"]
+                    ?.let { runCatching { PlatformType.valueOf(it) }.getOrNull() }
+                    ?: return@get call.response.status(HttpStatusCode.BadRequest)
                 val os = call.request.queryParameters["os"]
                     ?: return@get call.response.status(HttpStatusCode.BadRequest)
                 // 从 BuildConfig 读取最新版本号
@@ -175,8 +174,9 @@ fun Application.configureRouting() {
                     }
                 }
                 get("/Playlist") {
-                    val id =
-                        call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest, "id is required")
+                    val id = call.request.queryParameters["id"]
+                        ?: call.parameters["id"]
+                        ?: return@get call.respond(HttpStatusCode.BadRequest, "id is required")
                     when (val result = neteaseApi.getPlaylistDetail(id)) {
                         is NetworkResult.Success -> call.respond(
                             NeteaseResult(
@@ -193,8 +193,9 @@ fun Application.configureRouting() {
                     }
                 }
                 get("/Album") {
-                    val id =
-                        call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest, "id is required")
+                    val id = call.request.queryParameters["id"]
+                        ?: call.parameters["id"]
+                        ?: return@get call.respond(HttpStatusCode.BadRequest, "id is required")
                     when (val result = neteaseApi.getAlbumDetail(id)) {
                         is NetworkResult.Success -> call.respond(
                             NeteaseResult(

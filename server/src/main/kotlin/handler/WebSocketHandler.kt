@@ -135,6 +135,7 @@ class WebSocketHandler(
     }
 
     private suspend fun handleControl(session: UserSession, action: TogetherProtocol.PlayControlAction) {
+        if (!ensureMember(session, action.channelId)) return
         val event = action.event
         var isShowMessage = true
         val state = when (event) {
@@ -508,6 +509,7 @@ class WebSocketHandler(
         session: UserSession,
         action: TogetherProtocol.SendChat,
     ) {
+        if (!ensureMember(session, action.channelId)) return
         val chat = ChannelMessage.Text(action.channelId, session.user, content = action.content)
         broadcast(action.channelId, TogetherProtocol.MessageReceived(chat))
     }
@@ -516,6 +518,15 @@ class WebSocketHandler(
     /**
      * 处理心跳
      */
+    /** 校验发送者确实在当前频道，避免伪造 channelId 控制别人的房间。 */
+    private suspend fun ensureMember(session: UserSession, channelId: String): Boolean {
+        if (session.currentChannelId != channelId || channelManager.getChannel(channelId) == null) {
+            sendErrorResponse(session, "未加入该频道")
+            return false
+        }
+        return true
+    }
+
     private suspend fun handleHeartbeat(
         session: UserSession,
     ) {
