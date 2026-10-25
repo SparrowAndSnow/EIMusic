@@ -85,6 +85,9 @@
     <string name="my_playlist_count">%1$d 个歌单</string>
     <string name="my_track_count">%1$d 首歌曲</string>
     <string name="my_add_playlist">添加歌单</string>
+    <string name="my_create_local">新建本地歌单</string>
+    <string name="my_local_name">歌单名称</string>
+    <string name="create">创建</string>
     <string name="my_add_playlist_hint">支持网易云歌单链接或歌单 ID。</string>
     <string name="my_add_playlist_input_label">歌单链接或 ID</string>
     <string name="my_add_playlist_confirm">添加</string>
@@ -112,8 +115,13 @@
     <!-- Track Item Menu -->
     <string name="track_menu_more_options">更多选项</string>
     <string name="track_menu_add_to_playlist">添加到播放列表</string>
+    <string name="track_menu_add_to_library">加入本地歌单</string>
+    <string name="my_select_playlist">选择歌单</string>
+    <string name="my_no_local_playlists">还没有本地歌单</string>
     <string name="track_menu_add_to_playlist_next">下一首播放</string>
     <string name="track_menu_remove_from_playlist">从播放列表删除</string>
+    <string name="track_menu_move_up">上移</string>
+    <string name="track_menu_move_down">下移</string>
     <string name="track_menu_favorite">收藏</string>
     <string name="track_menu_download">下载</string>
     <string name="track_menu_share">分享</string>

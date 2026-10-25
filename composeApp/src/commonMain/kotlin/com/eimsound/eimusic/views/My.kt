@@ -31,12 +31,14 @@ import com.eimsound.eimusic.viewmodel.MyViewModel
 import com.eimsound.eimusic.viewmodel.PlayingListViewModel
 import com.eimsound.eimusic.views.components.RefreshButton
 import com.eimsound.eimusic.views.components.my.AddPlaylistDialog
+import com.eimsound.eimusic.views.components.my.CreateLocalPlaylistDialog
 import com.eimsound.eimusic.views.components.my.MyLibraryScaffold
 import com.eimsound.eimusic.views.components.my.PlaylistCollectionPane
 import com.eimsound.eimusic.views.components.my.PlaylistDetailPane
 import eimusic.composeapp.generated.resources.Res
 import eimusic.composeapp.generated.resources.add_24px
 import eimusic.composeapp.generated.resources.my_add_playlist
+import eimusic.composeapp.generated.resources.my_create_local
 import eimusic.composeapp.generated.resources.my_error_title
 import eimusic.composeapp.generated.resources.my_playlist_count
 import eimusic.composeapp.generated.resources.my_subtitle
@@ -54,7 +56,9 @@ fun MyView() {
     val playingListState by playingListViewModel.state.collectAsState()
 
     var showAddDialog by remember { mutableStateOf(false) }
+    var showCreateDialog by remember { mutableStateOf(false) }
     var playlistUrl by rememberSaveable { mutableStateOf("") }
+    var localPlaylistName by rememberSaveable { mutableStateOf("") }
     var showCompactDetail by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(state.selectedMediaList?.id) {
@@ -62,6 +66,21 @@ fun MyView() {
             showCompactDetail = false
         }
     }
+
+    CreateLocalPlaylistDialog(
+        visible = showCreateDialog,
+        name = localPlaylistName,
+        onNameChange = { localPlaylistName = it },
+        onDismiss = {
+            showCreateDialog = false
+            localPlaylistName = ""
+        },
+        onConfirm = {
+            myViewModel.createLocalPlaylist(localPlaylistName)
+            localPlaylistName = ""
+            showCreateDialog = false
+        },
+    )
 
     AddPlaylistDialog(
         visible = showAddDialog,
@@ -107,6 +126,7 @@ fun MyView() {
                     MyHeroSection(
                         playlistCount = state.playlists.size,
                         onAddPlaylist = { showAddDialog = true },
+                        onCreateLocal = { showCreateDialog = true },
                         onRefresh = myViewModel::load,
                         isLoading = state.isLoading
                     )
@@ -138,7 +158,9 @@ fun MyView() {
                     onRefresh = {
                         val mediaList = state.selectedMediaList
                         if (mediaList != null) myViewModel.refreshMediaList(mediaList)
-                    }
+                    },
+                    onRemoveTrack = { index -> myViewModel.removeTrackAt(index) },
+                    onMoveTrack = { from, to -> myViewModel.moveTrack(from, to) },
                 )
             }
         )
@@ -149,6 +171,7 @@ fun MyView() {
 private fun MyHeroSection(
     playlistCount: Int,
     onAddPlaylist: () -> Unit,
+    onCreateLocal: () -> Unit,
     onRefresh: () -> Unit,
     isLoading: Boolean = false
 ) {
@@ -196,19 +219,27 @@ private fun MyHeroSection(
                 }
             }
 
-            FilledTonalButton(
-                onClick = onAddPlaylist,
-                shape = radii.chip,
-            ) {
-                Icon(
-                    painter = painterResource(Res.drawable.add_24px),
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Text(
-                    text = stringResource(Res.string.my_add_playlist),
-                    modifier = Modifier.padding(start = 6.dp)
-                )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilledTonalButton(
+                    onClick = onCreateLocal,
+                    shape = radii.chip,
+                ) {
+                    Text(stringResource(Res.string.my_create_local))
+                }
+                FilledTonalButton(
+                    onClick = onAddPlaylist,
+                    shape = radii.chip,
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.add_24px),
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Text(
+                        text = stringResource(Res.string.my_add_playlist),
+                        modifier = Modifier.padding(start = 6.dp)
+                    )
+                }
             }
         }
     }

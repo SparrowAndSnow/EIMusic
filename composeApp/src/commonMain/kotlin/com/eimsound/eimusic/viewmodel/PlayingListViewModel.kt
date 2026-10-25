@@ -43,6 +43,14 @@ class PlayingListViewModel(
         EventBus.PlayingListEventBus.send(PlayingListEvent.TrackRemoved(track, source = source))
     }
 
+    fun sendMoveTrack(from: Int, to: Int, source: EventSource = EventSource.User) {
+        EventBus.PlayingListEventBus.send(PlayingListEvent.TrackMoved(from, to, source = source))
+    }
+
+    fun sendClearQueue(source: EventSource = EventSource.User) {
+        EventBus.PlayingListEventBus.send(PlayingListEvent.TrackListChanged(emptyList(), null, source = source))
+    }
+
     fun scroll(doScroll: (Int) -> Unit) {
         if (state.value.current != null && state.value.queue.isNotEmpty()) {
             val index = state.value.queue.indexOfFirst { state.value.current?.id == it.id }

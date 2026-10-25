@@ -45,6 +45,10 @@ class MyViewModel(
 
     fun load() = store.load()
     fun add(url: String) = store.addPlaylist(url)
+    fun createLocalPlaylist(name: String) = store.createLocalPlaylist(name)
+    fun addTrackToPlaylist(playlistId: String, track: Track) = store.addTrackToPlaylist(playlistId, track)
+    fun removeTrackAt(index: Int) = store.removeTrackAt(index)
+    fun moveTrack(from: Int, to: Int) = store.moveTrack(from, to)
     fun remove(mediaList: MediaList) = store.removePlaylist(mediaList)
     fun refreshMediaList(mediaList: MediaList) = store.refreshPlaylist(mediaList)
     fun selectMediaList(mediaList: MediaList) = store.selectPlaylist(mediaList)

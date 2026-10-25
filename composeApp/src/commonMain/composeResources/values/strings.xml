@@ -85,6 +85,9 @@
     <string name="my_playlist_count">%1$d playlists</string>
     <string name="my_track_count">%1$d tracks</string>
     <string name="my_add_playlist">Add Playlist</string>
+    <string name="my_create_local">New Local Playlist</string>
+    <string name="my_local_name">Playlist Name</string>
+    <string name="create">Create</string>
     <string name="my_add_playlist_hint">Supports NetEase playlist link or playlist ID.</string>
     <string name="my_add_playlist_input_label">Playlist Link or ID</string>
     <string name="my_add_playlist_confirm">Add</string>
@@ -112,8 +115,13 @@
     <!-- Track Item Menu -->
     <string name="track_menu_more_options">More Options</string>
     <string name="track_menu_add_to_playlist">Add to Playlist</string>
+    <string name="track_menu_add_to_library">Add to Library Playlist</string>
+    <string name="my_select_playlist">Select Playlist</string>
+    <string name="my_no_local_playlists">No local playlists yet</string>
     <string name="track_menu_add_to_playlist_next">Add to Next</string>
     <string name="track_menu_remove_from_playlist">Remove from Playlist</string>
+    <string name="track_menu_move_up">Move Up</string>
+    <string name="track_menu_move_down">Move Down</string>
     <string name="track_menu_favorite">Favorite</string>
     <string name="track_menu_download">Download</string>
     <string name="track_menu_share">Share</string>

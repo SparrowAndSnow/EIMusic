@@ -33,6 +33,7 @@ import com.eimsound.eimusic.components.MessageStateView
 import com.eimsound.eimusic.components.TrackList
 import com.eimsound.eimusic.music.MediaList
 import com.eimsound.eimusic.music.Track
+import com.eimsound.eimusic.music.TrackSource
 import com.eimsound.eimusic.music.UniversalMediaList
 import com.eimsound.eimusic.theme.LocalMotion
 import com.eimsound.eimusic.theme.LocalPalette
@@ -62,6 +63,8 @@ fun PlaylistDetailPane(
     onRefresh: () -> Unit,
     onBack: () -> Unit,
     onRemove: () -> Unit,
+    onRemoveTrack: ((Int) -> Unit)? = null,
+    onMoveTrack: ((Int, Int) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     onBackHandler(isBackEnabled = true) {
@@ -76,6 +79,7 @@ fun PlaylistDetailPane(
         return
     }
 
+    val isLocal = mediaList.id.source == TrackSource.LOCAL
     val universalMediaList = when (mediaList) {
         is MediaList.PlaylistMediaList -> mediaList.toUniversalMediaList()
         is MediaList.AlbumMediaList -> mediaList.toUniversalMediaList()
@@ -124,6 +128,9 @@ fun PlaylistDetailPane(
             isRefreshing = isLoading,
             onRefresh = onRefresh,
             key = Track::id,
+            showRemoveTrack = isLocal && onRemoveTrack != null,
+            onRemoveTrack = onRemoveTrack,
+            onMoveTrack = if (isLocal) onMoveTrack else null,
             header = {
                 Column {
                     PlaylistHeader(

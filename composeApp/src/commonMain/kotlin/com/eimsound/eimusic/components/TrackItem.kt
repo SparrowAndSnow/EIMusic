@@ -42,10 +42,13 @@ import eimusic.composeapp.generated.resources.more_vert_24px
 import eimusic.composeapp.generated.resources.playlist_add_24px
 import eimusic.composeapp.generated.resources.share_24px
 import eimusic.composeapp.generated.resources.skip_next_fill_24px
+import eimusic.composeapp.generated.resources.track_menu_add_to_library
 import eimusic.composeapp.generated.resources.track_menu_add_to_playlist
 import eimusic.composeapp.generated.resources.track_menu_add_to_playlist_next
 import eimusic.composeapp.generated.resources.track_menu_download
 import eimusic.composeapp.generated.resources.track_menu_favorite
+import eimusic.composeapp.generated.resources.track_menu_move_down
+import eimusic.composeapp.generated.resources.track_menu_move_up
 import eimusic.composeapp.generated.resources.track_menu_more_options
 import eimusic.composeapp.generated.resources.track_menu_remove_from_playlist
 import eimusic.composeapp.generated.resources.track_menu_share
@@ -64,7 +67,13 @@ fun TrackItem(
     onTrackNameClick: () -> Unit = {},
     onArtistClick: (Artist) -> Unit = {},
     onAddToPlaylist: ((Track, AddTrackStrategy) -> Unit)? = null,
+    onAddToLibraryPlaylist: (() -> Unit)? = null,
     onRemoveFromPlaylist: ((Track) -> Unit)? = null,
+    showMoveOptions: Boolean = false,
+    canMoveUp: Boolean = false,
+    canMoveDown: Boolean = false,
+    onMoveUp: (() -> Unit)? = null,
+    onMoveDown: (() -> Unit)? = null,
     onFavorite: (() -> Unit)? = null,
     onDownload: (() -> Unit)? = null,
     onShare: (() -> Unit)? = null
@@ -153,6 +162,16 @@ fun TrackItem(
             }
 
             DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                if (onAddToLibraryPlaylist != null) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(Res.string.track_menu_add_to_library)) },
+                        onClick = {
+                            onAddToLibraryPlaylist.invoke()
+                            menuExpanded = false
+                        },
+                        leadingIcon = { Icon(painterResource(Res.drawable.playlist_add_24px), contentDescription = null) }
+                    )
+                }
                 if (showAddToQueue) {
                     DropdownMenuItem(
                         text = { Text(stringResource(Res.string.track_menu_add_to_playlist)) },
@@ -170,6 +189,26 @@ fun TrackItem(
                         },
                         leadingIcon = { Icon(painterResource(Res.drawable.skip_next_fill_24px), contentDescription = null) }
                     )
+                }
+                if (showMoveOptions) {
+                    if (canMoveUp) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(Res.string.track_menu_move_up)) },
+                            onClick = {
+                                onMoveUp?.invoke()
+                                menuExpanded = false
+                            },
+                        )
+                    }
+                    if (canMoveDown) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(Res.string.track_menu_move_down)) },
+                            onClick = {
+                                onMoveDown?.invoke()
+                                menuExpanded = false
+                            },
+                        )
+                    }
                 }
                 if(showRemoveFromQueue){
                     DropdownMenuItem(
