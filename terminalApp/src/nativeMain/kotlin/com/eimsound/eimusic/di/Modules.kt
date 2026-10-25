@@ -29,6 +29,7 @@ import com.eimsound.eimusic.storage.NativeStorage
 import com.eimsound.eimusic.storage.get
 import com.eimsound.eimusic.network.TogetherWebSocketClient
 import com.eimsound.eimusic.resolver.share.NeteaseShareLinkResolver
+import com.eimsound.eimusic.together.TogetherStore
 import com.eimsound.eimusic.together.TogetherSyncManager
 import com.eimsound.eimusic.util.TuiLogger
 import com.eimsound.eimusic.viewmodel.AuthViewModel
@@ -78,9 +79,10 @@ fun viewModelModule() = module {
     single { AuthViewModel(get()) }
     single { TogetherWebSocketClient(get<AppConfig>().server.ws, get(), get()) }
     single { TogetherSyncManager(get(), get()) }
+    single { TogetherStore(get(), get(), get(), TuiLogger::log) }
     single { PlaylistViewModel(get(), get(), get(), get()) }
     single { LocalViewModel(get()) }
-    single { ChannelViewModel(get(), get(), get()) }
+    single { ChannelViewModel(get()) }
 }
 
 fun initKoin(): KoinApplication = startKoin {

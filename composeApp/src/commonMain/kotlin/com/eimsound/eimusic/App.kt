@@ -63,6 +63,7 @@ import com.eimsound.eimusic.util.ToastMessage
 import com.eimsound.eimusic.factory.TrackUriResolverFactory
 import com.eimsound.eimusic.playback.IMediaPlayerController
 import com.eimsound.eimusic.resolver.share.ShareLinkResolver
+import com.eimsound.eimusic.together.TogetherStore
 import com.eimsound.eimusic.together.TogetherSyncManager
 import com.eimsound.eimusic.util.UpdateService
 import com.eimsound.eimusic.viewmodel.AuthViewModel
@@ -213,6 +214,7 @@ val systemModule = module {
     single<AuthStore> { AuthStore(lazy { get() }, get()) }
 
     single<TogetherSyncManager> { TogetherSyncManager(get(), get()) }
+    single { TogetherStore(get(), get(), get()) }
 
     single<NotificationService> {
         NotificationService(get<SettingViewModel>().notificationState)
@@ -263,7 +265,7 @@ val viewModelModule = module {
     single(createdAtStart = true) { PlayerViewModel(get(), get(), get(), get(), get()) }
     single { ConfigViewModel(get()) }
     viewModel { AuthViewModel(get()) }
-    viewModel { ChannelViewModel(get(), get(), get(), get()) }
+    viewModel { ChannelViewModel(get(), get()) }
     viewModel { SearchResultViewModel(get(), get()) }
     viewModel { MyViewModel(get(), get(), get(), get()) }
     viewModel { TrackListViewModel(get(), get()) }

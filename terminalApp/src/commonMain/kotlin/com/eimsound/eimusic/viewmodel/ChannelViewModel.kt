@@ -1,31 +1,19 @@
 package com.eimsound.eimusic.viewmodel
 
-import com.eimsound.eimusic.auth.AuthState
-import com.eimsound.eimusic.auth.AuthStore
-import com.eimsound.eimusic.events.EventBus
-import com.eimsound.eimusic.events.EventSource
-import com.eimsound.eimusic.events.PlaybackEvent
-import com.eimsound.eimusic.events.PlayingListEvent
-import com.eimsound.eimusic.network.TogetherWebSocketClient
-import com.eimsound.eimusic.together.ChannelEvent
 import com.eimsound.eimusic.together.ChannelMessage
 import com.eimsound.eimusic.together.ChannelState
 import com.eimsound.eimusic.together.ConnectionState
 import com.eimsound.eimusic.together.DEFAULT_CHANNEL_ID
-import com.eimsound.eimusic.together.PlayControlEvent
-import com.eimsound.eimusic.together.SyncState
-import com.eimsound.eimusic.together.TogetherSyncManager
-import com.eimsound.eimusic.together.SystemMessageType
-import com.eimsound.eimusic.music.TrackSource
-import kotlin.time.Clock
+import com.eimsound.eimusic.together.TogetherStore
 import com.eimsound.eimusic.together.User
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -43,61 +31,44 @@ data class TogetherUiState(
     val isChannelIdInput: Boolean = false,
 )
 
+/** terminalApp 的薄适配层：只保留输入框状态 + TogetherStore。 */
 class ChannelViewModel(
-    private val webSocketClient: TogetherWebSocketClient,
-    private val syncManager: TogetherSyncManager,
-    private val authStore: AuthStore,
+    private val store: TogetherStore,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     private val _uiState = MutableStateFlow(TogetherUiState())
     val uiState: StateFlow<TogetherUiState> = _uiState.asStateFlow()
 
-    private val _currentChannelId = MutableStateFlow<String?>(null)
-    private var localNoticeShown = false
-
-    init { startObserving() }
-
-    fun connect() {
+    init {
         scope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-            try {
-                webSocketClient.connect()
-            } catch (_: Exception) { }
-            _uiState.value = _uiState.value.copy(isLoading = false)
+            store.state.collect { state ->
+                _uiState.update {
+                    it.copy(
+                        channelState = state.channelState,
+                        connectionState = state.connectionState,
+                        messages = state.messages,
+                        members = state.members,
+                        isLoading = state.isLoading,
+                    )
+                }
+            }
         }
     }
 
-    fun disconnect() {
-        scope.launch {
-            webSocketClient.disconnect()
-        }
-    }
+    fun connect() = store.connect()
+
+    fun disconnect() = store.disconnect()
 
     fun joinChannel(channelId: String) {
-        scope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-            val syncState: SyncState = syncManager.collectCurrentState()
-            val result = webSocketClient.joinChannel(channelId, syncState)
-            result.onSuccess { channel ->
-                _currentChannelId.value = channel.id
-                localNoticeShown = false
-                syncManager.updateChannelState(ChannelState.Joined(channel))
-                syncManager.initializeState(channel)
-            }.onFailure { error ->
-                com.eimsound.eimusic.util.TuiLogger.log("TOGETHER join failed: ${error.message}")
-                syncManager.updateChannelState(ChannelState.JoiningFailed(error.message ?: "Unknown error"))
-            }
-            _uiState.value = _uiState.value.copy(isLoading = false, channelIdInput = "")
-        }
+        store.joinChannel(channelId)
+        _uiState.update { it.copy(channelIdInput = "") }
     }
 
     fun leaveChannel() {
-        scope.launch {
-            _currentChannelId.value = null
-            webSocketClient.leaveChannel()
-            syncManager.updateChannelState(ChannelState.Disconnected)
-            _uiState.value = _uiState.value.copy(
+        store.leaveChannel()
+        _uiState.update {
+            it.copy(
                 messages = emptyList(),
                 members = emptyList(),
                 isChatInput = false,
@@ -105,253 +76,38 @@ class ChannelViewModel(
         }
     }
 
-    fun sendChatMessage(content: String) {
-        scope.launch {
-            webSocketClient.sendChatMessage(content)
-        }
-    }
+    fun sendChatMessage(content: String) = store.sendChatMessage(content)
 
     fun updateChatInput(input: String) {
-        _uiState.value = _uiState.value.copy(chatInput = input)
+        _uiState.update { it.copy(chatInput = input) }
     }
 
     fun toggleChatInput() {
-        _uiState.value = _uiState.value.copy(
-            isChatInput = !_uiState.value.isChatInput,
-            chatInput = if (_uiState.value.isChatInput) "" else _uiState.value.chatInput,
-        )
+        _uiState.update {
+            it.copy(
+                isChatInput = !it.isChatInput,
+                chatInput = if (it.isChatInput) "" else it.chatInput,
+            )
+        }
     }
 
     fun updateChannelIdInput(input: String) {
-        _uiState.value = _uiState.value.copy(channelIdInput = input)
+        _uiState.update { it.copy(channelIdInput = input) }
     }
 
     fun toggleChannelIdInput() {
-        _uiState.value = _uiState.value.copy(
-            isChannelIdInput = !_uiState.value.isChannelIdInput,
-        )
+        _uiState.update { it.copy(isChannelIdInput = !it.isChannelIdInput) }
     }
 
-    fun notifyLocalUnsupported() {
-        if (localNoticeShown || _uiState.value.channelState !is ChannelState.Joined) return
-        localNoticeShown = true
-        addMessage(
-            ChannelMessage.System(
-                channelId = _currentChannelId.value ?: DEFAULT_CHANNEL_ID,
-                sender = User("SYSTEM", "SYSTEM"),
-                timestamp = Clock.System.now(),
-                content = "本地曲目无法一起听，请切换到在线曲目",
-                messageType = SystemMessageType.LEAVE,
-            ),
-        )
-    }
+    fun notifyLocalUnsupported() = store.notifyLocalUnsupported()
 
-    private fun startObserving() {
-        // Observe playback events from local player → forward to WebSocket
-        scope.launch {
-            EventBus.PlaybackEventBus.receive { event ->
-                if (event.source == EventSource.User
-                    || event.source == EventSource.System
-                    || event.source == EventSource.Player
-                ) {
-                    if (_uiState.value.channelState !is ChannelState.Joined) return@receive
-                    val track = when (event) {
-                        is PlaybackEvent.Next -> event.track
-                        is PlaybackEvent.Previous -> event.track
-                        is PlaybackEvent.TrackChanged -> event.track
-                        else -> null
-                    }
-                    if (track?.source == TrackSource.LOCAL) {
-                        notifyLocalUnsupported()
-                        return@receive
-                    }
-                    if ((event is PlaybackEvent.PlayStateChanged || event is PlaybackEvent.Seek) &&
-                        syncManager.isCurrentTrackLocal()
-                    ) {
-                        notifyLocalUnsupported()
-                        return@receive
-                    }
-                    scope.launch {
-                        when (event) {
-                            is PlaybackEvent.PlayStateChanged -> {
-                                val ctl = if (event.isPlaying) {
-                                    PlayControlEvent.Play(event.position?.milliseconds ?: 0L)
-                                } else {
-                                    PlayControlEvent.Pause(event.position?.milliseconds ?: 0L)
-                                }
-                                syncManager.sendPlayCommand(ctl)
-                            }
-                            is PlaybackEvent.Next -> syncManager.sendPlayCommand(PlayControlEvent.Next(event.track))
-                            is PlaybackEvent.Previous -> syncManager.sendPlayCommand(PlayControlEvent.Previous(event.track))
-                            is PlaybackEvent.PlayModeChanged -> syncManager.sendPlayCommand(PlayControlEvent.PlayModeChanged(event.playMode))
-                            is PlaybackEvent.Seek -> syncManager.sendPlayCommand(PlayControlEvent.Seek(event.position.milliseconds))
-                            is PlaybackEvent.TrackChanged -> syncManager.sendPlayCommand(PlayControlEvent.ChangeTrack(event.track, event.isAudioCompleted))
-                        }
-                    }
-                }
-            }
-        }
+    fun formatTimestamp(timestamp: Instant): String =
+        timestamp.toLocalDateTime(TimeZone.of("Asia/Shanghai")).toString().substring(11, 16)
 
-        // Observe playlist events → forward to WebSocket
-        scope.launch {
-            EventBus.PlayingListEventBus.receive { event ->
-                if (event.source == EventSource.User) {
-                    if (_uiState.value.channelState !is ChannelState.Joined) return@receive
-                    scope.launch {
-                        when (event) {
-                            is PlayingListEvent.TrackAdded ->
-                                if (event.track.source == TrackSource.LOCAL) {
-                                    notifyLocalUnsupported()
-                                } else if (syncManager.hasLocalTracks()) {
-                                    val snapshot = syncManager.collectCurrentState()
-                                    syncManager.sendPlayCommand(
-                                        PlayControlEvent.ChangeTrackList(
-                                            snapshot.trackList ?: emptyList(),
-                                            snapshot.track,
-                                            syncManager.currentQueueRevision(),
-                                        )
-                                    )
-                                } else {
-                                    syncManager.sendPlayCommand(
-                                        PlayControlEvent.QueueChange(
-                                            kind = PlayControlEvent.QueueChangeKind.ADD,
-                                            track = event.track,
-                                            strategy = event.strategy,
-                                            baseRevision = syncManager.currentQueueRevision(),
-                                        )
-                                    )
-                                }
-                            is PlayingListEvent.TrackListChanged -> {
-                                val hasLocal = event.tracks.any { it.source == TrackSource.LOCAL }
-                                val shareable = event.tracks.filter { it.source != TrackSource.LOCAL }
-                                when {
-                                    event.tracks.isEmpty() -> {
-                                        // 主动清空队列也是有效同步，不能当成“全是本地”忽略。
-                                        syncManager.sendPlayCommand(
-                                            PlayControlEvent.ChangeTrackList(emptyList(), null, syncManager.currentQueueRevision())
-                                        )
-                                    }
-                                    shareable.isEmpty() -> notifyLocalUnsupported()
-                                    else -> {
-                                        if (hasLocal) notifyLocalUnsupported()
-                                        val play = event.track?.takeIf { it.source != TrackSource.LOCAL }
-                                            ?: shareable.first()
-                                        syncManager.sendPlayCommand(
-                                            PlayControlEvent.ChangeTrackList(shareable, play, syncManager.currentQueueRevision())
-                                        )
-                                    }
-                                }
-                            }
-                            is PlayingListEvent.TrackRemoved ->
-                                if (event.track.source != TrackSource.LOCAL) {
-                                    syncManager.sendPlayCommand(
-                                        PlayControlEvent.QueueChange(
-                                            kind = PlayControlEvent.QueueChangeKind.REMOVE,
-                                            track = event.track,
-                                            baseRevision = syncManager.currentQueueRevision(),
-                                        )
-                                    )
-                                }
-                            is PlayingListEvent.TrackMoved ->
-                                if (syncManager.hasLocalTracks()) {
-                                    val snapshot = syncManager.collectCurrentState()
-                                    syncManager.sendPlayCommand(
-                                        PlayControlEvent.ChangeTrackList(
-                                            snapshot.trackList ?: emptyList(),
-                                            snapshot.track,
-                                            syncManager.currentQueueRevision(),
-                                        )
-                                    )
-                                } else {
-                                    syncManager.sendPlayCommand(
-                                        PlayControlEvent.QueueChange(
-                                            kind = PlayControlEvent.QueueChangeKind.MOVE,
-                                            index = event.from,
-                                            toIndex = event.to,
-                                            baseRevision = syncManager.currentQueueRevision(),
-                                        )
-                                    )
-                                }
-                        }
-                    }
-                }
-            }
-        }
-
-        // WebSocket connection state changes
-        scope.launch {
-            webSocketClient.connectionStateFlow.collect { state ->
-                syncManager.updateConnectionState(state)
-                _uiState.value = _uiState.value.copy(connectionState = state)
-                when (state) {
-                    ConnectionState.CONNECTED -> {
-                        _currentChannelId.value?.let { joinChannel(it) }
-                    }
-                    ConnectionState.DISCONNECTED -> {
-                        syncManager.updateChannelState(ChannelState.Disconnected)
-                    }
-                    else -> {}
-                }
-            }
-        }
-
-        // WebSocket channel events
-        scope.launch {
-            webSocketClient.channelEvents().collect { event ->
-                when (event) {
-                    is ChannelEvent.NewMessage -> addMessage(event.message)
-                    is ChannelEvent.UserJoined -> updateMembers(event.members)
-                    is ChannelEvent.UserLeft -> updateMembers(event.members)
-                    is ChannelEvent.PlayStateChanged -> syncManager.handleRemoteSyncState(event)
-                    is ChannelEvent.RoomMetadataChanged -> {
-                        updateMembers(event.channel.members)
-                        syncManager.initializeState(event.channel)
-                    }
-                }
-            }
-        }
-
-        // WebSocket chat messages
-        scope.launch {
-            webSocketClient.messages().collect { message ->
-                addMessage(message)
-            }
-        }
-
-        // Update uiState from syncManager's channelState
-        scope.launch {
-            syncManager.channelState.collect { state ->
-                _uiState.value = _uiState.value.copy(channelState = state)
-            }
-        }
-    }
-
-    private fun addMessage(message: ChannelMessage) {
-        val current = _uiState.value.messages.toMutableList()
-        current.add(0, message)
-        if (current.size > 100) current.removeLast()
-        _uiState.value = _uiState.value.copy(messages = current)
-    }
-
-    private fun updateMembers(members: List<User>) {
-        _uiState.value = _uiState.value.copy(members = members)
-    }
-
-    fun formatTimestamp(timestamp: Instant): String {
-        val chinaTimeZone = TimeZone.of("Asia/Shanghai")
-        return timestamp.toLocalDateTime(chinaTimeZone).toString().substring(11, 16)
-    }
-
-    fun isMessageCurrentUser(message: ChannelMessage): Boolean {
-        val authState = authStore.state.value
-        return authState is AuthState.Authenticated
-                && message is ChannelMessage.Text
-                && message.sender.id == authState.user.id
-    }
+    fun isMessageCurrentUser(message: ChannelMessage): Boolean = store.isMessageCurrentUser(message)
 
     fun release() {
-        syncManager.cleanup()
-        scope.launch { webSocketClient.disconnect() }
+        store.release()
         scope.cancel()
     }
 }
