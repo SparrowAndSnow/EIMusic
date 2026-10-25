@@ -22,6 +22,8 @@ import com.eimsound.eimusic.network.RequestUrlProvider
 import com.eimsound.eimusic.playback.IMediaPlayerController
 import com.eimsound.eimusic.playback.PlaybackStore
 import com.eimsound.eimusic.playlist.PlaylistStore
+import com.eimsound.eimusic.local.LocalStore
+import com.eimsound.eimusic.util.loadTrackFiles
 import com.eimsound.eimusic.search.SearchStore
 import com.eimsound.eimusic.repository.NeteaseTrackRepository
 import com.eimsound.eimusic.repository.TrackRepository
@@ -87,6 +89,7 @@ fun viewModelModule() = module {
     single { TogetherStore(get(), get(), get(), TuiLogger::log) }
     single { PlaylistStore(get(), get(), get(), get(), TuiLogger::log) }
     single { PlaylistViewModel(get()) }
+    single { LocalStore(get(), ::loadTrackFiles) }
     single { LocalViewModel(get()) }
     single { ChannelViewModel(get()) }
 }

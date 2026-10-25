@@ -64,6 +64,8 @@ import com.eimsound.eimusic.factory.TrackUriResolverFactory
 import com.eimsound.eimusic.playback.IMediaPlayerController
 import com.eimsound.eimusic.playback.PlaybackStore
 import com.eimsound.eimusic.playlist.PlaylistStore
+import com.eimsound.eimusic.local.LocalStore
+import com.eimsound.eimusic.util.loadTrackFiles
 import com.eimsound.eimusic.search.SearchStore
 import com.eimsound.eimusic.resolver.share.ShareLinkResolver
 import com.eimsound.eimusic.together.TogetherStore
@@ -276,6 +278,7 @@ val viewModelModule = module {
     viewModel { MyViewModel(get()) }
     viewModel { TrackListViewModel(get(), get()) }
     viewModel { WelcomeViewModel(get()) }
+    single { LocalStore(get(), ::loadTrackFiles) }
     viewModel { LocalViewModel(get()) }
     viewModel { UpdateViewModel(get(), AppVersion.VERSION_NAME, getPlatform().type) }
 }
