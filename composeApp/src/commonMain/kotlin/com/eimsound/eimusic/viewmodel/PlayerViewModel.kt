@@ -32,7 +32,6 @@ class PlayerViewModel(
     init {
         viewModelScope.launch {
             EventBus.PlaybackEventBus.receive { event ->
-                if (syncManager.shouldIgnoreEventSource(event.source)) return@receive
                 if (event.source != EventSource.System) handlePlaybackEvent(event)
             }
         }
