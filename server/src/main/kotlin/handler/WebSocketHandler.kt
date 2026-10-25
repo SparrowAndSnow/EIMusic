@@ -253,12 +253,16 @@ class WebSocketHandler(
             }
 
             is PlayControlEvent.ChangeTrackList -> {
-                channelManager.updatePlayState(action.channelId) {
-                    SyncState(
-                        track = event.play ?: event.trackList.first(),
-                        trackList = event.trackList,
-                        controlledBy = session.user
-                    )
+                if (event.trackList.isEmpty()) {
+                    channelManager.clearQueue(action.channelId)
+                } else {
+                    channelManager.updatePlayState(action.channelId) {
+                        SyncState(
+                            track = event.play ?: event.trackList.first(),
+                            trackList = event.trackList,
+                            controlledBy = session.user
+                        )
+                    }
                 }
             }
 
@@ -311,9 +315,11 @@ class WebSocketHandler(
         }
 
         if (state != null) {
+            // 不回发给操作者，避免客户端把刚发送的队列/播放状态再应用一次。
             broadcast(
                 action.channelId,
-                TogetherProtocol.ServerEvent(ChannelEvent.PlayStateChanged(action.channelId, event, state))
+                TogetherProtocol.ServerEvent(ChannelEvent.PlayStateChanged(action.channelId, event, state)),
+                exceptSessionId = session.sessionId,
             )
 
             if (isShowMessage) {
@@ -330,8 +336,12 @@ class WebSocketHandler(
         }
     }
 
-    private suspend fun broadcast(channelId: String, protocol: TogetherProtocol) {
-        sessionManager.broadcast(channelId, protocol)
+    private suspend fun broadcast(
+        channelId: String,
+        protocol: TogetherProtocol,
+        exceptSessionId: String? = null,
+    ) {
+        sessionManager.broadcast(channelId, protocol, exceptSessionId)
     }
 
     private suspend fun sendToUser(session: DefaultWebSocketServerSession, msg: TogetherProtocol) {

@@ -185,10 +185,14 @@ class UserSessionManager(
     private fun generateSessionId(session: WebSocketSession): String =
         "${session.hashCode()}_${System.currentTimeMillis()}_${java.util.UUID.randomUUID()}"
 
-    suspend fun broadcast(channelId: String, protocol: TogetherProtocol) {
+    suspend fun broadcast(
+        channelId: String,
+        protocol: TogetherProtocol,
+        exceptSessionId: String? = null,
+    ) {
         getSessionsInChannel(channelId).forEach { id ->
-            val session = getSession(id)
-            session?.sendSerialized(protocol)
+            if (id == exceptSessionId) return@forEach
+            getSession(id)?.sendSerialized(protocol)
         }
     }
 }

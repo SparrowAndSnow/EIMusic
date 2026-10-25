@@ -94,6 +94,7 @@ class TogetherSyncManager(
     }
 
     private fun synchronizeTrackList(trackList: List<Track>, play: Track? = null) {
+        if (trackList.isEmpty()) controller.playState(PlayState.STOPPED)
         EventBus.PlayingListEventBus.send(
             PlayingListEvent.TrackListChanged(
                 trackList,

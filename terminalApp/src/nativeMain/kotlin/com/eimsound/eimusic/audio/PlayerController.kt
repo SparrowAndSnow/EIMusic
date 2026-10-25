@@ -121,11 +121,22 @@ class PlayerController(
     }
 
     fun queue(tracks: List<Track>, startTrack: Track? = null) {
-        _state.update {
-            it.copy(
+        val cleared = tracks.isEmpty()
+        if (cleared) {
+            engine.stop()
+            needsOpen = false
+        }
+        _state.update { state ->
+            val current = startTrack ?: state.current?.takeIf { c ->
+                tracks.any { it.id == c.id }
+            }
+            state.copy(
                 queue = tracks,
-                index = tracks.indexOfFirst { t -> t.id == startTrack?.id },
-                current = startTrack ?: it.current,
+                index = tracks.indexOfFirst { t -> t.id == current?.id },
+                current = current,
+                playState = if (cleared) PlayState.STOPPED else state.playState,
+                position = if (cleared) 0L else state.position,
+                isLoading = if (cleared) false else state.isLoading,
             )
         }
 
@@ -338,13 +349,17 @@ class PlayerController(
     }
 
     override fun sync(syncState: SyncState) {
-        _state.update {
-            it.copy(
-                queue = syncState.trackList ?: it.queue,
-                current = syncState.track ?: it.current,
-                playMode = syncState.playMode ?: it.playMode,
-                playState = syncState.playState ?: it.playState,
-                position = syncState.position ?: it.position,
+        _state.update { state ->
+            val queue = syncState.trackList ?: state.queue
+            val current = syncState.track ?: state.current?.takeIf { c ->
+                queue.any { it.id == c.id }
+            }
+            state.copy(
+                queue = queue,
+                current = current,
+                playMode = syncState.playMode ?: state.playMode,
+                playState = syncState.playState ?: state.playState,
+                position = syncState.position ?: state.position,
             )
         }
         val newTrack = syncState.track

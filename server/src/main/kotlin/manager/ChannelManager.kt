@@ -165,6 +165,27 @@ class ChannelManager(
         return state
     }
 
+    /** 清空频道队列并停止播放；空列表是有效状态，不能走 null=不修改的 updatePlayState。 */
+    suspend fun clearQueue(channelId: String): SyncState? = mutex.withLock {
+        val serverChannel = channels[channelId] ?: return@withLock null
+        val now = Clock.System.now()
+        serverChannel.channel = serverChannel.channel.copy(
+            currentTrack = null,
+            trackList = emptyList(),
+            playState = PlayState.STOPPED,
+            currentPosition = 0L,
+            anchorTimestamp = now,
+        )
+        serverChannel.lastActivity = now
+        SyncState(
+            track = null,
+            trackList = emptyList(),
+            playState = PlayState.STOPPED,
+            position = 0L,
+            anchorTimestamp = now,
+        )
+    }
+
     /**
      * 更新频道房主逻辑
      */

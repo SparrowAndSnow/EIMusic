@@ -206,13 +206,20 @@ class ChannelViewModel(
                                     syncManager.sendPlayCommand(PlayControlEvent.AddToQueue(event.track, event.strategy))
                                 }
                             is PlayingListEvent.TrackListChanged -> {
+                                val hasLocal = event.tracks.any { it.source == TrackSource.LOCAL }
                                 val shareable = event.tracks.filter { it.source != TrackSource.LOCAL }
-                                if (shareable.isEmpty()) {
-                                    notifyLocalUnsupported()
-                                } else {
-                                    val play = event.track?.takeIf { it.source != TrackSource.LOCAL }
-                                        ?: shareable.first()
-                                    syncManager.sendPlayCommand(PlayControlEvent.ChangeTrackList(shareable, play))
+                                when {
+                                    event.tracks.isEmpty() -> {
+                                        // 主动清空队列也是有效同步，不能当成“全是本地”忽略。
+                                        syncManager.sendPlayCommand(PlayControlEvent.ChangeTrackList(emptyList(), null))
+                                    }
+                                    shareable.isEmpty() -> notifyLocalUnsupported()
+                                    else -> {
+                                        if (hasLocal) notifyLocalUnsupported()
+                                        val play = event.track?.takeIf { it.source != TrackSource.LOCAL }
+                                            ?: shareable.first()
+                                        syncManager.sendPlayCommand(PlayControlEvent.ChangeTrackList(shareable, play))
+                                    }
                                 }
                             }
                             is PlayingListEvent.TrackRemoved ->
