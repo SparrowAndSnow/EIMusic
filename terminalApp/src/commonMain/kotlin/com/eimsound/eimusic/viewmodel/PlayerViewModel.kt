@@ -1,5 +1,6 @@
 package com.eimsound.eimusic.viewmodel
 
+import com.eimsound.eimusic.music.AddTrackStrategy
 import com.eimsound.eimusic.music.PlayerState
 import com.eimsound.eimusic.music.Track
 import com.eimsound.eimusic.playback.PlaybackStore
@@ -25,6 +26,8 @@ class PlayerViewModel(
     fun toggleMute() = store.toggleMute()
 
     fun playNext(track: Track) = store.playNext(track)
+    fun addToQueue(track: Track, strategy: AddTrackStrategy = AddTrackStrategy.AddToLast) =
+        store.addToQueue(track, strategy)
     fun playTrackFromList(tracks: List<Track>, track: Track) = store.playTrackFromList(tracks, track)
     fun playTrack(track: Track) = store.playTrack(track)
     fun playAll(tracks: List<Track>) = store.playAll(tracks)

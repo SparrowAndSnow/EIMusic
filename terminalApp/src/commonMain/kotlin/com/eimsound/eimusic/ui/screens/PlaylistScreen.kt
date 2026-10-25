@@ -5,6 +5,7 @@ import com.eimsound.eimusic.keyboard.PlaylistFocus
 import com.eimsound.eimusic.keyboard.PlaylistKeyActions
 import com.eimsound.eimusic.keyboard.dispatchPlaylistKey
 import com.eimsound.eimusic.keyboard.playlistStatusBarHint
+import com.eimsound.eimusic.music.AddTrackStrategy
 import com.eimsound.eimusic.music.MediaList
 import com.eimsound.eimusic.music.Track
 import com.eimsound.eimusic.music.TrackSource
@@ -221,10 +222,8 @@ fun PlaylistScreen(
                             playerViewModel.playTrackFromList(state.tracks, it)
                             onGoBack()
                         },
-                        onAddNext = {
-                        },
-                        onAddLast = {
-                        }
+                        onAddNext = { playerViewModel.playNext(it) },
+                        onAddLast = { playerViewModel.addToQueue(it, AddTrackStrategy.AddToLast) }
                     )
                 } else {
                     PlaylistListView(
