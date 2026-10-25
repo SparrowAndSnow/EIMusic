@@ -32,7 +32,7 @@ class TogetherSyncManager(
     private val coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var lastSyncState: SyncState? = null
     private var queueRevision = 0L
-    private val pendingCommands = MutableStateFlow<Set<String>>(emptySet())
+    private val pendingCommands = MutableStateFlow<Map<String, PlayControlEvent>>(emptyMap())
 
     init {
         coroutineScope.launch {
@@ -215,13 +215,21 @@ class TogetherSyncManager(
      */
     suspend fun sendPlayCommand(event: PlayControlEvent) {
         val commandId = "${webSocketClient.currentUserId()}-${Clock.System.now().toEpochMilliseconds()}-${kotlin.random.Random.nextLong().toULong().toString(16)}"
-        pendingCommands.update { it + commandId }
+        pendingCommands.update { it + (commandId to event) }
         coroutineScope.launch {
             delay(15.seconds)
             pendingCommands.update { it - commandId }
         }
-        val result = webSocketClient.sendPlayControl(event, commandId)
-        if (result.isFailure) pendingCommands.update { it - commandId }
+        // 发送失败时保留 pending，等重连后 replay。
+        webSocketClient.sendPlayControl(event, commandId)
+    }
+
+    /** 断线重连并重新加入频道后，重发未确认命令。 */
+    suspend fun replayPendingCommands() {
+        if (_channelState.value !is ChannelState.Joined) return
+        pendingCommands.value.forEach { (commandId, event) ->
+            webSocketClient.sendPlayControl(event, commandId)
+        }
     }
 
     /**

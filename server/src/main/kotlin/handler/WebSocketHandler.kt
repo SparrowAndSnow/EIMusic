@@ -26,6 +26,8 @@ import io.ktor.server.websocket.receiveDeserialized
 import io.ktor.server.websocket.sendSerialized
 import io.ktor.websocket.CloseReason
 import io.ktor.websocket.close
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.slf4j.LoggerFactory
 import kotlin.time.Clock
 
@@ -40,6 +42,7 @@ class WebSocketHandler(
 ) {
     private val logger = LoggerFactory.getLogger(WebSocketHandler::class.java)
     private val commandCache = java.util.concurrent.ConcurrentHashMap<String, SyncState>()
+    private val commandLocks = java.util.concurrent.ConcurrentHashMap<String, Mutex>()
 
     /**
      * 处理WebSocket会话
@@ -138,6 +141,11 @@ class WebSocketHandler(
     }
 
     private suspend fun handleControl(session: UserSession, action: TogetherProtocol.PlayControlAction) {
+        val lock = commandLocks.getOrPut(action.channelId) { Mutex() }
+        lock.withLock { handleControlLocked(session, action) }
+    }
+
+    private suspend fun handleControlLocked(session: UserSession, action: TogetherProtocol.PlayControlAction) {
         if (!ensureMember(session, action.channelId)) return
         action.commandId?.let { commandId ->
             val cached = commandCache[commandId]

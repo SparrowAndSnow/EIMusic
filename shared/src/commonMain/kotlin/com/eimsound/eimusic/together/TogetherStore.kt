@@ -84,6 +84,7 @@ class TogetherStore(
                     localNoticeShown = false
                     syncManager.updateChannelState(ChannelState.Joined(channel))
                     syncManager.initializeState(channel)
+                    scope.launch { syncManager.replayPendingCommands() }
                 }
                 .onFailure { error ->
                     log("TOGETHER join failed: ${error.message}")
