@@ -8,6 +8,7 @@ import com.eimsound.eimusic.events.PlaybackEvent
 import com.eimsound.eimusic.events.PlayingListEvent
 import com.eimsound.eimusic.music.TrackSource
 import com.eimsound.eimusic.network.TogetherWebSocketClient
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -42,8 +43,9 @@ class TogetherStore(
     private val syncManager: TogetherSyncManager,
     private val authStore: AuthStore,
     private val log: (String) -> Unit = {},
+    dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val scope = CoroutineScope(SupervisorJob() + dispatcher)
 
     private val _state = MutableStateFlow(TogetherState())
     val state: StateFlow<TogetherState> = _state.asStateFlow()

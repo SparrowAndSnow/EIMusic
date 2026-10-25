@@ -21,6 +21,7 @@ import com.eimsound.eimusic.storage.save
 import com.eimsound.eimusic.together.ChannelState
 import com.eimsound.eimusic.together.PlayState
 import com.eimsound.eimusic.together.TogetherStore
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -48,8 +49,9 @@ class PlaybackStore(
     private val library: DbLibraryRepository,
     private val session: DbSessionRepository,
     private val togetherStore: TogetherStore,
+    dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val scope = CoroutineScope(SupervisorJob() + dispatcher)
 
     val state: StateFlow<PlayerState> = controller.state
 

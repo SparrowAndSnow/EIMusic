@@ -64,6 +64,7 @@ import com.eimsound.eimusic.util.ToastMessage
 import com.eimsound.eimusic.factory.TrackUriResolverFactory
 import com.eimsound.eimusic.playback.IMediaPlayerController
 import com.eimsound.eimusic.playback.PlaybackStore
+import kotlinx.coroutines.Dispatchers
 import com.eimsound.eimusic.playlist.PlaylistStore
 import com.eimsound.eimusic.local.LocalStore
 import com.eimsound.eimusic.util.loadTrackFiles
@@ -221,7 +222,7 @@ val systemModule = module {
     single<AuthStore> { AuthStore(lazy { get() }, get()) }
 
     single<TogetherSyncManager> { TogetherSyncManager(get(), get()) }
-    single { TogetherStore(get(), get(), get()) }
+    single { TogetherStore(get(), get(), get(), dispatcher = Dispatchers.Main.immediate) }
 
     single<NotificationService> {
         NotificationService(get<SettingViewModel>().notificationState)
@@ -269,7 +270,7 @@ val viewModelModule = module {
     single(createdAtStart = true) { SettingViewModel(get()) }
     single(createdAtStart = true) { DefaultLayoutViewModel(get()) }
     single(createdAtStart = true) { PlayingListViewModel(get(), get()) }
-    single { PlaybackStore(get(), get(), get(), get(), get()) }
+    single { PlaybackStore(get(), get(), get(), get(), get(), Dispatchers.Main.immediate) }
     single(createdAtStart = true) { PlayerViewModel(get(), get(), get()) }
     single { ConfigViewModel(get()) }
     viewModel { AuthViewModel(get()) }
