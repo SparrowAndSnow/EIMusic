@@ -80,6 +80,7 @@ class ChannelViewModel(
                 syncManager.updateChannelState(ChannelState.Joined(channel))
                 syncManager.initializeState(channel)
             }.onFailure { error ->
+                com.eimsound.eimusic.util.TuiLogger.log("TOGETHER join failed: ${error.message}")
                 syncManager.updateChannelState(ChannelState.JoiningFailed(error.message ?: "Unknown error"))
             }
             _uiState.value = _uiState.value.copy(isLoading = false, channelIdInput = "")

@@ -17,6 +17,8 @@ import io.ktor.client.plugins.websocket.sendSerialized
 import io.ktor.client.plugins.websocket.webSocketSession
 import io.ktor.websocket.close
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -155,15 +157,19 @@ class TogetherWebSocketClient(
             syncState = syncState,
             timestamp = Clock.System.now()
         )
-        sendMessage(message)
-        currentChannelId = channelId
 
-        // 等待服务器响应
+        // 先订阅再发送，避免服务器响应过快导致 SharedFlow 事件丢失。
         return withTimeout(5.seconds) {
-            val event = channelEvents().first {
-                it is ChannelEvent.RoomMetadataChanged && it.channel.members.any { user.id == it.id }
-            } as ChannelEvent.RoomMetadataChanged
-            return@withTimeout Result.success(event.channel)
+            coroutineScope {
+                val response = async {
+                    channelEvents().first {
+                        it is ChannelEvent.RoomMetadataChanged && it.channel.members.any { member -> user.id == member.id }
+                    } as ChannelEvent.RoomMetadataChanged
+                }
+                sendMessage(message)
+                currentChannelId = channelId
+                Result.success(response.await().channel)
+            }
         }
     } catch (e: Exception) {
         Result.failure(e)

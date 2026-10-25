@@ -57,6 +57,7 @@ fun TogetherScreen(
                 focus = focus,
                 isJoined = isJoined,
                 actions = TogetherKeyActions(
+                    joinChannel = { channelViewModel.joinChannel("default") },
                     leaveChannel = { channelViewModel.leaveChannel() },
                     setFocus = { focus = it },
                     goBack = { channelViewModel.disconnect(); onGoBack() },

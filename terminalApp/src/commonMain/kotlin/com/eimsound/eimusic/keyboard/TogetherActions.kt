@@ -33,6 +33,7 @@ fun mapTogetherKey(key: String): TogetherAction? = togetherKeyMap[key]
 
 /** Together 页面按键回调集合。 */
 data class TogetherKeyActions(
+    val joinChannel: () -> Unit,
     val leaveChannel: () -> Unit,
     val setFocus: (TogetherFocus) -> Unit,
     val goBack: () -> Unit,
@@ -45,7 +46,7 @@ fun dispatchTogetherKey(
     actions: TogetherKeyActions,
 ): Boolean = when (focus) {
     TogetherFocus.Welcome -> when (mapTogetherKey(event.key)) {
-        TogetherAction.JoinChannel -> { actions.setFocus(TogetherFocus.Messages); true }
+        TogetherAction.JoinChannel -> { actions.joinChannel(); true }
         TogetherAction.LeaveChannel -> { actions.leaveChannel(); true }
         TogetherAction.ToggleChat -> false
         TogetherAction.Disconnect,
