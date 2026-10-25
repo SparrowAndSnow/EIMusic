@@ -10,6 +10,7 @@ enum class TogetherFocus { Welcome, Messages, ChatInput, ChannelIdInput }
 
 sealed interface TogetherAction : KeyAction {
     data object JoinChannel : TogetherAction
+    data object JoinCustomChannel : TogetherAction
     data object LeaveChannel : TogetherAction
     data object ToggleChat : TogetherAction
     data object BackToWelcome : TogetherAction
@@ -18,6 +19,7 @@ sealed interface TogetherAction : KeyAction {
 
 val togetherKeyBindings: List<KeyBinding<TogetherAction>> = listOf(
     KeyBinding(listOf("j"), "j", TogetherAction.JoinChannel, "Join"),
+    KeyBinding(listOf("c"), "c", TogetherAction.JoinCustomChannel, "Custom channel"),
     KeyBinding(listOf("l"), "l", TogetherAction.LeaveChannel, "Leave"),
     KeyBinding(listOf("m"), "m", TogetherAction.ToggleChat, "Chat"),
     KeyBinding(listOf("Escape"), "Esc", TogetherAction.BackToWelcome, "Back"),
@@ -47,6 +49,7 @@ fun dispatchTogetherKey(
 ): Boolean = when (focus) {
     TogetherFocus.Welcome -> when (mapTogetherKey(event.key)) {
         TogetherAction.JoinChannel -> { actions.joinChannel(); true }
+        TogetherAction.JoinCustomChannel -> { actions.setFocus(TogetherFocus.ChannelIdInput); true }
         TogetherAction.LeaveChannel -> { actions.leaveChannel(); true }
         TogetherAction.ToggleChat -> false
         TogetherAction.Disconnect,
@@ -69,7 +72,7 @@ fun dispatchTogetherKey(
 }
 
 fun togetherStatusBarHint(focus: TogetherFocus): String = when (focus) {
-    TogetherFocus.Welcome -> "j:Join  l:Leave  Esc:Back"
+    TogetherFocus.Welcome -> "j:Join  c:Custom  l:Leave  Esc:Back"
     TogetherFocus.Messages -> "j/k:Scroll  m:Chat  l:Leave  Esc:Back"
     TogetherFocus.ChatInput -> "Enter:Send  Esc:Cancel"
     TogetherFocus.ChannelIdInput -> "Enter:Join  Esc:Cancel"
