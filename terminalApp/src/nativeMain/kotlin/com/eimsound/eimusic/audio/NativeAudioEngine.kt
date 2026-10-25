@@ -2,6 +2,8 @@ package com.eimsound.eimusic.audio
 
 import com.eimsound.eimusic.console.restoreConsoleMode
 import com.eimsound.eimusic.util.TuiLogger
+import kotlinx.atomicfu.locks.reentrantLock
+import kotlinx.atomicfu.locks.withLock
 import kotlinx.cinterop.*
 import miniaudio.*
 
@@ -9,6 +11,7 @@ import miniaudio.*
 class NativeAudioEngine {
     private val enginePtr: CPointer<ma_engine>
     private val soundPtr: CPointer<ma_sound>
+    private val lock = reentrantLock()
     private var soundLoaded = false
 
     /** 流式播放相关状态 */
@@ -52,7 +55,7 @@ class NativeAudioEngine {
 
     // ── 文件播放（用于本地文件和缓存文件） ──
 
-    fun openFile(path: String): Long {
+    fun openFile(path: String): Long = lock.withLock {
         closeCurrent()
         TuiLogger.log("Opening: ${path.take(80)}")
         val result =
@@ -66,7 +69,7 @@ class NativeAudioEngine {
         val dur = duration()
         TuiLogger.log("Sound loaded, duration=${dur}ms")
         restoreConsoleMode()
-        return dur
+        dur
     }
 
     // ── 流式播放（用于网络音频） ──
@@ -75,7 +78,7 @@ class NativeAudioEngine {
      * 从 [StreamBuffer] 初始化流式播放。
      * 内部创建 ma_decoder（从缓冲区读取编码音频）+ ma_sound（从 decoder 读取 PCM）。
      */
-    fun openStream(buffer: StreamBuffer): Long {
+    fun openStream(buffer: StreamBuffer): Long = lock.withLock {
         closeCurrent()
 
         activeBuffer = buffer
@@ -109,87 +112,99 @@ class NativeAudioEngine {
         val dur = duration()
         TuiLogger.log("Stream initialized, duration=${dur}ms")
         restoreConsoleMode()
-        return dur
+        dur
     }
 
     // ── 播放控制 ──
 
     fun play() {
-        if (!soundLoaded) return
-        ma_sound_start(soundPtr)
-        restoreConsoleMode()
+        lock.withLock {
+            if (!soundLoaded) return
+            ma_sound_start(soundPtr)
+            restoreConsoleMode()
+        }
     }
 
     fun pause() {
-        if (!soundLoaded) return
-        ma_sound_stop(soundPtr)
+        lock.withLock {
+            if (!soundLoaded) return
+            ma_sound_stop(soundPtr)
+        }
     }
 
     fun stop() {
-        if (!soundLoaded) return
-        ma_sound_stop(soundPtr)
-        ma_sound_seek_to_pcm_frame(soundPtr, 0uL)
+        lock.withLock {
+            if (!soundLoaded) return
+            ma_sound_stop(soundPtr)
+            ma_sound_seek_to_pcm_frame(soundPtr, 0uL)
+        }
     }
 
     fun seek(millis: Long) {
-        if (!soundLoaded) return
-        val totalFrames = lengthInPcmFrames()
-        val totalMs = duration()
-        if (totalMs <= 0L || totalFrames <= 0uL) return
-        val safeMillis = millis.coerceIn(0L, totalMs)
-        val targetFrame = (safeMillis * totalFrames.toLong() / totalMs).toULong()
-        ma_sound_seek_to_pcm_frame(soundPtr, targetFrame)
+        lock.withLock {
+            if (!soundLoaded) return
+            val totalFrames = lengthInPcmFrames()
+            val totalMs = duration()
+            if (totalMs <= 0L || totalFrames <= 0uL) return
+            val safeMillis = millis.coerceIn(0L, totalMs)
+            val targetFrame = (safeMillis * totalFrames.toLong() / totalMs).toULong()
+            ma_sound_seek_to_pcm_frame(soundPtr, targetFrame)
+        }
     }
 
-    fun position(): Long {
-        if (!soundLoaded) return 0L
-        return ma_sound_get_time_in_milliseconds(soundPtr).toLong()
+    fun position(): Long = lock.withLock {
+        if (!soundLoaded) return@withLock 0L
+        ma_sound_get_time_in_milliseconds(soundPtr).toLong()
     }
 
-    fun duration(): Long {
-        if (!soundLoaded) return 0L
-        return memScoped {
+    fun duration(): Long = lock.withLock {
+        if (!soundLoaded) return@withLock 0L
+        memScoped {
             val pcmFrames: ULongVar = alloc()
             ma_sound_get_length_in_pcm_frames(soundPtr, pcmFrames.ptr)
             val frames = pcmFrames.value
-            if (frames == 0uL) return 0L
+            if (frames == 0uL) return@memScoped 0L
             val sampleRate = ma_engine_get_sample_rate(enginePtr).toLong()
             frames.toLong() * 1000L / sampleRate
         }
     }
 
     fun setVolume(value: Float) {
-        ma_sound_set_volume(soundPtr, value)
+        lock.withLock { ma_sound_set_volume(soundPtr, value) }
     }
 
-    fun isPlaying(): Boolean {
-        if (!soundLoaded) return false
-        return ma_sound_is_playing(soundPtr) != 0u
+    fun isPlaying(): Boolean = lock.withLock {
+        if (!soundLoaded) return@withLock false
+        ma_sound_is_playing(soundPtr) != 0u
     }
 
     // ── 生命周期 ──
 
     /** 先停 sound 再销毁 decoder，供切歌/释放复用。 */
     fun closeCurrent() {
-        try {
-            if (soundLoaded) {
-                ma_sound_stop(soundPtr)
-                ma_sound_uninit(soundPtr)
-                soundLoaded = false
+        lock.withLock {
+            try {
+                if (soundLoaded) {
+                    soundLoaded = false
+                    ma_sound_stop(soundPtr)
+                    ma_sound_uninit(soundPtr)
+                }
+            } catch (_: Exception) {
             }
-        } catch (_: Exception) {
+            cleanupStream()
         }
-        cleanupStream()
     }
 
     fun release() {
-        closeCurrent()
-        try {
-            ma_engine_uninit(enginePtr)
-        } catch (_: Exception) {
+        lock.withLock {
+            closeCurrent()
+            try {
+                ma_engine_uninit(enginePtr)
+            } catch (_: Exception) {
+            }
+            nativeHeap.free(enginePtr)
+            nativeHeap.free(soundPtr)
         }
-        nativeHeap.free(enginePtr)
-        nativeHeap.free(soundPtr)
     }
 
     private fun cleanupStream() {
@@ -204,8 +219,8 @@ class NativeAudioEngine {
         activeBuffer = null
     }
 
-    private fun lengthInPcmFrames(): ULong {
-        return memScoped {
+    private fun lengthInPcmFrames(): ULong = lock.withLock {
+        memScoped {
             val frames: ULongVar = alloc()
             ma_sound_get_length_in_pcm_frames(soundPtr, frames.ptr)
             frames.value

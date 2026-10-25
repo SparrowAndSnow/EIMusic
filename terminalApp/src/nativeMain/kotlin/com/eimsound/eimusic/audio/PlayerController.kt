@@ -396,13 +396,14 @@ class PlayerController(
     private fun currentList(): List<Track> = _state.value.currentList
 
     private fun doOpenAndPlay(track: Track) {
+        // 先停轮询，再拆音频资源，避免 duration/position 与 uninit 并发。
+        stopPositionPolling()
         playJob?.cancel()
         streamJob?.cancel()
         streamJob = null
         engine.closeCurrent()
         networkStream?.close()
         networkStream = null
-        stopPositionPolling()
         playJob = scope.launch {
             try {
                 TuiLogger.log("Track Source: ${track.name} (${track.source})")

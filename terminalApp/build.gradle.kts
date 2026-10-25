@@ -35,6 +35,7 @@ kotlin {
         }
 
         nativeMain.dependencies {
+            implementation(libs.atomicfu)
             implementation(libs.ktor.client.curl)
             implementation(libs.sqldelight.native.driver)
         }
