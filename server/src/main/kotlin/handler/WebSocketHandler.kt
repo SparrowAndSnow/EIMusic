@@ -43,7 +43,8 @@ class WebSocketHandler(
      * 处理WebSocket会话
      */
     suspend fun handleSession(session: DefaultWebSocketServerSession, user: User) {
-//        cleanupPreviousSession(user)
+        // 同一用户重连时先踢掉旧连接，避免旧 listen 协程继续占用会话。
+        cleanupPreviousSession(user)
 
         when (val result = sessionManager.createSession(session, user, forceCleanup = false)) {
             is CreateUserSessionResult.Success -> {

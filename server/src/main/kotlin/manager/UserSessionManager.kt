@@ -50,9 +50,9 @@ class UserSessionManager(
             }
         }
 
-//        val sessionId = generateSessionId(session)
+        val sessionId = generateSessionId(session)
         val userSession = UserSession(
-            sessionId = user.id,
+            sessionId = sessionId,
             user = user.copy(isOnline = true),
             session = session,
             connectTime = Clock.System.now(),
@@ -183,7 +183,7 @@ class UserSessionManager(
     }
 
     private fun generateSessionId(session: WebSocketSession): String =
-        "${session.hashCode()}_${System.currentTimeMillis()}"
+        "${session.hashCode()}_${System.currentTimeMillis()}_${java.util.UUID.randomUUID()}"
 
     suspend fun broadcast(channelId: String, protocol: TogetherProtocol) {
         getSessionsInChannel(channelId).forEach { id ->
