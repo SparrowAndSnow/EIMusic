@@ -167,7 +167,11 @@ class TogetherStore(
                     notifyLocalUnsupported()
                     return@receive
                 }
-                if ((event is PlaybackEvent.PlayStateChanged || event is PlaybackEvent.Seek) &&
+                // Next/Previous 的 track 可能为 null，此时只能看当前曲目来源。
+                if ((event is PlaybackEvent.PlayStateChanged ||
+                        event is PlaybackEvent.Seek ||
+                        event is PlaybackEvent.Next ||
+                        event is PlaybackEvent.Previous) &&
                     syncManager.isCurrentTrackLocal()
                 ) {
                     notifyLocalUnsupported()
