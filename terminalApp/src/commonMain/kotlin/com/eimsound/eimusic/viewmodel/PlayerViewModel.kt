@@ -5,6 +5,9 @@ import com.eimsound.eimusic.db.DbSessionRepository
 import com.eimsound.eimusic.db.DbTrack
 import com.eimsound.eimusic.db.toDbTrack
 import com.eimsound.eimusic.db.toTrack
+import com.eimsound.eimusic.events.EventBus
+import com.eimsound.eimusic.events.EventSource
+import com.eimsound.eimusic.events.PlayingListEvent
 import com.eimsound.eimusic.music.PlayerState
 import com.eimsound.eimusic.music.Track
 import com.eimsound.eimusic.music.PlayMode
@@ -192,6 +195,7 @@ class PlayerViewModel(
     fun playNext(track: Track) {
         val index = (state.value.index + 1).coerceIn(0, state.value.queue.size)
         controller.addTrack(track, index)
+        announceQueueChange()
     }
 
     /** 用当前列表替换队列，并播放选中曲目。 */
@@ -199,14 +203,17 @@ class PlayerViewModel(
         if (tracks.isEmpty()) return
         controller.queue(tracks)
         controller.play(track)
+        announceQueueChange()
     }
 
     fun playTrack(track: Track) {
         // 已在队列里的曲目直接播放，不移动位置；新曲目才追加到末尾。
-        if (state.value.queue.none { it.id == track.id }) {
+        val added = state.value.queue.none { it.id == track.id }
+        if (added) {
             controller.addTrack(track, state.value.queue.size)
         }
         controller.play(track)
+        if (added) announceQueueChange()
     }
 
     fun playAll(tracks: List<Track>) {
@@ -214,11 +221,18 @@ class PlayerViewModel(
         controller.queue(tracks) {
             controller.play(tracks.first())
         }
+        announceQueueChange()
     }
 
-    fun removeTrack(index: Int) = controller.removeTrack(index)
+    fun removeTrack(index: Int) {
+        controller.removeTrack(index)
+        announceQueueChange()
+    }
 
-    fun moveTrack(from: Int, to: Int) = controller.moveTrack(from, to)
+    fun moveTrack(from: Int, to: Int) {
+        controller.moveTrack(from, to)
+        announceQueueChange()
+    }
 
     fun clearQueue() {
         controller.playState(PlayState.STOPPED)
@@ -226,6 +240,17 @@ class PlayerViewModel(
         for (i in (size - 1) downTo 0) {
             controller.removeTrack(i)
         }
+        announceQueueChange()
+    }
+
+    private fun announceQueueChange() {
+        EventBus.PlayingListEventBus.send(
+            PlayingListEvent.TrackListChanged(
+                tracks = state.value.queue,
+                track = state.value.current,
+                source = EventSource.User,
+            ),
+        )
     }
 
     fun release() {
