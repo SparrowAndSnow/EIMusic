@@ -58,7 +58,8 @@ class PlaybackStore(
 
     private val _pendingDelta = MutableStateFlow(0L)
     val displayPosition: StateFlow<Long> = combine(state, _pendingDelta) { s, delta ->
-        (s.position + delta).coerceIn(0, s.duration)
+        val max = s.duration.coerceAtLeast(0L)
+        (s.position + delta).coerceIn(0L, max)
     }.stateIn(scope, SharingStarted.Eagerly, 0L)
 
     private var debounceJob: Job? = null
@@ -254,7 +255,8 @@ class PlaybackStore(
         val offset = _pendingDelta.value
         if (offset == 0L) return
         _pendingDelta.value = 0L
-        val target = (state.value.position + offset).coerceIn(0, state.value.duration)
+        val max = state.value.duration.coerceAtLeast(0L)
+        val target = (state.value.position + offset).coerceIn(0L, max)
         controller.seek(target)
     }
 

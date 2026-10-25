@@ -108,7 +108,7 @@ actual class MediaPlayerController actual constructor(val trackUriResolverFactor
     private fun handlePlayerReady() {
         _state.update {
             it.copy(
-                duration = mediaController?.duration ?: 0,
+                duration = mediaController?.duration?.coerceAtLeast(0L) ?: 0L,
                 isLoading = false
             )
         }
