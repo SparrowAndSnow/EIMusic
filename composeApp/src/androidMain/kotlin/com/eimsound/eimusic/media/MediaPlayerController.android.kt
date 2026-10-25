@@ -201,7 +201,18 @@ actual class MediaPlayerController actual constructor(val trackUriResolverFactor
         play(media, 0)
     }
 
+    private fun runOnMain(block: () -> Unit) {
+        if (Looper.myLooper() == Looper.getMainLooper()) block()
+        else progressUpdateHandler.post(block)
+    }
+
     private fun play(media: Track, position: Long) {
+        runOnMain {
+            playOnMain(media, position)
+        }
+    }
+
+    private fun playOnMain(media: Track, position: Long) {
         val list = getCurrentPlayList()
         val mediaIndex = list.indexOfFirst { it.id == media.id }
         _state.update {
@@ -218,6 +229,10 @@ actual class MediaPlayerController actual constructor(val trackUriResolverFactor
     private fun getCurrentPlayList(): List<Track> = _state.value.currentList
 
     actual override fun queue(medias: List<Track>, prepareOver: () -> Unit) {
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            progressUpdateHandler.post { queue(medias, prepareOver) }
+            return
+        }
         val mediaItems = medias.mapNotNull { it.parse() }
         _state.update {
             it.copy(queue = medias)
@@ -260,6 +275,10 @@ actual class MediaPlayerController actual constructor(val trackUriResolverFactor
     }
 
     actual override fun sync(syncState: SyncState) {
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            progressUpdateHandler.post { sync(syncState) }
+            return
+        }
         val medias = syncState.trackList ?: return
         val index = medias.indexOfFirst { it.id == syncState.track?.id }
 

@@ -339,5 +339,9 @@ class TogetherStore(
 
     private fun updateMembers(members: List<User>) {
         _state.value = _state.value.copy(members = members)
+        val joined = _state.value.channelState as? ChannelState.Joined ?: return
+        if (joined.channel.members != members) {
+            syncManager.updateChannelState(ChannelState.Joined(joined.channel.copy(members = members)))
+        }
     }
 }
