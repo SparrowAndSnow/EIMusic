@@ -6,6 +6,7 @@ import com.eimsound.eimusic.factory.TrackUriResolverFactory
 import com.eimsound.eimusic.music.PlayMode
 import com.eimsound.eimusic.music.PlayerState
 import com.eimsound.eimusic.music.Track
+import com.eimsound.eimusic.music.TrackId
 import com.eimsound.eimusic.music.nextTrackCandidate
 import com.eimsound.eimusic.music.previousTrackCandidate
 import com.eimsound.eimusic.music.withTrackAdded
@@ -204,6 +205,21 @@ open class JavaStreamPlayerController(
         _state.update { it.copy(queue = medias) }
         prepareOver()
         playMode(state.value.playMode)
+    }
+
+    override fun restore(queue: List<Track>, currentId: TrackId?) {
+        val index = queue.indexOfFirst { it.id == currentId }
+        val current = queue.getOrNull(index)
+        _state.update {
+            it.copy(
+                queue = queue,
+                index = index.coerceAtLeast(0),
+                current = current,
+                playState = if (current == null) PlayState.STOPPED else PlayState.PAUSED,
+                position = 0L,
+                isLoading = false,
+            )
+        }
     }
 
     override fun playState(state: PlayState) {

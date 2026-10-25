@@ -229,6 +229,21 @@ actual class MediaPlayerController actual constructor(val trackUriResolverFactor
         isReady.value = true
     }
 
+    actual override fun restore(queue: List<Track>, currentId: TrackId?) {
+        val index = queue.indexOfFirst { it.id == currentId }
+        val current = queue.getOrNull(index)
+        _state.update {
+            it.copy(
+                queue = queue,
+                index = index.coerceAtLeast(0),
+                current = current,
+                playState = if (current == null) PlayState.STOPPED else PlayState.PAUSED,
+                position = 0L,
+                isLoading = false,
+            )
+        }
+    }
+
     actual override fun playState(state: PlayState) {
         when (state) {
             PlayState.PLAYING -> mediaController?.play()
