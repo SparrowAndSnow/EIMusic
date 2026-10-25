@@ -221,7 +221,7 @@ class PlayerController(
                 val next = nextTrack()
                 if (next != null) {
                     EventBus.PlaybackEventBus.send(
-                        PlaybackEvent.Next(isAudioCompleted, next, source = origin.toEventSource())
+                        PlaybackEvent.Next(isAudioCompleted, next, source = if (origin == PlaybackOrigin.RemoteSync) EventSource.Remote else EventSource.Player)
                     )
                     play(next, isAudioCompleted, origin)
                 }
@@ -238,7 +238,7 @@ class PlayerController(
                 val prev = previousTrack()
                 if (prev != null) {
                     EventBus.PlaybackEventBus.send(
-                        PlaybackEvent.Previous(prev, source = origin.toEventSource())
+                        PlaybackEvent.Previous(prev, source = if (origin == PlaybackOrigin.RemoteSync) EventSource.Remote else EventSource.Player)
                     )
                     play(prev, false, origin)
                 }

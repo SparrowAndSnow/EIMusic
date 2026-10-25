@@ -13,6 +13,7 @@ import androidx.media3.session.SessionCommand
 import com.eimsound.eimusic.EIMusicMediaController
 import com.eimsound.eimusic.cycle
 import com.eimsound.eimusic.events.EventSource
+import com.eimsound.eimusic.events.EventBus
 import com.eimsound.eimusic.events.PlaybackEvent
 import com.eimsound.eimusic.music.PlayMode
 import com.eimsound.eimusic.music.PlayerState
@@ -378,11 +379,23 @@ actual class MediaPlayerController actual constructor(val trackUriResolverFactor
 
     actual override fun next(isAudioCompleted: Boolean, origin: PlaybackOrigin) {
         currentOrigin = origin
+        val target = nextTrack()
+        if (target != null) {
+            EventBus.PlaybackEventBus.send(
+                PlaybackEvent.Next(track = target, source = if (origin == PlaybackOrigin.RemoteSync) EventSource.Remote else EventSource.Player)
+            )
+        }
         mediaController?.seekToNextMediaItem()
     }
 
     actual override fun previous(origin: PlaybackOrigin) {
         currentOrigin = origin
+        val target = previousTrack()
+        if (target != null) {
+            EventBus.PlaybackEventBus.send(
+                PlaybackEvent.Previous(track = target, source = if (origin == PlaybackOrigin.RemoteSync) EventSource.Remote else EventSource.Player)
+            )
+        }
         mediaController?.seekToPreviousMediaItem()
     }
 

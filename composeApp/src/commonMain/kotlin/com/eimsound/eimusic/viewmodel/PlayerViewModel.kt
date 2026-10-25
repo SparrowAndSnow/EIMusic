@@ -53,8 +53,12 @@ class PlayerViewModel(
             is PlaybackEvent.PlayStateChanged -> handlePlayStateChanged(event)
             is PlaybackEvent.PlayModeChanged -> onPlayModeChanged(event.playMode, event.source.toPlaybackOrigin())
             is PlaybackEvent.Seek -> seek(event.position, event.seekOver, event.source.toPlaybackOrigin())
-            is PlaybackEvent.Next -> controller.next(event.isAudioCompleted, event.source.toPlaybackOrigin())
-            is PlaybackEvent.Previous -> controller.previous(event.source.toPlaybackOrigin())
+            is PlaybackEvent.Next -> if (event.source == EventSource.User) {
+                controller.next(event.isAudioCompleted, event.source.toPlaybackOrigin())
+            }
+            is PlaybackEvent.Previous -> if (event.source == EventSource.User) {
+                controller.previous(event.source.toPlaybackOrigin())
+            }
             is PlaybackEvent.TrackChanged -> handleTrackChanged(event)
         }
     }

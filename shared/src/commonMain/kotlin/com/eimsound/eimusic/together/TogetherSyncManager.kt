@@ -89,12 +89,23 @@ class TogetherSyncManager(
                     remoteState.track,
                 )
                 // 使用 TrackChanged
+                // 按服务端指定曲目应用，避免各端 local index 不同导致多跳一首。
                 is PlayControlEvent.Next -> {
-                    controller.next(origin = PlaybackOrigin.RemoteSync)
+                    val track = event.track
+                    if (track != null) {
+                        synchronizeTrack(track)
+                    } else {
+                        controller.next(origin = PlaybackOrigin.RemoteSync)
+                    }
                 }
 
                 is PlayControlEvent.Previous -> {
-                    controller.previous(PlaybackOrigin.RemoteSync)
+                    val track = event.track
+                    if (track != null) {
+                        synchronizeTrack(track)
+                    } else {
+                        controller.previous(PlaybackOrigin.RemoteSync)
+                    }
                 }
                 is PlayControlEvent.Pause -> synchronizePlayState(
                     remoteState.playState ?: PlayState.PAUSED,
