@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Track(
     val album: Album?,
-    val artists: List<Artist>?,
+    val artists: List<Artist> = emptyList(),
     val duration: Duration?,
     val id: TrackId,
     val name: String,

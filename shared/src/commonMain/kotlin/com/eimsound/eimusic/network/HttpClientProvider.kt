@@ -5,7 +5,7 @@ import com.eimsound.eimusic.auth.AuthStore
 import com.eimsound.eimusic.auth.RefreshRequest
 import com.eimsound.eimusic.network.models.NetworkResult
 import com.eimsound.eimusic.serialization.Json
-import com.eimsound.eimusic.serialization.Json
+import com.eimsound.eimusic.serialization.ProtoBuf
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.HttpTimeout
@@ -37,7 +37,7 @@ class HttpClientProvider(
             }
 
             install(WebSockets){
-                contentConverter = KotlinxWebsocketSerializationConverter(Json)
+                contentConverter = KotlinxWebsocketSerializationConverter(ProtoBuf)
             }
 
             install(HttpTimeout) {

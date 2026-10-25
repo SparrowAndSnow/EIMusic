@@ -20,7 +20,7 @@ fun DbTrack.toTrack(): Track = Track(
     } else {
         null
     },
-    artists = artist?.let { listOf(Artist(image = null, id = source.name, name = it)) },
+    artists = artist?.let { listOf(Artist(image = null, id = source.name, name = it)) } ?: emptyList(),
     duration = duration?.let(::Duration),
     id = runCatching { TrackId.parse(id) }.getOrElse { TrackId(source, externalId) },
     name = title,

@@ -16,7 +16,7 @@ fun localTrack(path: String): Track {
         uri = path,
         source = TrackSource.LOCAL,
         album = null,
-        artists = null,
+        artists = emptyList(),
         duration = null,
     )
 }

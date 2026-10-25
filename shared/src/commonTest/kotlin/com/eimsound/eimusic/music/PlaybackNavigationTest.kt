@@ -8,7 +8,7 @@ import kotlin.test.assertSame
 class PlaybackNavigationTest {
     private fun track(id: String) = Track(
         album = null,
-        artists = null,
+        artists = emptyList(),
         duration = null,
         id = TrackId(TrackSource.LOCAL, id),
         name = id,

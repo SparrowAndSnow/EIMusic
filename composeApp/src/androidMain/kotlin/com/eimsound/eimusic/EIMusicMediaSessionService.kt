@@ -74,7 +74,7 @@ class EIMusicMediaSessionService : MediaSessionService(), KoinComponent {
                                 uri = trackId.id,
                                 name = "",
                                 album = null,
-                                artists = null,
+                                artists = emptyList(),
                                 duration = null,
                             )
                         )

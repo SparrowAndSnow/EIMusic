@@ -1,6 +1,6 @@
 package com.eimsound.eimusic.server
 
-import com.eimsound.eimusic.serialization.Json
+import com.eimsound.eimusic.serialization.ProtoBuf
 import com.eimsound.eimusic.server.handler.WebSocketHandler
 import com.eimsound.eimusic.together.User
 import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
@@ -19,7 +19,7 @@ fun Application.configureSockets() {
         maxFrameSize = Long.MAX_VALUE
         masking = false
 
-        contentConverter = KotlinxWebsocketSerializationConverter(Json)
+        contentConverter = KotlinxWebsocketSerializationConverter(ProtoBuf)
     }
 
     routing {

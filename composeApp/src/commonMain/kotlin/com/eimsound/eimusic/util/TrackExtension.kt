@@ -11,7 +11,7 @@ fun localTack(path: String, name: String, uri: String): Track {
         id = TrackId(TrackSource.LOCAL, path),
         name = name,
         uri = uri,
-        artists = null,
+        artists = emptyList(),
         album = null,
         duration = null,
         source = TrackSource.LOCAL
