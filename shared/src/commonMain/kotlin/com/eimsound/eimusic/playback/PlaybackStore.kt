@@ -137,12 +137,18 @@ class PlaybackStore(
         return false
     }
 
-    fun playNext(track: Track) {
+    fun playNext(track: Track) = addToQueue(track, AddTrackStrategy.AddToNext)
+
+    fun addToQueue(track: Track, strategy: AddTrackStrategy) {
         if (rejectLocalTrack(track)) return
-        val index = (state.value.index + 1).coerceIn(0, state.value.queue.size)
+        val index = when (strategy) {
+            is AddTrackStrategy.AddToLast -> state.value.queue.size
+            is AddTrackStrategy.AddToNext -> (state.value.index + 1).coerceIn(0, state.value.queue.size)
+            is AddTrackStrategy.InsertToQueue -> strategy.index.coerceIn(0, state.value.queue.size)
+        }
         controller.addTrack(track, index)
         EventBus.PlayingListEventBus.send(
-            PlayingListEvent.TrackAdded(track, AddTrackStrategy.AddToNext, source = EventSource.User),
+            PlayingListEvent.TrackAdded(track, strategy, source = EventSource.User),
         )
     }
 

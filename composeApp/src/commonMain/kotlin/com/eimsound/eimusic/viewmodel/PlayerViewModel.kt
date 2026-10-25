@@ -39,8 +39,8 @@ class PlayerViewModel(
 
         viewModelScope.launch {
             EventBus.PlayingListEventBus.receive { event ->
-                if (syncManager.shouldIgnoreEventSource(event.source)) return@receive
-                handlePlayingListEvent(event)
+                // 本地 UI 已直接调用 PlaybackStore；这里只应用远端同步事件。
+                if (event.source == EventSource.Remote) handlePlayingListEvent(event)
             }
         }
 
