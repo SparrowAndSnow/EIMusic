@@ -15,6 +15,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlin.math.abs
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -30,6 +31,7 @@ class TogetherSyncManager(
     private val coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var lastSyncState: SyncState? = null
     private var queueRevision = 0L
+    private val pendingCommands = MutableStateFlow<Set<String>>(emptySet())
 
     private val _channelState = MutableStateFlow<ChannelState>(ChannelState.Disconnected)
     val channelState: StateFlow<ChannelState> = _channelState.asStateFlow()
@@ -54,8 +56,14 @@ class TogetherSyncManager(
         val remoteState = remoteStateEvent.state
         lastSyncState = remoteState
         queueRevision = remoteState.queueRevision
-        // 自己操作的回显只用来更新 revision，不再重复应用，避免重新加载/重置进度。
-        if (remoteState.controlledBy?.id == webSocketClient.currentUserId()) return
+        val commandId = remoteState.commandId
+        if (commandId != null && commandId in pendingCommands.value) {
+            pendingCommands.update { it - commandId }
+            // 自己的命令：只确认，不重复应用。
+            return
+        }
+        // 兼容没有 commandId 的旧状态。
+        if (commandId == null && remoteState.controlledBy?.id == webSocketClient.currentUserId()) return
 
         val event = remoteStateEvent.event
         try {
@@ -196,7 +204,10 @@ class TogetherSyncManager(
      * 发送播放控制命令
      */
     suspend fun sendPlayCommand(event: PlayControlEvent) {
-        webSocketClient.sendPlayControl(event)
+        val commandId = "${webSocketClient.currentUserId()}-${Clock.System.now().toEpochMilliseconds()}-${kotlin.random.Random.nextLong().toULong().toString(16)}"
+        pendingCommands.update { it + commandId }
+        val result = webSocketClient.sendPlayControl(event, commandId)
+        if (result.isFailure) pendingCommands.update { it - commandId }
     }
 
     /**

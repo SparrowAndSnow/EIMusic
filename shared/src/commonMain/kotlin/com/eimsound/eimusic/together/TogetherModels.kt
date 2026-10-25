@@ -75,6 +75,7 @@ data class SyncState(
     val track: Track? = null,
     val trackList: List<Track>? = null,
     val queueRevision: Long = 0L,
+    val commandId: String? = null,
     val playMode: PlayMode? = null,
     val playState: PlayState? = null,
     val position: Long? = null,

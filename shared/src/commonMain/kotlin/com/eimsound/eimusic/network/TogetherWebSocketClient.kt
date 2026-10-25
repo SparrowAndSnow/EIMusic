@@ -216,12 +216,14 @@ class TogetherWebSocketClient(
      */
     suspend fun sendPlayControl(
         event: PlayControlEvent,
+        commandId: String? = null,
     ): Result<Unit> = try {
         val currentChannel = currentChannelId ?: return Result.failure(IllegalStateException("未加入任何频道"))
 
         val message = TogetherProtocol.PlayControlAction(
             channelId = currentChannel,
             event = event,
+            commandId = commandId,
             timestamp = Clock.System.now()
         )
 

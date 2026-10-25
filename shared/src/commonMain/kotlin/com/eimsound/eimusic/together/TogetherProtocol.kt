@@ -38,6 +38,7 @@ sealed interface TogetherProtocol {
     data class PlayControlAction(
         val channelId: String,
         val event: PlayControlEvent,
+        val commandId: String? = null,
         override val timestamp: Instant = Clock.System.now()
     ) : TogetherProtocol
 

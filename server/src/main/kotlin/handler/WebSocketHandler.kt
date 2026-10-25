@@ -329,9 +329,10 @@ class WebSocketHandler(
         }
 
         if (state != null) {
+            val stateWithCommand = state.copy(commandId = action.commandId)
             broadcast(
                 action.channelId,
-                TogetherProtocol.ServerEvent(ChannelEvent.PlayStateChanged(action.channelId, event, state)),
+                TogetherProtocol.ServerEvent(ChannelEvent.PlayStateChanged(action.channelId, event, stateWithCommand)),
             )
 
             if (isShowMessage) {
