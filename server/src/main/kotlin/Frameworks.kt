@@ -16,6 +16,7 @@ import org.koin.logger.slf4jLogger
 import org.slf4j.LoggerFactory
 import java.io.File
 import com.eimsound.eimusic.music.TrackSource
+import kotlin.time.Duration.Companion.seconds
 
 private fun loadAppConfig(): AppConfig {
     val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true; prettyPrint = true; encodeDefaults = true }
@@ -31,16 +32,44 @@ private fun loadAppConfig(): AppConfig {
     return AppConfig()
 }
 
+data class ServerSettings(
+    val maxChannels: Int = 1000,
+    val maxUsersPerChannel: Int = 50,
+    val maxConnections: Int = 10000,
+    val heartbeatIntervalSeconds: Int = 30,
+)
+
+private fun Application.loadServerSettings(): ServerSettings {
+    fun int(path: String, default: Int): Int =
+        environment.config.propertyOrNull(path)?.getString()?.toIntOrNull() ?: default
+
+    return ServerSettings(
+        maxChannels = int("server.maxChannels", 1000),
+        maxUsersPerChannel = int("server.maxUsersPerChannel", 50),
+        maxConnections = int("server.maxConnections", 10000),
+        heartbeatIntervalSeconds = int("server.heartbeatInterval", 30),
+    )
+}
+
 fun Application.configureFrameworks() {
     val appConfig = loadAppConfig()
+    val serverSettings = loadServerSettings()
     install(Koin) {
         slf4jLogger()
         modules(module {
+            single<ServerSettings> { serverSettings }
             single<ChannelManager> {
-                ChannelManager()
+                ChannelManager(
+                    maxChannels = get<ServerSettings>().maxChannels,
+                    maxUsersPerChannel = get<ServerSettings>().maxUsersPerChannel,
+                )
             }
             single<UserSessionManager> {
-                UserSessionManager()
+                val settings = get<ServerSettings>()
+                UserSessionManager(
+                    maxConnections = settings.maxConnections,
+                    heartbeatTimeout = settings.heartbeatIntervalSeconds.seconds * 3,
+                )
             }
             single<ConnectionMonitor>(createdAtStart = true) {
                 ConnectionMonitor(get(), get())
