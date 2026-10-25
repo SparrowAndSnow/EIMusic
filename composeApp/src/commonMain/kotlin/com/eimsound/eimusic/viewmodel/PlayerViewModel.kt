@@ -84,6 +84,9 @@ class PlayerViewModel(
             is PlayingListEvent.TrackRemoved -> {
                 onPlayingTrackRemoved(event.track)
             }
+            is PlayingListEvent.TrackMoved -> {
+                controller.moveTrack(event.from, event.to)
+            }
         }
     }
 

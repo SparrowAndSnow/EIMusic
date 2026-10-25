@@ -17,6 +17,7 @@ import com.eimsound.eimusic.together.ConnectionState
 import com.eimsound.eimusic.together.PlayControlEvent
 import com.eimsound.eimusic.together.PlayControlEvent.*
 import com.eimsound.eimusic.together.SyncState
+import com.eimsound.eimusic.music.TrackSource
 import com.eimsound.eimusic.together.TogetherSyncManager
 import com.eimsound.eimusic.together.User
 import kotlinx.coroutines.flow.*
@@ -251,16 +252,55 @@ class ChannelViewModel(
             EventBus.PlayingListEventBus.receive {
                 if (it.source == EventSource.User) when (it) {
                     is PlayingListEvent.TrackAdded -> {
-                        sendPlayControl(AddToQueue(it.track, it.strategy))
+                        if (it.track.source != TrackSource.LOCAL) {
+                            sendPlayControl(
+                                QueueChange(
+                                    kind = QueueChangeKind.ADD,
+                                    track = it.track,
+                                    strategy = it.strategy,
+                                    baseRevision = syncManager.currentQueueRevision(),
+                                )
+                            )
+                        }
                     }
 
                     is PlayingListEvent.TrackListChanged -> {
-                        sendPlayControl(ChangeTrackList(it.tracks, it.track))
+                        val shareable = it.tracks.filter { track -> track.source != TrackSource.LOCAL }
+                        when {
+                            it.tracks.isEmpty() -> sendPlayControl(
+                                ChangeTrackList(emptyList(), null, syncManager.currentQueueRevision())
+                            )
+                            shareable.isEmpty() -> {}
+                            else -> sendPlayControl(
+                                ChangeTrackList(
+                                    shareable,
+                                    it.track?.takeIf { track -> track.source != TrackSource.LOCAL } ?: shareable.first(),
+                                    syncManager.currentQueueRevision(),
+                                )
+                            )
+                        }
                     }
 
                     is PlayingListEvent.TrackRemoved -> {
-                        sendPlayControl(RemoveFromQueue(it.track))
+                        if (it.track.source != TrackSource.LOCAL) {
+                            sendPlayControl(
+                                QueueChange(
+                                    kind = QueueChangeKind.REMOVE,
+                                    track = it.track,
+                                    baseRevision = syncManager.currentQueueRevision(),
+                                )
+                            )
+                        }
                     }
+
+                    is PlayingListEvent.TrackMoved -> sendPlayControl(
+                        QueueChange(
+                            kind = QueueChangeKind.MOVE,
+                            index = it.from,
+                            toIndex = it.to,
+                            baseRevision = syncManager.currentQueueRevision(),
+                        )
+                    )
                 }
             }
         }

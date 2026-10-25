@@ -257,7 +257,7 @@ val viewModelModule = module {
     viewModel { ChannelViewModel(get(), get(), get(), get()) }
     viewModel { SearchResultViewModel(get()) }
     viewModel { MyViewModel(get(), get(), get()) }
-    viewModel { TrackListViewModel(get()) }
+    viewModel { TrackListViewModel(get(), get()) }
     viewModel { WelcomeViewModel(get()) }
     viewModel { LocalViewModel(get()) }
     viewModel { UpdateViewModel(get(), AppVersion.VERSION_NAME, getPlatform().type) }
