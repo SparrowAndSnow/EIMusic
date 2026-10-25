@@ -62,6 +62,7 @@ import com.eimsound.eimusic.util.Toast
 import com.eimsound.eimusic.util.ToastMessage
 import com.eimsound.eimusic.factory.TrackUriResolverFactory
 import com.eimsound.eimusic.playback.IMediaPlayerController
+import com.eimsound.eimusic.playback.PlaybackStore
 import com.eimsound.eimusic.resolver.share.ShareLinkResolver
 import com.eimsound.eimusic.together.TogetherStore
 import com.eimsound.eimusic.together.TogetherSyncManager
@@ -262,7 +263,8 @@ val viewModelModule = module {
     single(createdAtStart = true) { SettingViewModel(get()) }
     single(createdAtStart = true) { DefaultLayoutViewModel(get()) }
     single(createdAtStart = true) { PlayingListViewModel(get(), get()) }
-    single(createdAtStart = true) { PlayerViewModel(get(), get(), get(), get(), get()) }
+    single { PlaybackStore(get(), get(), get(), get(), get()) }
+    single(createdAtStart = true) { PlayerViewModel(get(), get(), get()) }
     single { ConfigViewModel(get()) }
     viewModel { AuthViewModel(get()) }
     viewModel { ChannelViewModel(get(), get()) }
