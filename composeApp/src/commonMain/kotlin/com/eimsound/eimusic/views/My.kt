@@ -1,6 +1,7 @@
 package com.eimsound.eimusic.views
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -166,7 +167,6 @@ fun MyView() {
         )
     }
 }
-
 @Composable
 private fun MyHeroSection(
     playlistCount: Int,
@@ -178,6 +178,53 @@ private fun MyHeroSection(
     val palette = LocalPalette.current
     val radii = LocalRadii.current
 
+    val textBlock: @Composable () -> Unit = {
+        Column {
+            Text(
+                text = stringResource(Res.string.my_title),
+                style = MaterialTheme.typography.headlineSmall,
+                color = palette.textPrimary
+            )
+            Text(
+                text = stringResource(Res.string.my_subtitle),
+                style = MaterialTheme.typography.bodyMedium,
+                color = palette.textSecondary,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(top = 10.dp)
+            ) {
+                Text(
+                    text = stringResource(Res.string.my_playlist_count, playlistCount),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = palette.accent,
+                )
+                RefreshButton(onRefresh, !isLoading)
+            }
+        }
+    }
+
+    val buttons: @Composable () -> Unit = {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilledTonalButton(onClick = onCreateLocal, shape = radii.chip) {
+                Text(stringResource(Res.string.my_create_local))
+            }
+            FilledTonalButton(onClick = onAddPlaylist, shape = radii.chip) {
+                Icon(
+                    painter = painterResource(Res.drawable.add_24px),
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Text(
+                    text = stringResource(Res.string.my_add_playlist),
+                    modifier = Modifier.padding(start = 6.dp)
+                )
+            }
+        }
+    }
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = radii.medium,
@@ -185,60 +232,24 @@ private fun MyHeroSection(
         tonalElevation = 0.dp,
         shadowElevation = 0.dp
     ) {
-        Row(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 18.dp, vertical = 18.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(horizontal = 18.dp, vertical = 18.dp)
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(Res.string.my_title),
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = palette.textPrimary
-                )
-                Text(
-                    text = stringResource(Res.string.my_subtitle),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = palette.textSecondary,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
+            if (maxWidth < 600.dp) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    textBlock()
+                    buttons()
+                }
+            } else {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(top = 10.dp)
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = stringResource(Res.string.my_playlist_count, playlistCount),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = palette.accent,
-
-                    )
-                    RefreshButton(onRefresh, !isLoading)
-                }
-            }
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilledTonalButton(
-                    onClick = onCreateLocal,
-                    shape = radii.chip,
-                ) {
-                    Text(stringResource(Res.string.my_create_local))
-                }
-                FilledTonalButton(
-                    onClick = onAddPlaylist,
-                    shape = radii.chip,
-                ) {
-                    Icon(
-                        painter = painterResource(Res.drawable.add_24px),
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Text(
-                        text = stringResource(Res.string.my_add_playlist),
-                        modifier = Modifier.padding(start = 6.dp)
-                    )
+                    Column(modifier = Modifier.weight(1f)) { textBlock() }
+                    buttons()
                 }
             }
         }
