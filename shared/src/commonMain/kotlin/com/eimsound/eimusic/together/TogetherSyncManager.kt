@@ -61,6 +61,10 @@ class TogetherSyncManager(
                 is PlayControlEvent.RemoveFromQueue -> removeFromQueue(event.track)
                 is PlayControlEvent.ChangeTrack -> synchronizeTrack(event.track, event.isAudioCompleted)
                 is PlayControlEvent.ChangeTrackList -> synchronizeTrackList(event.trackList, event.play)
+                is PlayControlEvent.QueueChange -> synchronizeTrackList(
+                    remoteState.trackList ?: emptyList(),
+                    remoteState.track,
+                )
                 // 使用 TrackChanged
                 is PlayControlEvent.Next -> {
                     controller.next()
@@ -262,6 +266,10 @@ class TogetherSyncManager(
     }
 
     fun currentQueueRevision(): Long = queueRevision
+
+    /** 混合本地曲目时索引操作不可靠，退回整队列快照。 */
+    fun hasLocalTracks(): Boolean =
+        controller.state.value.queue.any { it.source == com.eimsound.eimusic.music.TrackSource.LOCAL }
 
     fun isCurrentTrackLocal(): Boolean =
         controller.state.value.current?.source == com.eimsound.eimusic.music.TrackSource.LOCAL

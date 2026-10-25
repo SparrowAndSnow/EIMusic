@@ -108,6 +108,7 @@ class PlayerController(
                         val idx = state.value.queue.indexOfFirst { it.id == event.track.id }
                         if (idx >= 0) removeTrack(idx)
                     }
+                    is PlayingListEvent.TrackMoved -> moveTrack(event.from, event.to)
                 }
             }
         }
@@ -122,6 +123,7 @@ class PlayerController(
 
     fun queue(tracks: List<Track>, startTrack: Track? = null) {
         val cleared = tracks.isEmpty()
+        val previousCurrentId = _state.value.current?.id
         if (cleared) {
             engine.stop()
             needsOpen = false
@@ -140,7 +142,8 @@ class PlayerController(
             )
         }
 
-        if (startTrack != null) doOpenAndPlay(startTrack)
+        // 队列变化但当前曲目未变时不要重新 open/播放；只有远端切歌才需要启动。
+        if (startTrack != null && startTrack.id != previousCurrentId) doOpenAndPlay(startTrack)
     }
 
     override fun play(media: Track) {

@@ -10,6 +10,7 @@ import com.eimsound.eimusic.events.EventSource
 import com.eimsound.eimusic.events.PlayingListEvent
 import com.eimsound.eimusic.music.PlayerState
 import com.eimsound.eimusic.music.Track
+import com.eimsound.eimusic.music.AddTrackStrategy
 import com.eimsound.eimusic.music.PlayMode
 import com.eimsound.eimusic.music.change
 import com.eimsound.eimusic.music.name
@@ -195,7 +196,9 @@ class PlayerViewModel(
     fun playNext(track: Track) {
         val index = (state.value.index + 1).coerceIn(0, state.value.queue.size)
         controller.addTrack(track, index)
-        announceQueueChange()
+        EventBus.PlayingListEventBus.send(
+            PlayingListEvent.TrackAdded(track, AddTrackStrategy.AddToNext, source = EventSource.User),
+        )
     }
 
     /** 用当前列表替换队列，并播放选中曲目。 */
@@ -213,7 +216,11 @@ class PlayerViewModel(
             controller.addTrack(track, state.value.queue.size)
         }
         controller.play(track)
-        if (added) announceQueueChange()
+        if (added) {
+            EventBus.PlayingListEventBus.send(
+                PlayingListEvent.TrackAdded(track, AddTrackStrategy.AddToLast, source = EventSource.User),
+            )
+        }
     }
 
     fun playAll(tracks: List<Track>) {
@@ -225,13 +232,20 @@ class PlayerViewModel(
     }
 
     fun removeTrack(index: Int) {
+        val track = state.value.queue.getOrNull(index)
         controller.removeTrack(index)
-        announceQueueChange()
+        if (track != null) {
+            EventBus.PlayingListEventBus.send(
+                PlayingListEvent.TrackRemoved(track, source = EventSource.User),
+            )
+        }
     }
 
     fun moveTrack(from: Int, to: Int) {
         controller.moveTrack(from, to)
-        announceQueueChange()
+        EventBus.PlayingListEventBus.send(
+            PlayingListEvent.TrackMoved(from, to, source = EventSource.User),
+        )
     }
 
     fun clearQueue() {

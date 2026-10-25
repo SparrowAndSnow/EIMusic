@@ -202,8 +202,24 @@ class ChannelViewModel(
                             is PlayingListEvent.TrackAdded ->
                                 if (event.track.source == TrackSource.LOCAL) {
                                     notifyLocalUnsupported()
+                                } else if (syncManager.hasLocalTracks()) {
+                                    val snapshot = syncManager.collectCurrentState()
+                                    syncManager.sendPlayCommand(
+                                        PlayControlEvent.ChangeTrackList(
+                                            snapshot.trackList ?: emptyList(),
+                                            snapshot.track,
+                                            syncManager.currentQueueRevision(),
+                                        )
+                                    )
                                 } else {
-                                    syncManager.sendPlayCommand(PlayControlEvent.AddToQueue(event.track, event.strategy))
+                                    syncManager.sendPlayCommand(
+                                        PlayControlEvent.QueueChange(
+                                            kind = PlayControlEvent.QueueChangeKind.ADD,
+                                            track = event.track,
+                                            strategy = event.strategy,
+                                            baseRevision = syncManager.currentQueueRevision(),
+                                        )
+                                    )
                                 }
                             is PlayingListEvent.TrackListChanged -> {
                                 val hasLocal = event.tracks.any { it.source == TrackSource.LOCAL }
@@ -228,7 +244,33 @@ class ChannelViewModel(
                             }
                             is PlayingListEvent.TrackRemoved ->
                                 if (event.track.source != TrackSource.LOCAL) {
-                                    syncManager.sendPlayCommand(PlayControlEvent.RemoveFromQueue(event.track))
+                                    syncManager.sendPlayCommand(
+                                        PlayControlEvent.QueueChange(
+                                            kind = PlayControlEvent.QueueChangeKind.REMOVE,
+                                            track = event.track,
+                                            baseRevision = syncManager.currentQueueRevision(),
+                                        )
+                                    )
+                                }
+                            is PlayingListEvent.TrackMoved ->
+                                if (syncManager.hasLocalTracks()) {
+                                    val snapshot = syncManager.collectCurrentState()
+                                    syncManager.sendPlayCommand(
+                                        PlayControlEvent.ChangeTrackList(
+                                            snapshot.trackList ?: emptyList(),
+                                            snapshot.track,
+                                            syncManager.currentQueueRevision(),
+                                        )
+                                    )
+                                } else {
+                                    syncManager.sendPlayCommand(
+                                        PlayControlEvent.QueueChange(
+                                            kind = PlayControlEvent.QueueChangeKind.MOVE,
+                                            index = event.from,
+                                            toIndex = event.to,
+                                            baseRevision = syncManager.currentQueueRevision(),
+                                        )
+                                    )
                                 }
                         }
                     }

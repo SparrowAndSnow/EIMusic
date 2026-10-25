@@ -1,6 +1,9 @@
 package com.eimsound.eimusic.server.manager
 
+import com.eimsound.eimusic.music.AddTrackStrategy
 import com.eimsound.eimusic.music.PlayMode
+import com.eimsound.eimusic.music.Track
+import com.eimsound.eimusic.together.PlayControlEvent.QueueChangeKind
 import com.eimsound.eimusic.server.model.SYSTEM
 import com.eimsound.eimusic.server.model.ServerChannel
 import com.eimsound.eimusic.server.model.UserSession
@@ -211,6 +214,84 @@ class ChannelManager(
                 playState = if (clearing) PlayState.STOPPED else state.playState,
                 position = if (clearing) 0L else state.position,
                 queueRevision = updatedChannel.queueRevision,
+            ),
+        )
+    }
+
+    /** 按操作日志原子修改队列；新增/删除/移动都校验 baseRevision。 */
+    suspend fun applyQueueOperation(
+        channelId: String,
+        expectedRevision: Long?,
+        kind: QueueChangeKind,
+        track: Track?,
+        strategy: AddTrackStrategy?,
+        index: Int,
+        toIndex: Int,
+    ): QueueUpdateResult = mutex.withLock {
+        val serverChannel = channels[channelId] ?: return@withLock QueueUpdateResult.NotFound
+        val channel = serverChannel.channel
+        if (expectedRevision != null && expectedRevision != channel.queueRevision) {
+            return@withLock QueueUpdateResult.Conflict(channel)
+        }
+
+        val queue = channel.trackList.toMutableList()
+        var current = channel.currentTrack
+        var playState = channel.playState
+        var position = channel.currentPosition
+
+        when (kind) {
+            QueueChangeKind.ADD -> {
+                val added = track ?: return@withLock QueueUpdateResult.NotFound
+                queue.removeAll { it.id == added.id }
+                val insertAt = when (strategy) {
+                    is AddTrackStrategy.AddToLast, null -> queue.size
+                    is AddTrackStrategy.AddToNext ->
+                        (queue.indexOfFirst { it.id == current?.id } + 1).coerceAtLeast(0)
+                    is AddTrackStrategy.InsertToQueue -> strategy.index
+                }
+                queue.add(insertAt.coerceIn(0, queue.size), added)
+            }
+
+            QueueChangeKind.REMOVE -> {
+                val removed = track ?: return@withLock QueueUpdateResult.NotFound
+                val removedIndex = queue.indexOfFirst { it.id == removed.id }
+                if (removedIndex >= 0) {
+                    queue.removeAt(removedIndex)
+                    if (current?.id == removed.id) {
+                        current = queue.getOrNull(removedIndex.coerceAtMost(queue.lastIndex))
+                        position = 0L
+                        if (current == null) playState = PlayState.STOPPED
+                    }
+                }
+            }
+
+            QueueChangeKind.MOVE -> {
+                if (index in queue.indices) {
+                    val moved = queue.removeAt(index)
+                    queue.add(toIndex.coerceIn(0, queue.size), moved)
+                }
+            }
+        }
+
+        val now = Clock.System.now()
+        val updated = channel.copy(
+            trackList = queue,
+            currentTrack = current,
+            playState = playState,
+            currentPosition = position,
+            anchorTimestamp = now,
+            queueRevision = channel.queueRevision + 1,
+        )
+        serverChannel.channel = updated
+        serverChannel.lastActivity = now
+        QueueUpdateResult.Success(
+            SyncState(
+                track = current,
+                trackList = queue,
+                playState = playState,
+                position = position,
+                anchorTimestamp = now,
+                queueRevision = updated.queueRevision,
             ),
         )
     }

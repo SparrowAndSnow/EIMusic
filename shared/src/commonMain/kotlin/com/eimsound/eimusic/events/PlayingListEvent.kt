@@ -39,4 +39,13 @@ sealed interface PlayingListEvent : Event<PlayingListEvent> {
             return "已删除歌曲 ${track.name}"
         }
     }
+
+    data class TrackMoved(
+        val from: Int,
+        val to: Int,
+        override val source: EventSource = EventSource.User,
+        override val targets: Set<EventSource> = setOf(EventSource.Remote, EventSource.Player),
+    ) : PlayingListEvent {
+        override fun toString(): String = "移动歌曲 $from -> $to"
+    }
 }

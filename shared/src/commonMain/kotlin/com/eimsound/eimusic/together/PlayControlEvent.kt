@@ -34,11 +34,33 @@ sealed interface PlayControlEvent {
     }
 
     @Serializable
+    @SerialName("queue_change")
+    data class QueueChange(
+        val kind: QueueChangeKind,
+        val track: Track? = null,
+        val strategy: AddTrackStrategy? = null,
+        val index: Int = -1,
+        val toIndex: Int = -1,
+        val baseRevision: Long? = null,
+    ) : PlayControlEvent {
+        override fun toString(): String = when (kind) {
+            QueueChangeKind.ADD -> "添加歌曲 ${track?.name}"
+            QueueChangeKind.REMOVE -> "删除歌曲 ${track?.name}"
+            QueueChangeKind.MOVE -> "移动歌曲 $index -> $toIndex"
+        }
+    }
+
+    @Serializable
     @SerialName("change_track")
     data class ChangeTrack(val track: Track, val isAudioCompleted: Boolean = false) : PlayControlEvent {
         override fun toString(): String {
             return "开始播放 ${track.name}"
         }
+    }
+
+    @Serializable
+    enum class QueueChangeKind {
+        ADD, REMOVE, MOVE
     }
 
     @Serializable

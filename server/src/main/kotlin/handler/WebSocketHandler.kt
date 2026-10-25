@@ -149,6 +149,8 @@ class WebSocketHandler(
             is PlayControlEvent.ChangeTrackList ->
                 event.trackList.firstOrNull { it.source == TrackSource.LOCAL }
                     ?: event.play?.takeIf { it.source == TrackSource.LOCAL }
+            is PlayControlEvent.QueueChange ->
+                event.track?.takeIf { it.source == TrackSource.LOCAL }
             else -> null
         }
         if (localTrack != null) {
@@ -250,6 +252,26 @@ class WebSocketHandler(
                             )
                         } else null
                     }
+                }
+            }
+
+            is PlayControlEvent.QueueChange -> {
+                when (val result = channelManager.applyQueueOperation(
+                    channelId = action.channelId,
+                    expectedRevision = event.baseRevision,
+                    kind = event.kind,
+                    track = event.track,
+                    strategy = event.strategy,
+                    index = event.index,
+                    toIndex = event.toIndex,
+                )) {
+                    is QueueUpdateResult.Success -> result.state.copy(controlledBy = session.user)
+                    is QueueUpdateResult.Conflict -> {
+                        sendErrorResponse(session, "队列已更新，请重试")
+                        sendRoomMetadata(session, action.channelId, result.channel)
+                        null
+                    }
+                    QueueUpdateResult.NotFound -> null
                 }
             }
 

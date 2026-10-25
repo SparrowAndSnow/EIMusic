@@ -30,6 +30,7 @@ val module = SerializersModule {
         subclass(PlayControlEvent.Previous::class)
         subclass(PlayControlEvent.ChangeTrack::class)
         subclass(PlayControlEvent.ChangeTrackList::class)
+        subclass(PlayControlEvent.QueueChange::class)
         subclass(PlayControlEvent.AddToQueue::class)
         subclass(PlayControlEvent.RemoveFromQueue::class)
         subclass(PlayControlEvent.PlayModeChanged::class)
