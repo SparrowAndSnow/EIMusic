@@ -41,7 +41,7 @@ class SpotifyTrackRepository(
                         tracks = emptyList()
                     )
                 },
-                artists = artists,
+                artists = artists ?: emptyList(),
                 name = trackDto?.name ?: "",
                 uri = trackDto?.previewUrl,
                 duration = Duration(trackDto?.durationMs?.toLong()?.div(1000) ?: 0),

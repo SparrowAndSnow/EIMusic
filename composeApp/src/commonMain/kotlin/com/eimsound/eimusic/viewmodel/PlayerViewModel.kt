@@ -2,6 +2,9 @@ package com.eimsound.eimusic.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.eimsound.eimusic.db.DbLibraryRepository
+import com.eimsound.eimusic.db.DbSessionRepository
+import com.eimsound.eimusic.db.toDbTrack
 import com.eimsound.eimusic.music.Duration
 import com.eimsound.eimusic.events.EventBus
 import com.eimsound.eimusic.events.EventSource
@@ -19,7 +22,9 @@ import com.eimsound.eimusic.storage.get
 import com.eimsound.eimusic.storage.save
 import com.eimsound.eimusic.together.PlayState
 import com.eimsound.eimusic.together.TogetherSyncManager
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
@@ -27,6 +32,8 @@ class PlayerViewModel(
     private val storage: IStorage,
     private val syncManager: TogetherSyncManager,
     private val controller: IMediaPlayerController,
+    private val library: DbLibraryRepository,
+    private val session: DbSessionRepository,
 ) : ViewModel() {
     init {
         viewModelScope.launch {
@@ -113,6 +120,22 @@ class PlayerViewModel(
         event.onEach {
             EventBus.PlaybackEventBus.send(it)
         }.launchIn(viewModelScope)
+
+        viewModelScope.launch {
+            var lastTrackId: String? = null
+            state.map { it.queue to it.current }
+                .distinctUntilChanged()
+                .collect { (queue, current) ->
+                    session.savePlayback(
+                        queue = queue.map { it.toDbTrack() },
+                        currentTrackId = current?.id?.toString(),
+                    )
+                    if (current != null && current.id.toString() != lastTrackId) {
+                        lastTrackId = current.id.toString()
+                        library.recordRecent(current.toDbTrack())
+                    }
+                }
+        }
     }
 
     fun sendTrackChanged(track: Track, isAudioCompleted: Boolean = false, source: EventSource = EventSource.User) {

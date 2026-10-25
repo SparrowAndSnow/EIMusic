@@ -16,26 +16,27 @@
 
 ## 待做
 
-- [ ] **Driver 接入**
-  - Android：`AndroidSqliteDriver`
-  - Desktop/JVM：`JdbcSqliteDriver`
-  - iOS：`NativeSqliteDriver`
-  - wasmJs：无官方 SQLite driver，保留 JSON/in-memory 仓储实现，接口不变
+- [x] **Driver 接入（desktop 已编译验证）**
+  - Android：`AndroidSqliteDriver`（代码已加，待设备验证）
+  - Desktop/JVM：`JdbcSqliteDriver`，DB 位于 `~/.config/eimusic/eimusic.db`
+  - iOS：`NativeSqliteDriver`（代码已加，待编译验证）
+  - wasmJs：无官方 SQLite driver，暂时抛错，JSON fallback 未接
   - 建库路径与 terminalApp 保持一致，schema 版本/migration 共用
 
-- [ ] **Playlist 迁移**
-  - `PlaylistViewModel`/UI 改用 `DbPlaylistRepository`
-  - 导入歌单（网易等）只读；本地歌单可增删/排序
-  - 本地歌单可混合加入各来源曲目
-  - 旧 `Settings.playlists` 一次性导入 DB，成功后清空
+- [~] **Playlist 迁移**
+  - `MyViewModel` 已改用 `DbPlaylistRepository`，旧 `Settings.playlists` 一次性导入
+  - 导入歌单（网易等）只读
+  - 本地歌单 UI（创建/加曲/排序）仍待做
+  - 本地歌单可混合加入各来源曲目（仓储已支持）
 
-- [ ] **最近播放 / 搜索历史**
-  - 改用 `DbLibraryRepository`，移除 `Settings.recentTracks` / `recentSearches` 主存储
-  - 首次启动迁移旧 JSON 数据
+- [~] **最近播放 / 搜索历史**
+  - `PlayerViewModel` 已记录最近播放；`SearchResultViewModel` 已记录搜索词
+  - UI 历史展示仍待做
+  - 旧 `Settings.recentTracks` / `recentSearches` 迁移未做
 
-- [ ] **会话恢复**
-  - `DbSessionRepository`：lastTab / 队列 / 当前曲目（不记录位置）
-  - 启动恢复队列和当前曲目，暂停打开
+- [~] **会话恢复**
+  - `PlayerViewModel` 已保存队列和当前曲目（不记录位置）
+  - 启动恢复和 lastTab 仍待做
 
 - [ ] **UI 对齐**
   - 本地歌单创建、添加曲目、删除/排序

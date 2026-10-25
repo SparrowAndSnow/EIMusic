@@ -14,6 +14,10 @@ import androidx.compose.ui.Modifier
 import androidx.savedstate.compose.serialization.serializers.SnapshotStateListSerializer
 import com.eimsound.eimusic.auth.AuthStore
 import com.eimsound.eimusic.data.Storage
+import com.eimsound.eimusic.data.createEIMusicDatabase
+import com.eimsound.eimusic.db.DbLibraryRepository
+import com.eimsound.eimusic.db.DbPlaylistRepository
+import com.eimsound.eimusic.db.DbSessionRepository
 import com.eimsound.eimusic.lang.Locale
 import com.eimsound.eimusic.layout.BottomBar
 import com.eimsound.eimusic.layout.DefaultLayout
@@ -197,6 +201,11 @@ fun AppEnvironment(content: @Composable () -> Unit) {
 val systemModule = module {
     single<IStorage>(createdAtStart = true) { Storage() }
 
+    single(createdAtStart = true) { createEIMusicDatabase() }
+    single { DbPlaylistRepository(get()) }
+    single { DbLibraryRepository(get()) }
+    single { DbSessionRepository(get()) }
+
     single<AppConfig> { get<IStorage>().get(AppConfig()) }
 
     single<IMediaPlayerController>(createdAtStart = true) { MediaPlayerController(get()) }
@@ -251,12 +260,12 @@ val viewModelModule = module {
     single(createdAtStart = true) { SettingViewModel(get()) }
     single(createdAtStart = true) { DefaultLayoutViewModel(get()) }
     single(createdAtStart = true) { PlayingListViewModel(get(), get()) }
-    single(createdAtStart = true) { PlayerViewModel(get(), get(), get()) }
+    single(createdAtStart = true) { PlayerViewModel(get(), get(), get(), get(), get()) }
     single { ConfigViewModel(get()) }
     viewModel { AuthViewModel(get()) }
     viewModel { ChannelViewModel(get(), get(), get(), get()) }
-    viewModel { SearchResultViewModel(get()) }
-    viewModel { MyViewModel(get(), get(), get()) }
+    viewModel { SearchResultViewModel(get(), get()) }
+    viewModel { MyViewModel(get(), get(), get(), get()) }
     viewModel { TrackListViewModel(get(), get()) }
     viewModel { WelcomeViewModel(get()) }
     viewModel { LocalViewModel(get()) }

@@ -85,6 +85,7 @@ kotlin {
 //            implementation(compose.material3AdaptiveNavigationSuite)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.serialization.protobuf)
+            implementation(libs.sqldelight.runtime)
 
             implementation(libs.coil.compose.image.loader)
             implementation(libs.coil.compose.image.loader.network.ktor)
@@ -110,11 +111,13 @@ kotlin {
             implementation(libs.androidx.media3.session)
             implementation(libs.koin.android)
             implementation(libs.androidx.lifecycle.process)
+            implementation(libs.sqldelight.android.driver)
         }
 
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
+            implementation(libs.sqldelight.sqlite.driver)
 
 //            val javafxPlatform = when (osdetector.classifier) {
 //                "linux-x86_64" -> "linux"
@@ -138,6 +141,7 @@ kotlin {
 
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
+            implementation(libs.sqldelight.native.driver)
         }
     }
 }
