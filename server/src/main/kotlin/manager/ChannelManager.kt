@@ -23,6 +23,11 @@ import kotlin.time.Clock
  * 频道管理器
  * 负责频道的创建、维护、清理等操作
  */
+sealed interface QueueUpdateResult {
+    data class Success(val state: SyncState) : QueueUpdateResult
+    data class Conflict(val channel: Channel) : QueueUpdateResult
+    data object NotFound : QueueUpdateResult
+}
 class ChannelManager(
     private val maxChannels: Int = 1000, private val maxUsersPerChannel: Int = 50
 ) {
@@ -150,6 +155,7 @@ class ChannelManager(
 
         val state = block(channel) ?: return null
 
+        val queueChanged = state.trackList != null
         val updatedChannel = channel.copy(
             currentTrack = state.track ?: channel.currentTrack,
             trackList = state.trackList ?: channel.trackList,
@@ -157,32 +163,55 @@ class ChannelManager(
             playMode = state.playMode ?: channel.playMode,
             currentPosition = state.position ?: channel.currentPosition,
             anchorTimestamp = state.anchorTimestamp ?: channel.anchorTimestamp,
+            queueRevision = channel.queueRevision + if (queueChanged) 1 else 0,
         )
 
         serverChannel.channel = updatedChannel
         serverChannel.lastActivity = Clock.System.now()
 
-        return state
+        return state.copy(queueRevision = updatedChannel.queueRevision)
     }
 
-    /** 清空频道队列并停止播放；空列表是有效状态，不能走 null=不修改的 updatePlayState。 */
-    suspend fun clearQueue(channelId: String): SyncState? = mutex.withLock {
-        val serverChannel = channels[channelId] ?: return@withLock null
+    /**
+     * 原子地应用队列快照：校验 baseRevision 后再递增，避免并发覆盖。
+     * 空列表表示清空队列，此时必须同时清空 currentTrack 并停止播放。
+     */
+    suspend fun updateQueue(
+        channelId: String,
+        expectedRevision: Long?,
+        block: (Channel) -> SyncState?,
+    ): QueueUpdateResult = mutex.withLock {
+        val serverChannel = channels[channelId] ?: return@withLock QueueUpdateResult.NotFound
+        val channel = serverChannel.channel
+        if (expectedRevision != null && expectedRevision != channel.queueRevision) {
+            return@withLock QueueUpdateResult.Conflict(channel)
+        }
+
+        val state = block(channel) ?: return@withLock QueueUpdateResult.NotFound
+        val clearing = state.trackList?.isEmpty() == true
         val now = Clock.System.now()
-        serverChannel.channel = serverChannel.channel.copy(
-            currentTrack = null,
-            trackList = emptyList(),
-            playState = PlayState.STOPPED,
-            currentPosition = 0L,
-            anchorTimestamp = now,
+        val updatedChannel = channel.copy(
+            currentTrack = when {
+                clearing -> null
+                state.track != null -> state.track
+                else -> channel.currentTrack
+            },
+            trackList = state.trackList ?: channel.trackList,
+            playState = if (clearing) PlayState.STOPPED else state.playState ?: channel.playState,
+            currentPosition = if (clearing) 0L else state.position ?: channel.currentPosition,
+            anchorTimestamp = state.anchorTimestamp ?: now,
+            queueRevision = channel.queueRevision + 1,
         )
+        serverChannel.channel = updatedChannel
         serverChannel.lastActivity = now
-        SyncState(
-            track = null,
-            trackList = emptyList(),
-            playState = PlayState.STOPPED,
-            position = 0L,
-            anchorTimestamp = now,
+
+        QueueUpdateResult.Success(
+            state.copy(
+                track = if (clearing) null else state.track,
+                playState = if (clearing) PlayState.STOPPED else state.playState,
+                position = if (clearing) 0L else state.position,
+                queueRevision = updatedChannel.queueRevision,
+            ),
         )
     }
 

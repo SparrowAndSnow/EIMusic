@@ -63,7 +63,11 @@ sealed interface PlayControlEvent {
 
     @Serializable
     @SerialName("change_track_list")
-    data class ChangeTrackList(val trackList: List<Track>, val play: Track? = null) : PlayControlEvent {
+    data class ChangeTrackList(
+        val trackList: List<Track>,
+        val play: Track? = null,
+        val baseRevision: Long? = null,
+    ) : PlayControlEvent {
         override fun toString(): String {
             return "播放列表已更新"
         }

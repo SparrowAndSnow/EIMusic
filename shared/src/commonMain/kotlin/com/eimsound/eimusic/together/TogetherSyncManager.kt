@@ -28,6 +28,7 @@ class TogetherSyncManager(
 ) {
     private val coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var lastSyncState: SyncState? = null
+    private var queueRevision = 0L
 
     private val _channelState = MutableStateFlow<ChannelState>(ChannelState.Disconnected)
     val channelState: StateFlow<ChannelState> = _channelState.asStateFlow()
@@ -49,6 +50,9 @@ class TogetherSyncManager(
     fun handleRemoteSyncState(remoteStateEvent: ChannelEvent.PlayStateChanged) {
         val remoteState = remoteStateEvent.state
         lastSyncState = remoteState
+        queueRevision = remoteState.queueRevision
+        // 自己操作的回显只用来更新 revision，不再重复应用，避免重新加载/重置进度。
+        if (remoteState.controlledBy?.id == webSocketClient.currentUserId()) return
 
         val event = remoteStateEvent.event
         try {
@@ -219,6 +223,7 @@ class TogetherSyncManager(
     }
 
     fun initializeState(channel: Channel) {
+        queueRevision = channel.queueRevision
         val serverTimestamp = channel.anchorTimestamp
         val clientNow = Clock.System.now()
 
@@ -252,8 +257,11 @@ class TogetherSyncManager(
             playMode = state.playMode,
             playState = if (shareableCurrent == null) PlayState.STOPPED else state.playState,
             position = if (shareableCurrent == null) 0L else state.position,
+            queueRevision = queueRevision,
         )
     }
+
+    fun currentQueueRevision(): Long = queueRevision
 
     fun isCurrentTrackLocal(): Boolean =
         controller.state.value.current?.source == com.eimsound.eimusic.music.TrackSource.LOCAL

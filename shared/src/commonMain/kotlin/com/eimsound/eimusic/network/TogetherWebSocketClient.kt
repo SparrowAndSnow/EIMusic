@@ -57,6 +57,8 @@ class TogetherWebSocketClient(
     // 当前连接的频道
     private var currentChannelId: String? = null
 
+    fun currentUserId(): String? = authStore.current().user.id
+
     // 心跳任务
     private var heartbeatJob: Job? = null
     private val heartbeatInterval = 30.seconds

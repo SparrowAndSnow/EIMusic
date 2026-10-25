@@ -5,6 +5,7 @@ import com.eimsound.eimusic.music.AddTrackStrategy
 import com.eimsound.eimusic.music.Track
 import com.eimsound.eimusic.music.TrackSource
 import com.eimsound.eimusic.server.manager.ChannelManager
+import com.eimsound.eimusic.server.manager.QueueUpdateResult
 import com.eimsound.eimusic.together.CreateChannelResult
 import com.eimsound.eimusic.server.manager.CreateUserSessionResult
 import com.eimsound.eimusic.together.JoinChannelResult
@@ -253,16 +254,25 @@ class WebSocketHandler(
             }
 
             is PlayControlEvent.ChangeTrackList -> {
-                if (event.trackList.isEmpty()) {
-                    channelManager.clearQueue(action.channelId)
-                } else {
-                    channelManager.updatePlayState(action.channelId) {
-                        SyncState(
-                            track = event.play ?: event.trackList.first(),
-                            trackList = event.trackList,
-                            controlledBy = session.user
-                        )
+                when (val result = channelManager.updateQueue(
+                    channelId = action.channelId,
+                    expectedRevision = event.baseRevision,
+                ) {
+                    SyncState(
+                        track = if (event.trackList.isEmpty()) null else event.play ?: event.trackList.first(),
+                        trackList = event.trackList,
+                        playState = if (event.trackList.isEmpty()) PlayState.STOPPED else null,
+                        position = if (event.trackList.isEmpty()) 0L else null,
+                        controlledBy = session.user,
+                    )
+                }) {
+                    is QueueUpdateResult.Success -> result.state
+                    is QueueUpdateResult.Conflict -> {
+                        sendErrorResponse(session, "队列已更新，请重试")
+                        sendRoomMetadata(session, action.channelId, result.channel)
+                        null
                     }
+                    QueueUpdateResult.NotFound -> null
                 }
             }
 
@@ -315,11 +325,9 @@ class WebSocketHandler(
         }
 
         if (state != null) {
-            // 不回发给操作者，避免客户端把刚发送的队列/播放状态再应用一次。
             broadcast(
                 action.channelId,
                 TogetherProtocol.ServerEvent(ChannelEvent.PlayStateChanged(action.channelId, event, state)),
-                exceptSessionId = session.sessionId,
             )
 
             if (isShowMessage) {

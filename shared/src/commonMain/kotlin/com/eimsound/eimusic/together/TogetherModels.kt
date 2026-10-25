@@ -33,6 +33,7 @@ data class Channel(
     val playMode: PlayMode = PlayMode.Loop,
     val playState: PlayState = PlayState.STOPPED,
     val currentPosition: Long = 0L, // 当前播放位置（毫秒）
+    val queueRevision: Long = 0L, // 队列快照版本，用于并发 CAS
     // 播放锚点时间戳
     val anchorTimestamp: Instant = Clock.System.now(),
     val createdAt: Instant = Clock.System.now(),
@@ -73,6 +74,7 @@ val PlayState.isPlaying
 data class SyncState(
     val track: Track? = null,
     val trackList: List<Track>? = null,
+    val queueRevision: Long = 0L,
     val playMode: PlayMode? = null,
     val playState: PlayState? = null,
     val position: Long? = null,
