@@ -215,6 +215,11 @@ actual class MediaPlayerController actual constructor(val trackUriResolverFactor
     private fun playOnMain(media: Track, position: Long) {
         val list = getCurrentPlayList()
         val mediaIndex = list.indexOfFirst { it.id == media.id }
+        // 会话恢复只恢复了状态，ExoPlayer 还没有 media items；首次播放时补上。
+        if ((mediaController?.mediaItemCount ?: 0) == 0 && list.isNotEmpty()) {
+            mediaController?.setMediaItems(list.mapNotNull { it.parse() })
+            mediaController?.prepare()
+        }
         _state.update {
             it.copy(
                 current = media,
@@ -260,6 +265,18 @@ actual class MediaPlayerController actual constructor(val trackUriResolverFactor
     }
 
     actual override fun playState(state: PlayState) {
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            progressUpdateHandler.post { playState(state) }
+            return
+        }
+        if (state == PlayState.PLAYING && (mediaController?.mediaItemCount ?: 0) == 0) {
+            val list = _state.value.currentList
+            if (list.isNotEmpty()) {
+                mediaController?.setMediaItems(list.mapNotNull { it.parse() })
+                mediaController?.seekTo(_state.value.index.coerceAtLeast(0), _state.value.position)
+                mediaController?.prepare()
+            }
+        }
         when (state) {
             PlayState.PLAYING -> mediaController?.play()
             PlayState.PAUSED -> mediaController?.pause()
