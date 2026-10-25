@@ -10,6 +10,7 @@ import com.eimsound.eimusic.music.PlayMode
 import com.eimsound.eimusic.music.Track
 import com.eimsound.eimusic.network.TogetherWebSocketClient
 import com.eimsound.eimusic.playback.IMediaPlayerController
+import com.eimsound.eimusic.playback.PlaybackOrigin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,7 +30,6 @@ class TogetherSyncManager(
     private val coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var lastSyncState: SyncState? = null
     private var queueRevision = 0L
-    private var suppressForwardUntil = 0L
 
     private val _channelState = MutableStateFlow<ChannelState>(ChannelState.Disconnected)
     val channelState: StateFlow<ChannelState> = _channelState.asStateFlow()
@@ -57,8 +57,6 @@ class TogetherSyncManager(
         // 自己操作的回显只用来更新 revision，不再重复应用，避免重新加载/重置进度。
         if (remoteState.controlledBy?.id == webSocketClient.currentUserId()) return
 
-        // 应用远端命令时，controller 会再次发出 Player 事件；短时间内禁止回传，避免 Next 循环。
-        suppressForwardUntil = Clock.System.now().toEpochMilliseconds() + 250
         val event = remoteStateEvent.event
         try {
             when (event) {
@@ -72,11 +70,11 @@ class TogetherSyncManager(
                 )
                 // 使用 TrackChanged
                 is PlayControlEvent.Next -> {
-                    controller.next()
+                    controller.next(origin = PlaybackOrigin.RemoteSync)
                 }
 
                 is PlayControlEvent.Previous -> {
-                    controller.previous()
+                    controller.previous(PlaybackOrigin.RemoteSync)
                 }
                 is PlayControlEvent.Pause -> synchronizePlayState(
                     remoteState.playState ?: PlayState.PAUSED,
@@ -107,7 +105,7 @@ class TogetherSyncManager(
     }
 
     private fun synchronizeTrackList(trackList: List<Track>, play: Track? = null) {
-        if (trackList.isEmpty()) controller.playState(PlayState.STOPPED)
+        if (trackList.isEmpty()) controller.playState(PlayState.STOPPED, PlaybackOrigin.RemoteSync)
         EventBus.PlayingListEventBus.send(
             PlayingListEvent.TrackListChanged(
                 trackList,
@@ -271,9 +269,6 @@ class TogetherSyncManager(
     }
 
     fun currentQueueRevision(): Long = queueRevision
-
-    fun isApplyingRemote(): Boolean =
-        Clock.System.now().toEpochMilliseconds() < suppressForwardUntil
 
     /** 混合本地曲目时索引操作不可靠，退回整队列快照。 */
     fun hasLocalTracks(): Boolean =

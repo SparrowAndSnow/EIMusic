@@ -152,7 +152,6 @@ class TogetherStore(
     private fun startObserving() {
         scope.launch {
             EventBus.PlaybackEventBus.receive { event ->
-                if (syncManager.isApplyingRemote()) return@receive
                 if (event.source != EventSource.User &&
                     event.source != EventSource.System &&
                     event.source != EventSource.Player

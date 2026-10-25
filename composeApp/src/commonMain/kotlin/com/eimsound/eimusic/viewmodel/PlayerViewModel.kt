@@ -12,7 +12,9 @@ import com.eimsound.eimusic.music.PlayMode
 import com.eimsound.eimusic.music.Track
 import com.eimsound.eimusic.music.change
 import com.eimsound.eimusic.playback.IMediaPlayerController
+import com.eimsound.eimusic.playback.PlaybackOrigin
 import com.eimsound.eimusic.playback.PlaybackStore
+import com.eimsound.eimusic.playback.toPlaybackOrigin
 import com.eimsound.eimusic.together.PlayState
 import com.eimsound.eimusic.together.TogetherSyncManager
 import kotlinx.coroutines.flow.launchIn
@@ -49,24 +51,29 @@ class PlayerViewModel(
     private fun handlePlaybackEvent(event: PlaybackEvent) {
         when (event) {
             is PlaybackEvent.PlayStateChanged -> handlePlayStateChanged(event)
-            is PlaybackEvent.PlayModeChanged -> onPlayModeChanged(event.playMode)
-            is PlaybackEvent.Seek -> seek(event.position, event.seekOver)
-            is PlaybackEvent.Next -> next()
-            is PlaybackEvent.Previous -> previous()
+            is PlaybackEvent.PlayModeChanged -> onPlayModeChanged(event.playMode, event.source.toPlaybackOrigin())
+            is PlaybackEvent.Seek -> seek(event.position, event.seekOver, event.source.toPlaybackOrigin())
+            is PlaybackEvent.Next -> controller.next(event.isAudioCompleted, event.source.toPlaybackOrigin())
+            is PlaybackEvent.Previous -> controller.previous(event.source.toPlaybackOrigin())
             is PlaybackEvent.TrackChanged -> handleTrackChanged(event)
         }
     }
 
     private fun handlePlayStateChanged(event: PlaybackEvent.PlayStateChanged) {
         when (event.source) {
-            EventSource.Player, EventSource.User -> isPlaying(event.isPlaying)
-            EventSource.Remote -> seek(event.position ?: Duration(0)) { isPlaying(event.isPlaying) }
+            EventSource.Player -> Unit
+            EventSource.User, EventSource.System -> isPlaying(event.isPlaying, event.source.toPlaybackOrigin())
+            EventSource.Remote -> seek(
+                event.position ?: Duration(0),
+                seekOver = { isPlaying(event.isPlaying, PlaybackOrigin.RemoteSync) },
+                origin = PlaybackOrigin.RemoteSync,
+            )
             else -> {}
         }
     }
 
     private fun handleTrackChanged(event: PlaybackEvent.TrackChanged) {
-        if (event.source != EventSource.Player) changeTrack(event.track)
+        if (event.source != EventSource.Player) changeTrack(event.track, event.source.toPlaybackOrigin())
     }
 
     private fun handlePlayingListEvent(event: PlayingListEvent) {
@@ -88,7 +95,8 @@ class PlayerViewModel(
     private fun previous() = controller.previous()
     private fun next() = controller.next()
 
-    fun onPlayModeChanged(value: PlayMode) = store.setPlayMode(value)
+    fun onPlayModeChanged(value: PlayMode, origin: PlaybackOrigin = PlaybackOrigin.LocalUi) =
+        store.setPlayMode(value, origin)
 
     fun sendPlayModeChanged() {
         val value = state.value.playMode.change { state.value.queue.size }
@@ -105,9 +113,9 @@ class PlayerViewModel(
 
     fun onPlayingTrackRemoved(track: Track) = store.applyTrackRemoved(track)
 
-    fun changeTrack(track: Track) {
+    fun changeTrack(track: Track, origin: PlaybackOrigin = PlaybackOrigin.LocalUi) {
         if (track.id == state.value.current?.id) return
-        controller.play(track)
+        controller.play(track, origin)
     }
 
     fun sendNext(isAudioCompleted: Boolean = false) {
@@ -118,16 +126,20 @@ class PlayerViewModel(
         EventBus.PlaybackEventBus.send(PlaybackEvent.Previous(controller.previousTrack()))
     }
 
-    fun isPlaying(value: Boolean) {
-        controller.playState(if (value) PlayState.PLAYING else PlayState.PAUSED)
+    fun isPlaying(value: Boolean, origin: PlaybackOrigin = PlaybackOrigin.LocalUi) {
+        controller.playState(if (value) PlayState.PLAYING else PlayState.PAUSED, origin)
     }
 
     fun sendIsPlaying(value: Boolean) {
         EventBus.PlaybackEventBus.send(PlaybackEvent.PlayStateChanged(value, Duration(state.value.position)))
     }
 
-    fun seek(value: Duration, seekOver: () -> Unit = {}) {
-        controller.seek(value.milliseconds) { seekOver() }
+    fun seek(
+        value: Duration,
+        seekOver: () -> Unit = {},
+        origin: PlaybackOrigin = PlaybackOrigin.LocalUi,
+    ) {
+        controller.seek(value.milliseconds, seekOver = { seekOver() }, origin = origin)
     }
 
     fun sendSeek(position: Duration, seekOver: () -> Unit = {}) {

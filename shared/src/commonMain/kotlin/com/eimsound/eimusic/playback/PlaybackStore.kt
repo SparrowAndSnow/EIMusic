@@ -216,7 +216,9 @@ class PlaybackStore(
     /** compose 的事件桥：应用来自 EventBus 的队列事件，不触发本地入队拦截。 */
     fun applyTrackListChanged(tracks: List<Track>, track: Track?, source: EventSource) {
         controller.queue(tracks) {
-            if (source != EventSource.Player) track?.let { controller.play(it) }
+            if (source != EventSource.Player) {
+                track?.let { controller.play(it, source.toPlaybackOrigin()) }
+            }
         }
     }
 
@@ -283,7 +285,8 @@ class PlaybackStore(
 
     fun toggleMute() = controller.volume(state.value.volume, !state.value.isMute)
 
-    fun setPlayMode(mode: PlayMode) = controller.playMode(mode)
+    fun setPlayMode(mode: PlayMode, origin: PlaybackOrigin = PlaybackOrigin.LocalUi) =
+        controller.playMode(mode, origin)
     fun setVolume(value: Float) = controller.volume(value)
     fun setMute(value: Boolean) = controller.volume(state.value.volume, value)
 

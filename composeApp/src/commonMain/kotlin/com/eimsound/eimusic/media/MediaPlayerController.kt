@@ -8,6 +8,7 @@ import com.eimsound.eimusic.together.PlayState
 import com.eimsound.eimusic.together.SyncState
 import com.eimsound.eimusic.factory.TrackUriResolverFactory
 import com.eimsound.eimusic.playback.IMediaPlayerController
+import com.eimsound.eimusic.playback.PlaybackOrigin
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -20,9 +21,9 @@ expect class MediaPlayerController(trackUriResolverFactory: TrackUriResolverFact
 
     override fun queue(medias: List<Track>, prepareOver: () -> Unit)
 
-    override fun play(media: Track)
+    override fun play(media: Track, origin: PlaybackOrigin)
 
-    override fun next(isAudioCompleted: Boolean)
+    override fun next(isAudioCompleted: Boolean, origin: PlaybackOrigin)
 
     override fun addTrack(media: Track, index: Int)
 
@@ -30,17 +31,17 @@ expect class MediaPlayerController(trackUriResolverFactory: TrackUriResolverFact
 
     override fun nextTrack(): Track?
 
-    override fun previous()
+    override fun previous(origin: PlaybackOrigin)
 
     override fun previousTrack(): Track?
 
-    override fun playState(state: PlayState)
+    override fun playState(state: PlayState, origin: PlaybackOrigin)
 
-    override fun playMode(mode: PlayMode)
+    override fun playMode(mode: PlayMode, origin: PlaybackOrigin)
 
     override fun volume(volume: Float, isMuted: Boolean )
 
-    override fun seek(millis: Long, seekOver: () -> Unit)
+    override fun seek(millis: Long, seekOver: () -> Unit, origin: PlaybackOrigin)
 
     override fun release()
 

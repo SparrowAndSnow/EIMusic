@@ -22,6 +22,8 @@ import com.eimsound.eimusic.together.PlayState
 import com.eimsound.eimusic.together.SyncState
 import com.eimsound.eimusic.factory.TrackUriResolverFactory
 import com.eimsound.eimusic.playback.IMediaPlayerController
+import com.eimsound.eimusic.playback.PlaybackOrigin
+import com.eimsound.eimusic.playback.toEventSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -48,6 +50,7 @@ actual class MediaPlayerController actual constructor(val trackUriResolverFactor
     private val playerListener = createPlayerListener()
     private val mediaController get() = eimMediaController.mediaController
     private var pendingSeekCallback: (() -> Unit)? = null
+    private var currentOrigin = PlaybackOrigin.LocalUi
     private var isSeeking = MutableStateFlow(false)
     private var pendingReadyCallback: (() -> Unit)? = null
     private var isReady = MutableStateFlow(false)
@@ -148,7 +151,7 @@ actual class MediaPlayerController actual constructor(val trackUriResolverFactor
                     PlaybackEvent.TrackChanged(
                         current,
                         isAudioCompleted = true,
-                        source = EventSource.Player
+                        source = if (currentOrigin == PlaybackOrigin.RemoteSync) EventSource.Remote else EventSource.Player
                     )
                 )
             }
@@ -191,14 +194,14 @@ actual class MediaPlayerController actual constructor(val trackUriResolverFactor
         stopProgressUpdate()
     }
 
-    actual override fun seek(millis: Long, seekOver: () -> Unit) {
+    actual override fun seek(millis: Long, seekOver: () -> Unit, origin: PlaybackOrigin) {
         if (!isSeeking.value) isSeeking.value = true
         pendingSeekCallback = seekOver
         mediaController?.seekTo(millis)
     }
 
-    actual override fun play(media: Track) {
-        play(media, 0)
+    actual override fun play(media: Track, origin: PlaybackOrigin) {
+        play(media, 0, origin)
     }
 
     private fun runOnMain(block: () -> Unit) {
@@ -206,13 +209,14 @@ actual class MediaPlayerController actual constructor(val trackUriResolverFactor
         else progressUpdateHandler.post(block)
     }
 
-    private fun play(media: Track, position: Long) {
+    private fun play(media: Track, position: Long, origin: PlaybackOrigin = PlaybackOrigin.LocalUi) {
+        currentOrigin = origin
         runOnMain {
-            playOnMain(media, position)
+            playOnMain(media, position, origin)
         }
     }
 
-    private fun playOnMain(media: Track, position: Long) {
+    private fun playOnMain(media: Track, position: Long, origin: PlaybackOrigin) {
         val list = getCurrentPlayList()
         val mediaIndex = list.indexOfFirst { it.id == media.id }
         // 会话恢复只恢复了状态，ExoPlayer 还没有 media items；首次播放时补上。
@@ -264,9 +268,10 @@ actual class MediaPlayerController actual constructor(val trackUriResolverFactor
         }
     }
 
-    actual override fun playState(state: PlayState) {
+    actual override fun playState(state: PlayState, origin: PlaybackOrigin) {
+        currentOrigin = origin
         if (Looper.myLooper() != Looper.getMainLooper()) {
-            progressUpdateHandler.post { playState(state) }
+            progressUpdateHandler.post { playState(state, origin) }
             return
         }
         if (state == PlayState.PLAYING && (mediaController?.mediaItemCount ?: 0) == 0) {
@@ -310,17 +315,18 @@ actual class MediaPlayerController actual constructor(val trackUriResolverFactor
             )
         }
 
+        currentOrigin = PlaybackOrigin.RemoteSync
         queue(medias) {
-            playMode(_state.value.playMode)
+            playMode(_state.value.playMode, PlaybackOrigin.RemoteSync)
             syncState.track?.let { track ->
-                play(track, syncState.position ?: 0)
+                play(track, syncState.position ?: 0, PlaybackOrigin.RemoteSync)
                 mediaController?.playWhenReady = true
             }
         }
     }
 
 
-    actual override fun playMode(mode: PlayMode) {
+    actual override fun playMode(mode: PlayMode, origin: PlaybackOrigin) {
         when (mode) {
             is PlayMode.Shuffle -> {
                 shuffle(mode.seed, mode.indices)
@@ -370,11 +376,13 @@ actual class MediaPlayerController actual constructor(val trackUriResolverFactor
         mediaController?.shuffleModeEnabled = true
     }
 
-    actual override fun next(isAudioCompleted: Boolean) {
+    actual override fun next(isAudioCompleted: Boolean, origin: PlaybackOrigin) {
+        currentOrigin = origin
         mediaController?.seekToNextMediaItem()
     }
 
-    actual override fun previous() {
+    actual override fun previous(origin: PlaybackOrigin) {
+        currentOrigin = origin
         mediaController?.seekToPreviousMediaItem()
     }
 

@@ -14,6 +14,8 @@ import com.eimsound.eimusic.music.withTrackRemoved
 import com.eimsound.eimusic.together.PlayState
 import com.eimsound.eimusic.together.SyncState
 import com.eimsound.eimusic.playback.IMediaPlayerController
+import com.eimsound.eimusic.playback.PlaybackOrigin
+import com.eimsound.eimusic.playback.toEventSource
 import com.goxr3plus.streamplayer.enums.Status
 import com.goxr3plus.streamplayer.stream.StreamPlayer
 import com.goxr3plus.streamplayer.stream.StreamPlayerEvent
@@ -187,7 +189,7 @@ open class JavaStreamPlayerController(
      * @param millis 目标位置
      * @param seekOver 跳转完成回调
      */
-    override fun seek(millis: Long, seekOver: () -> Unit) {
+    override fun seek(millis: Long, seekOver: () -> Unit, origin: PlaybackOrigin) {
         scope.launch {
             mediaPlayer.seekTo((millis / 1000.0).toInt())
             seekOver()
@@ -222,7 +224,7 @@ open class JavaStreamPlayerController(
         }
     }
 
-    override fun playState(state: PlayState) {
+    override fun playState(state: PlayState, origin: PlaybackOrigin) {
         when (state) {
             PlayState.PLAYING -> mediaPlayer.resume()
             PlayState.PAUSED -> mediaPlayer.pause()
@@ -230,7 +232,7 @@ open class JavaStreamPlayerController(
         }
     }
 
-    override fun playMode(mode: PlayMode) {
+    override fun playMode(mode: PlayMode, origin: PlaybackOrigin) {
         _state.update { it.copy(playMode = mode) }
     }
 
@@ -248,35 +250,39 @@ open class JavaStreamPlayerController(
 
     override fun nextTrack(): Track? = state.value.nextTrackCandidate()
 
-    override fun next(isAudioCompleted: Boolean) {
+    override fun next(isAudioCompleted: Boolean, origin: PlaybackOrigin) {
         when (_state.value.playMode) {
             is PlayMode.Shuffle, is PlayMode.Loop -> {
-                nextTrack()?.let { play(it, isAudioCompleted) }
+                nextTrack()?.let { play(it, isAudioCompleted, origin) }
             }
 
-            is PlayMode.RepeatOne -> seek(0) {}
+            is PlayMode.RepeatOne -> seek(0, seekOver = {})
         }
     }
 
     override fun previousTrack(): Track? = state.value.previousTrackCandidate()
 
-    override fun previous() {
+    override fun previous(origin: PlaybackOrigin) {
         when (_state.value.playMode) {
             is PlayMode.Shuffle, is PlayMode.Loop -> {
-                previousTrack()?.let { play(it, false) }
+                previousTrack()?.let { play(it, false, origin) }
             }
 
-            is PlayMode.RepeatOne -> seek(0) {}
+            is PlayMode.RepeatOne -> seek(0, seekOver = {})
         }
     }
 
     private fun getCurrentPlayList(): List<Track> = _state.value.currentList
 
-    override fun play(media: Track) {
-        play(media, isAudioCompleted = false)
+    override fun play(media: Track, origin: PlaybackOrigin) {
+        play(media, isAudioCompleted = false, origin)
     }
 
-    private fun play(media: Track, isAudioCompleted: Boolean = false) {
+    private fun play(
+        media: Track,
+        isAudioCompleted: Boolean = false,
+        origin: PlaybackOrigin = PlaybackOrigin.LocalUi,
+    ) {
         val list = getCurrentPlayList()
         _state.update {
             it.copy(
@@ -292,7 +298,7 @@ open class JavaStreamPlayerController(
                     PlaybackEvent.TrackChanged(
                         media,
                         isAudioCompleted = true,
-                        source = EventSource.Player
+                        source = origin.toEventSource()
                     )
                 )
             }
@@ -321,27 +327,31 @@ open class JavaStreamPlayerController(
             )
         }
 
-        syncState.playMode?.let { playMode(it) }
+        syncState.playMode?.let { playMode(it, PlaybackOrigin.RemoteSync) }
 
         if (syncState.track?.id != current?.id) {
             handleTrackChange(syncState)
         } else {
             syncState.position?.let { position ->
-                seek(position) {
-                    syncState.playState?.let { state -> playState(state) }
-                }
+                seek(
+                    position,
+                    seekOver = { syncState.playState?.let { state -> playState(state, PlaybackOrigin.RemoteSync) } },
+                    origin = PlaybackOrigin.RemoteSync,
+                )
             }
         }
     }
 
     private fun handleTrackChange(syncState: SyncState) {
         isReady.value = true
-        play(syncState.track ?: return, isAudioCompleted = false)
+        play(syncState.track ?: return, isAudioCompleted = false, origin = PlaybackOrigin.RemoteSync)
         pendingReadyCallback = {
             syncState.position?.let { position ->
-                seek(position) {
-                    syncState.playState?.let { state -> playState(state) }
-                }
+                seek(
+                    position,
+                    seekOver = { syncState.playState?.let { state -> playState(state, PlaybackOrigin.RemoteSync) } },
+                    origin = PlaybackOrigin.RemoteSync,
+                )
             }
         }
     }

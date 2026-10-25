@@ -18,6 +18,8 @@ import com.eimsound.eimusic.music.recalculatedIndex
 import com.eimsound.eimusic.music.withTrackAdded
 import com.eimsound.eimusic.music.withTrackRemoved
 import com.eimsound.eimusic.playback.IMediaPlayerController
+import com.eimsound.eimusic.playback.PlaybackOrigin
+import com.eimsound.eimusic.playback.toEventSource
 import com.eimsound.eimusic.together.PlayState
 import com.eimsound.eimusic.together.SyncState
 import io.ktor.client.HttpClient
@@ -76,7 +78,7 @@ class PlayerController(
                                 val next = nextTrack()
                                 if (next != null) play(next, event.isAudioCompleted)
                             }
-                            is PlayMode.RepeatOne -> seek(0) {}
+                            is PlayMode.RepeatOne -> seek(0, seekOver = {})
                         }
                     }
                     is PlaybackEvent.Previous -> {
@@ -85,7 +87,7 @@ class PlayerController(
                                 val prev = previousTrack()
                                 if (prev != null) play(prev, false)
                             }
-                            is PlayMode.RepeatOne -> seek(0) {}
+                            is PlayMode.RepeatOne -> seek(0, seekOver = {})
                         }
                     }
                 }
@@ -146,11 +148,15 @@ class PlayerController(
         if (startTrack != null && startTrack.id != previousCurrentId) doOpenAndPlay(startTrack)
     }
 
-    override fun play(media: Track) {
-        play(media, false)
+    override fun play(media: Track, origin: PlaybackOrigin) {
+        play(media, false, origin)
     }
 
-    private fun play(media: Track, isAudioCompleted: Boolean = false) {
+    private fun play(
+        media: Track,
+        isAudioCompleted: Boolean = false,
+        origin: PlaybackOrigin = PlaybackOrigin.LocalUi,
+    ) {
         needsOpen = false
         val list = currentList()
         _state.update {
@@ -192,7 +198,7 @@ class PlayerController(
         if (engine.isPlaying()) pause() else resume()
     }
 
-    override fun playState(state: PlayState) {
+    override fun playState(state: PlayState, origin: PlaybackOrigin) {
         when (state) {
             PlayState.PLAYING -> resume()
             PlayState.PAUSED -> pause()
@@ -203,41 +209,41 @@ class PlayerController(
             }
         }
         EventBus.PlaybackEventBus.send(
-            PlaybackEvent.PlayStateChanged(state == PlayState.PLAYING, position = Duration(_state.value.position), source = EventSource.Player)
+            PlaybackEvent.PlayStateChanged(state == PlayState.PLAYING, position = Duration(_state.value.position), source = origin.toEventSource())
         )
     }
 
     // ── Track navigation ──
 
-    override fun next(isAudioCompleted: Boolean) {
+    override fun next(isAudioCompleted: Boolean, origin: PlaybackOrigin) {
         when (_state.value.playMode) {
             is PlayMode.Shuffle, is PlayMode.Loop -> {
                 val next = nextTrack()
                 if (next != null) {
                     EventBus.PlaybackEventBus.send(
-                        PlaybackEvent.Next(isAudioCompleted, next, source = EventSource.Player)
+                        PlaybackEvent.Next(isAudioCompleted, next, source = origin.toEventSource())
                     )
-                    play(next, isAudioCompleted)
+                    play(next, isAudioCompleted, origin)
                 }
             }
-            is PlayMode.RepeatOne -> seek(0) {}
+            is PlayMode.RepeatOne -> seek(0, seekOver = {})
         }
     }
 
     override fun nextTrack(): Track? = state.value.nextTrackCandidate()
 
-    override fun previous() {
+    override fun previous(origin: PlaybackOrigin) {
         when (_state.value.playMode) {
             is PlayMode.Shuffle, is PlayMode.Loop -> {
                 val prev = previousTrack()
                 if (prev != null) {
                     EventBus.PlaybackEventBus.send(
-                        PlaybackEvent.Previous(prev, source = EventSource.Player)
+                        PlaybackEvent.Previous(prev, source = origin.toEventSource())
                     )
-                    play(prev, false)
+                    play(prev, false, origin)
                 }
             }
-            is PlayMode.RepeatOne -> seek(0) {}
+            is PlayMode.RepeatOne -> seek(0, seekOver = {})
         }
     }
 
@@ -245,11 +251,11 @@ class PlayerController(
 
     // ── Seek & volume ──
 
-    override fun seek(millis: Long, seekOver: () -> Unit) {
+    override fun seek(millis: Long, seekOver: () -> Unit, origin: PlaybackOrigin) {
         engine.seek(millis)
         _state.update { it.copy(position = millis) }
         EventBus.PlaybackEventBus.send(
-            PlaybackEvent.Seek(Duration(millis), source = EventSource.Player)
+            PlaybackEvent.Seek(Duration(millis), source = origin.toEventSource())
         )
         seekOver()
     }
@@ -279,10 +285,10 @@ class PlayerController(
         }
     }
 
-    override fun playMode(mode: PlayMode) {
+    override fun playMode(mode: PlayMode, origin: PlaybackOrigin) {
         _state.update { it.copy(playMode = mode) }
         EventBus.PlaybackEventBus.send(
-            PlaybackEvent.PlayModeChanged(mode, source = EventSource.Player)
+            PlaybackEvent.PlayModeChanged(mode, source = origin.toEventSource())
         )
     }
 
@@ -369,10 +375,10 @@ class PlayerController(
         if (newTrack != null) {
             syncPendingPosition = syncState.position
             syncPendingPlayState = syncState.playState
-            play(newTrack)
+            play(newTrack, origin = PlaybackOrigin.RemoteSync)
         } else {
-            syncState.playState?.let { playState(it) }
-            syncState.position?.let { seek(it) }
+            syncState.playState?.let { playState(it, PlaybackOrigin.RemoteSync) }
+            syncState.position?.let { seek(it, origin = PlaybackOrigin.RemoteSync) }
         }
     }
 

@@ -18,9 +18,12 @@ interface IMediaPlayerController {
 
     fun queue(medias: List<Track>, prepareOver: () -> Unit = {})
 
-    fun play(media: Track)
+    fun play(media: Track, origin: PlaybackOrigin = PlaybackOrigin.LocalUi)
 
-    fun next(isAudioCompleted: Boolean = false)
+    fun next(
+        isAudioCompleted: Boolean = false,
+        origin: PlaybackOrigin = PlaybackOrigin.LocalUi,
+    )
 
     fun addTrack(media: Track, index: Int)
 
@@ -31,17 +34,21 @@ interface IMediaPlayerController {
 
     fun nextTrack(): Track?
 
-    fun previous()
+    fun previous(origin: PlaybackOrigin = PlaybackOrigin.LocalUi)
 
     fun previousTrack(): Track?
 
-    fun playState(state: PlayState)
+    fun playState(state: PlayState, origin: PlaybackOrigin = PlaybackOrigin.LocalUi)
 
-    fun playMode(mode: PlayMode)
+    fun playMode(mode: PlayMode, origin: PlaybackOrigin = PlaybackOrigin.LocalUi)
 
     fun volume(volume: Float, isMuted: Boolean = false)
 
-    fun seek(millis: Long, seekOver: () -> Unit = {})
+    fun seek(
+        millis: Long,
+        seekOver: () -> Unit = {},
+        origin: PlaybackOrigin = PlaybackOrigin.LocalUi,
+    )
 
     fun release()
 
