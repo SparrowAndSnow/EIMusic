@@ -49,6 +49,8 @@ class TogetherSyncManager(
      * 处理远程同步状态
      */
     fun handleRemoteSyncState(remoteStateEvent: ChannelEvent.PlayStateChanged) {
+        // 已退出频道后不再接受任何播放控制（包括 leave 前已经到达的事件）。
+        if (_channelState.value !is ChannelState.Joined) return
         val remoteState = remoteStateEvent.state
         lastSyncState = remoteState
         queueRevision = remoteState.queueRevision

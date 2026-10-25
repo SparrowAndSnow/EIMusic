@@ -96,9 +96,10 @@ class TogetherStore(
     fun leaveChannel() {
         scope.launch {
             currentChannelId = null
-            webSocketClient.leaveChannel()
+            // 先切本地状态，阻止 leave 请求往返期间到达的远端控制事件。
             syncManager.updateChannelState(ChannelState.Disconnected)
             _state.value = _state.value.copy(messages = emptyList(), members = emptyList())
+            webSocketClient.leaveChannel()
         }
     }
 
@@ -314,8 +315,10 @@ class TogetherStore(
                     is ChannelEvent.UserLeft -> updateMembers(event.members)
                     is ChannelEvent.PlayStateChanged -> syncManager.handleRemoteSyncState(event)
                     is ChannelEvent.RoomMetadataChanged -> {
-                        updateMembers(event.channel.members)
-                        syncManager.initializeState(event.channel)
+                        if (_state.value.channelState is ChannelState.Joined) {
+                            updateMembers(event.channel.members)
+                            syncManager.initializeState(event.channel)
+                        }
                     }
                 }
             }
