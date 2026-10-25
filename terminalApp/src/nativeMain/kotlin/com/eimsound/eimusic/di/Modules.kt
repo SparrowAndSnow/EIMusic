@@ -21,6 +21,7 @@ import com.eimsound.eimusic.network.FallbackHttpClientFactory
 import com.eimsound.eimusic.network.RequestUrlProvider
 import com.eimsound.eimusic.playback.IMediaPlayerController
 import com.eimsound.eimusic.playback.PlaybackStore
+import com.eimsound.eimusic.playlist.PlaylistStore
 import com.eimsound.eimusic.repository.NeteaseTrackRepository
 import com.eimsound.eimusic.repository.TrackRepository
 import com.eimsound.eimusic.resolver.track.LocalUriResolver
@@ -82,7 +83,8 @@ fun viewModelModule() = module {
     single { TogetherWebSocketClient(get<AppConfig>().server.ws, get(), get()) }
     single { TogetherSyncManager(get(), get()) }
     single { TogetherStore(get(), get(), get(), TuiLogger::log) }
-    single { PlaylistViewModel(get(), get(), get(), get()) }
+    single { PlaylistStore(get(), get(), get(), get(), TuiLogger::log) }
+    single { PlaylistViewModel(get()) }
     single { LocalViewModel(get()) }
     single { ChannelViewModel(get()) }
 }
