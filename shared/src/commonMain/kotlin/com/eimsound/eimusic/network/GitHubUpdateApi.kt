@@ -70,12 +70,7 @@ class GitHubUpdateApi(
         val keyword = when (platform) {
             PlatformType.ANDROID -> ".apk"
             PlatformType.IOS -> ".ipa"
-            PlatformType.DESKTOP -> when {
-                os.startsWith("linux") -> "linux"
-                os.startsWith("windows") -> "windows"
-                os.startsWith("osx") || os.startsWith("mac") -> "macos"
-                else -> ""
-            }
+            PlatformType.DESKTOP -> "EIMusic"
             PlatformType.WASM, PlatformType.Native -> ""
             else -> ""
         }
