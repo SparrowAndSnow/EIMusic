@@ -82,6 +82,10 @@ class ChannelViewModel(
         _uiState.update { it.copy(chatInput = input) }
     }
 
+    fun setChatInput(active: Boolean) {
+        _uiState.update { it.copy(isChatInput = active) }
+    }
+
     fun toggleChatInput() {
         _uiState.update {
             it.copy(

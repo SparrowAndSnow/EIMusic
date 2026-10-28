@@ -59,8 +59,15 @@ fun TogetherScreen(
                 actions = TogetherKeyActions(
                     joinChannel = { channelViewModel.joinChannel("default") },
                     leaveChannel = { channelViewModel.leaveChannel() },
-                    setFocus = { focus = it },
-                    goBack = { channelViewModel.disconnect(); onGoBack() },
+                    setFocus = { newFocus ->
+                        focus = newFocus
+                        channelViewModel.setChatInput(newFocus == TogetherFocus.ChatInput)
+                    },
+                    goBack = {
+                        channelViewModel.setChatInput(false)
+                        channelViewModel.disconnect()
+                        onGoBack()
+                    },
                 ),
             )
         },
@@ -92,9 +99,12 @@ fun TogetherScreen(
                             channelViewModel.sendChatMessage(state.chatInput)
                             channelViewModel.updateChatInput("")
                         }
+                        // 保持输入态继续聊天；清空内容即可，避免隐藏输入框后留下残影。
+                    },
+                    onCancelChat = {
+                        channelViewModel.setChatInput(false)
                         focus = TogetherFocus.Messages
                     },
-                    onCancelChat = { focus = TogetherFocus.Messages },
                 )
             }
         }
@@ -188,17 +198,17 @@ private fun ChatLayout(
 ) {
     ConnectionBar(state.connectionState, palette)
 
-    val msgLines = (termHeight - 2 - if (focus == TogetherFocus.ChatInput) 2 else 0).coerceAtLeast(1)
+    val msgLines = (termHeight - 2 - if (state.isChatInput) 2 else 0).coerceAtLeast(1)
     MessageListView(
         messages = state.messages,
-
         visibleLines = msgLines,
         termWidth = termWidth,
         channelViewModel = channelViewModel,
         palette = palette,
+        enabled = focus == TogetherFocus.Messages,
     )
 
-    if (focus == TogetherFocus.ChatInput) {
+    if (state.isChatInput) {
         Spacer(Modifier.height(1))
         Box(modifier = Modifier.border(color = palette.dimBorderFg)) {
             InputField(
@@ -236,6 +246,7 @@ private fun MessageListView(
     termWidth: Int,
     channelViewModel: ChannelViewModel,
     palette: com.eimsound.eimusic.ui.theme.TuiColors,
+    enabled: Boolean = true,
 ) {
     if (messages.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -250,6 +261,7 @@ private fun MessageListView(
     ListView(
         items = messages,
         visibleLines = visibleLines,
+        enabled = enabled,
         showScrollIndicator = true,
         render = { message, i, isSelected ->
             ChatBubble(
