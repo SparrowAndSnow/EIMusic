@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -21,8 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.eimsound.eimusic.AppVersion
-import com.eimsound.eimusic.network.models.DownloadState
-import com.eimsound.eimusic.theme.LocalPalette
 import com.eimsound.eimusic.viewmodel.UpdateViewModel
 import com.eimsound.eimusic.views.SettingSection
 import eimusic.composeapp.generated.resources.Res
@@ -130,7 +127,6 @@ fun SettingUpdate(
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        UpdateExecuteState(uiState.downloadState)
                     }
                 },
                 colors = ListItemDefaults.colors(
@@ -168,50 +164,8 @@ fun SettingUpdate(
             },
             onLater = {
                 updateViewModel.ignoreVersion(uiState.latestVersion ?: AppVersion.VERSION_NAME)
-                updateViewModel.clearUpdateState()
                 showUpdateDialog = false
             }
         )
     }
-}
-
-@Composable
-fun UpdateExecuteState(downloadState: DownloadState) {
-    val palette = LocalPalette.current
-    var downloadProgress by remember { mutableStateOf(0f) }
-    var downloadProgressColor by remember { mutableStateOf(palette.accent) }
-
-    when (downloadState) {
-        is DownloadState.None -> {
-            return
-        }
-
-        is DownloadState.Progress -> {
-            downloadProgress = downloadState.percent.toFloat() / 100
-            downloadProgressColor = palette.accent
-        }
-
-        is DownloadState.Error -> {
-            Text(
-                text = "${stringResource(Res.string.setting_update_download_error)}: ${downloadState.cause.message}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = palette.error
-            )
-            return
-        }
-
-        is DownloadState.Success -> {
-            downloadProgress = 1f
-            downloadProgressColor = palette.success
-        }
-
-        is DownloadState.Loading -> {
-            downloadProgress = 0f
-            downloadProgressColor = palette.accent
-        }
-    }
-
-    LinearProgressIndicator(progress = {
-        downloadProgress
-    }, color = downloadProgressColor)
 }

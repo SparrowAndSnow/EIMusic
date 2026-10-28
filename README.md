@@ -86,6 +86,28 @@ Windows：
 - 服务端配置：`server/src/main/resources/application.conf`
 - 音乐源配置：将 `eimusic.example.json` 复制为 `eimusic.json` 后填写音乐源服务地址
 
+## CI/CD
+
+仓库已配置 GitHub Actions：
+
+- `.github/workflows/ci.yml`：PR/主分支构建 shared、server、desktop、Android debug APK，并编译 terminal。
+- `.github/workflows/release.yml`：推送 `v*` 标签时校验 `version.toml`，构建 Android APK、server fat jar、Linux desktop zip，发布 GitHub Release，并推送 `ghcr.io/<owner>/eimusic-backend` 镜像。
+
+发布前先把 `version.toml` 的 `version.name` 改成与标签一致，例如：
+
+```toml
+[version]
+name = "1.0.0"
+code = 100
+```
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+CI 会克隆 `SparrowAndSnow/mosaic` 到项目根目录作为 terminalApp 的复合构建依赖；本地代理配置请放在 `~/.gradle/gradle.properties`，不要提交到仓库。
+
 ## 技术栈
 
 - [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html) / [Compose Multiplatform](https://github.com/JetBrains/compose-multiplatform)

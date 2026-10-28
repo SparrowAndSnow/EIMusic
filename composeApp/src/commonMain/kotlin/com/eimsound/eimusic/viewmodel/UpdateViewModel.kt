@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.eimsound.eimusic.BuildConfig
 import com.eimsound.eimusic.PlatformType
 import com.eimsound.eimusic.version.UpdateInfo
-import com.eimsound.eimusic.network.models.DownloadState
 import com.eimsound.eimusic.network.models.NetworkResult
 import com.eimsound.eimusic.util.UpdateService
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -89,8 +88,8 @@ class UpdateViewModel(
     fun update() {
         viewModelScope.launch {
             val info = uiState.value.updateInfo ?: return@launch
-            updateService.executeUpdate( info).collect {
-                _uiState.value = _uiState.value.copy(downloadState = it)
+            if (!updateService.openDownload(info)) {
+                _uiState.value = _uiState.value.copy(error = "无法打开下载页面")
             }
         }
     }
@@ -106,5 +105,4 @@ data class UpdateUiState(
     val updateInfo: UpdateInfo? = null,
     val latestVersion: String? = null,
     val error: String? = null,
-    val downloadState: DownloadState = DownloadState.None,
 )
