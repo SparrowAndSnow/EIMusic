@@ -42,18 +42,15 @@ jobs:
       - name: Build terminal release
         run: ./gradlew.bat :terminalApp:linkReleaseExecutableMingwX64 --no-daemon --stacktrace
 
-      - name: Package terminal
+      - name: Stage terminal binary
         shell: pwsh
-        run: |
-          Compress-Archive `
-            -Path "terminalApp/build/bin/mingwX64/releaseExecutable/eimusic.exe" `
-            -DestinationPath "terminal-windows.zip"
+        run: Copy-Item "terminalApp/build/bin/mingwX64/releaseExecutable/eimusic.exe" "eimusic.exe"
 
       - name: Upload terminal artifact
         uses: actions/upload-artifact@v4
         with:
           name: terminal-windows
-          path: terminal-windows.zip
+          path: eimusic.exe
 
   release:
     name: Build release artifacts
@@ -114,8 +111,9 @@ jobs:
           mkdir -p release
           cp "androidApp/build/outputs/apk/debug/EIMusic-${VERSION}.apk" "release/EIMusic-${VERSION}.apk"
           cp "server/build/libs/server-all.jar" "release/server-all.jar"
-          mv "release/terminal-windows.zip" "release/EIMusic-${VERSION}-terminal-windows-x86_64.zip"
-          tar -C "terminalApp/build/bin/linuxX64/releaseExecutable" -czf "release/EIMusic-${VERSION}-terminal-linux-x86_64.tar.gz" eimusic.kexe
+          cp "terminalApp/build/bin/linuxX64/releaseExecutable/eimusic.kexe" "release/eimusic.kexe"
+          # Windows artifact is downloaded as release/eimusic.exe
+          test -f "release/eimusic.exe"
           ls -lh release
 
       - name: Publish GitHub Release

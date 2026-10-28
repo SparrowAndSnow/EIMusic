@@ -65,11 +65,11 @@ Linux：
 
 产物位于 `terminalApp/build/bin/linuxX64/releaseExecutable/eimusic.kexe`。
 
-GitHub Release 提供：
+GitHub Release 直接提供未压缩二进制：
 
 ```text
-EIMusic-<version>-terminal-linux-x86_64.tar.gz
-EIMusic-<version>-terminal-windows-x86_64.zip
+eimusic.kexe
+eimusic.exe
 ```
 
 macOS terminal 暂未加入 Release 构建。
@@ -100,7 +100,7 @@ Windows：
 仓库已配置 GitHub Actions：
 
 - `.github/workflows/ci.yml`：PR/主分支构建 shared、server、desktop、Android debug APK，并编译 terminal。
-- `.github/workflows/release.yml`：推送 `v*` 标签时校验 `version.toml`，构建 Android APK、server fat jar、terminal Linux 发行包，发布 GitHub Release，并推送 `ghcr.io/<owner>/eimusic-backend` 镜像。
+- `.github/workflows/release.yml`：推送 `v*` 标签时校验 `version.toml`，构建 Android APK、server fat jar、terminal Linux/Windows 二进制，发布 GitHub Release，并推送 `ghcr.io/<owner>/eimusic-backend` 镜像。
 
 发布前先把 `version.toml` 的 `version.name` 改成与标签一致，例如：
 
