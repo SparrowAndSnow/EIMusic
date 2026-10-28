@@ -69,7 +69,10 @@ GitHub Release 提供：
 
 ```text
 EIMusic-<version>-terminal-linux-x86_64.tar.gz
+EIMusic-<version>-terminal-windows-x86_64.zip
 ```
+
+macOS terminal 暂未加入 Release 构建。
 
 macOS（Apple Silicon）：
 

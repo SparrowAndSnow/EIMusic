@@ -10,9 +10,55 @@ permissions:
   packages: write
 
 jobs:
+  terminal-windows:
+    name: Build terminal (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Checkout Mosaic composite build
+        run: git clone --depth 1 https://github.com/SparrowAndSnow/mosaic.git mosaic
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Set up MSYS2 MinGW
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: mingw-w64-x86_64-gcc
+          path-type: inherit
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build terminal release
+        run: ./gradlew.bat :terminalApp:linkReleaseExecutableMingwX64 --no-daemon --stacktrace
+
+      - name: Package terminal
+        shell: pwsh
+        run: |
+          Compress-Archive `
+            -Path "terminalApp/build/bin/mingwX64/releaseExecutable/eimusic.exe" `
+            -DestinationPath "terminal-windows.zip"
+
+      - name: Upload terminal artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: terminal-windows
+          path: terminal-windows.zip
+
   release:
     name: Build release artifacts
     runs-on: ubuntu-latest
+    needs: terminal-windows
     timeout-minutes: 60
 
     steps:
@@ -48,6 +94,12 @@ jobs:
             :terminalApp:linkReleaseExecutableLinuxX64 \
             --no-daemon --stacktrace
 
+      - name: Download Windows terminal
+        uses: actions/download-artifact@v4
+        with:
+          name: terminal-windows
+          path: release
+
       - name: Prepare release files
         run: |
           VERSION=$(python3 - <<'PY'
@@ -62,6 +114,7 @@ jobs:
           mkdir -p release
           cp "androidApp/build/outputs/apk/debug/EIMusic-${VERSION}.apk" "release/EIMusic-${VERSION}.apk"
           cp "server/build/libs/server-all.jar" "release/server-all.jar"
+          mv "release/terminal-windows.zip" "release/EIMusic-${VERSION}-terminal-windows-x86_64.zip"
           tar -C "terminalApp/build/bin/linuxX64/releaseExecutable" -czf "release/EIMusic-${VERSION}-terminal-linux-x86_64.tar.gz" eimusic.kexe
           ls -lh release
 
