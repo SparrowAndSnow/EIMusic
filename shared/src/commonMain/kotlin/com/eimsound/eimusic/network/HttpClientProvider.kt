@@ -30,6 +30,20 @@ class HttpClientProvider(
     private val refreshTokenUrl: String,
     private val authSore: AuthStore
 ) {
+    /** 不带 EIMusic Bearer Token 的客户端，用于 GitHub 等第三方公开 API。 */
+    val anonymousClient: HttpClient by lazy {
+        HttpClient {
+            install(ContentNegotiation) {
+                json(Json)
+            }
+            install(HttpTimeout) {
+                connectTimeoutMillis = 15_000
+                requestTimeoutMillis = 15_000
+                socketTimeoutMillis = 15_000
+            }
+        }
+    }
+
     val client: HttpClient by lazy {
         HttpClient {
             install(ContentNegotiation) {

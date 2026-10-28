@@ -86,6 +86,10 @@ Windows：
 - 服务端配置：`server/src/main/resources/application.conf`
 - 音乐源配置：将 `eimusic.example.json` 复制为 `eimusic.json` 后填写音乐源服务地址
 
+## 版本检查
+
+客户端直接请求 GitHub Releases API（`SparrowAndSnow/EIMusic`）并对比 `tag_name`，不再依赖服务端 `/version/check`。服务端该接口仅保留给旧客户端兼容。仓库必须保持公开，否则匿名 API 会返回 404。
+
 ## CI/CD
 
 仓库已配置 GitHub Actions：

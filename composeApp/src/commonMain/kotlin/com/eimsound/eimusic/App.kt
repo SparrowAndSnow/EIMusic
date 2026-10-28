@@ -35,8 +35,8 @@ import com.eimsound.eimusic.network.HttpClientProvider
 import com.eimsound.eimusic.network.NeteaseApi
 import com.eimsound.eimusic.network.NeteaseApiImpl
 import com.eimsound.eimusic.network.FallbackHttpClientFactory
+import com.eimsound.eimusic.network.GitHubUpdateApi
 import com.eimsound.eimusic.network.UpdateApi
-import com.eimsound.eimusic.network.UpdateApiImpl
 import com.eimsound.eimusic.repository.TrackRepository
 import com.eimsound.eimusic.route.LocalRoute
 import com.eimsound.eimusic.route.MyRoute
@@ -239,7 +239,7 @@ fun networkModule() = module {
 
     single<TogetherWebSocketClient> { TogetherWebSocketClient(get<AppConfig>().server.ws, get(), get()) }
 
-    single<UpdateApi> { UpdateApiImpl(get<AppConfig>().server.http, get()) }
+    single<UpdateApi> { GitHubUpdateApi(get()) }
 
     single<UpdateService> { UpdateService(get()) }
 }

@@ -8,10 +8,10 @@ title = "新版本 1.0.0"
 description = "发现新版本，请及时更新以获得更好的体验"
 
 [version.download]
-android = "https://github.com/SparrowAndSnow/EIMusicKT/releases/download/v%s/EIMusic-%s.apk"
+android = "https://github.com/SparrowAndSnow/EIMusic/releases/download/v%s/EIMusic-%s.apk"
 ios = ""
 
 [version.download.desktop]
-mac = "https://github.com/SparrowAndSnow/EIMusicKT/releases/download/v%s/EIMusic-%s-macos.zip"
-windows = "https://github.com/SparrowAndSnow/EIMusicKT/releases/download/v%s/EIMusic-%s-windows-x86_64.zip"
-linux= "https://github.com/SparrowAndSnow/EIMusicKT/releases/download/v%s/EIMusic-%s-linux-x86_64.zip"
+mac = "https://github.com/SparrowAndSnow/EIMusic/releases/download/v%s/EIMusic-%s-macos.zip"
+windows = "https://github.com/SparrowAndSnow/EIMusic/releases/download/v%s/EIMusic-%s-windows-x86_64.zip"
+linux= "https://github.com/SparrowAndSnow/EIMusic/releases/download/v%s/EIMusic-%s-linux-x86_64.zip"
