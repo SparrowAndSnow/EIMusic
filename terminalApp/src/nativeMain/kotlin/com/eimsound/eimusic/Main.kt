@@ -6,6 +6,10 @@ import com.eimsound.eimusic.mpris.createMprisManager
 import com.eimsound.eimusic.util.initTuiLogging
 import com.eimsound.eimusic.playback.IMediaPlayerController
 import com.eimsound.eimusic.storage.IStorage
+import com.eimsound.eimusic.storage.NativeStorage
+import com.eimsound.eimusic.storage.Settings
+import com.eimsound.eimusic.storage.get
+import platform.posix.setenv
 import com.eimsound.eimusic.util.AnyAsciiProcessor
 import com.eimsound.eimusic.util.Renderer
 import com.eimsound.eimusic.viewmodel.AuthViewModel
@@ -21,6 +25,19 @@ import kotlinx.coroutines.runBlocking
 
 fun main() {
     initTuiLogging()
+
+    // 代理在创建 HTTP 客户端前设置，libcurl/Ktor 会读取这些环境变量。
+    runCatching {
+        val bootstrapStorage = NativeStorage()
+        if (bootstrapStorage.get(Settings::proxyEnabled, false)) {
+            val host = bootstrapStorage.get(Settings::proxyHost, "127.0.0.1")
+            val port = bootstrapStorage.get(Settings::proxyPort, 8080)
+            val proxy = if (host.contains("://")) host else "http://$host:$port"
+            setenv("http_proxy", proxy, 1)
+            setenv("https_proxy", proxy, 1)
+            setenv("all_proxy", proxy, 1)
+        }
+    }
 
     val koinApp = initKoin()
     val koin = koinApp.koin
