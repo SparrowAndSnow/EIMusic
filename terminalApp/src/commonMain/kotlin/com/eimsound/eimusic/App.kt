@@ -27,6 +27,7 @@ import com.eimsound.eimusic.ui.components.TrackActionHost
 import com.eimsound.eimusic.ui.components.TrackInfoDialog
 import com.eimsound.eimusic.ui.components.rememberContextMenuState
 import com.eimsound.eimusic.ui.screens.SearchPage
+import com.eimsound.eimusic.ui.screens.SettingsScreen
 import com.eimsound.eimusic.ui.screens.TogetherScreen
 import com.eimsound.eimusic.ui.theme.LocalSafeContentSize
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
@@ -152,6 +153,7 @@ fun App(
                     playerViewModel = playerViewModel,
                     onOpenHelp = { navigate(Route.Help) },
                     onOpenSearch = { backStack = listOf(Route.Search()) },
+                    onOpenSettings = { backStack = listOf(Route.Settings) },
                     onOpenLogin = { navigate(Route.Login) },
                     onOpenLogs = { navigate(Route.LogViewer) },
                     onToggleTheme = {
@@ -191,6 +193,20 @@ fun App(
 
             is Route.Together -> TogetherScreen(
                 channelViewModel = channelViewModel,
+                onGoBack = goBack,
+            )
+
+            is Route.Settings -> SettingsScreen(
+                authViewModel = authViewModel,
+                localViewModel = localViewModel,
+                playerViewModel = playerViewModel,
+                isDark = isDark,
+                onToggleTheme = {
+                    isDark = !isDark
+                    storage.save(Settings::darkMode, isDark)
+                },
+                onOpenLogin = { navigate(Route.Login) },
+                onOpenLocalPaths = { backStack = listOf(Route.LocalSongs) },
                 onGoBack = goBack,
             )
 
@@ -240,6 +256,7 @@ fun App(
                     onNavigate = { navigate(Route.Login) },
                     onOpenQueue = { if (currentRoute !is Route.Queue) navigate(Route.Queue) },
                     onOpenTogether = { if (currentRoute !is Route.Together) navigate(Route.Together) },
+                    onOpenSettings = { if (currentRoute !is Route.Settings) navigate(Route.Settings) },
                     onToggleTheme = {
                         isDark = !isDark
                         storage.save(Settings::darkMode, isDark)
@@ -267,6 +284,9 @@ fun App(
                         val delta = if (event.shift) -1 else 1
                         val next = (base + delta + tabRoutes.size) % tabRoutes.size
                         backStack = listOf(tabRoutes[next].second)
+                        true
+                    } else if (event.key == "s" && !event.ctrl && !event.alt && !overlayRoute) {
+                        backStack = listOf(Route.Settings)
                         true
                     } else if (overlayRoute) {
                         // 弹窗打开时除切页外，全局快捷键停用。

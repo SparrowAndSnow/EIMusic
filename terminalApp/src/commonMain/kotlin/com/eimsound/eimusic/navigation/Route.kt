@@ -10,6 +10,7 @@ sealed interface Route {
     data object LogViewer : Route
 
     data object Help : Route
+    data object Settings : Route
 
     // New features
     data object Playlists : Route

@@ -11,6 +11,7 @@ sealed interface MainAction : KeyAction {
     data object TogglePlayMode : MainAction
     data object ToggleHelp : MainAction
     data object OpenSearch : MainAction
+    data object OpenSettings : MainAction
     data object OpenLogin : MainAction
     data object OpenLogs : MainAction
     data object SeekForward : MainAction
@@ -41,6 +42,7 @@ val mainKeyBindings: List<KeyBinding<MainAction>> = listOf(
     KeyBinding(listOf("t"), "t", MainAction.ToggleTheme, "Toggle theme"),
     KeyBinding(listOf("l"), "l", MainAction.OpenLogin, "Login"),
     KeyBinding(listOf("f"), "f", MainAction.OpenSearch, "Search music"),
+    KeyBinding(listOf("s"), "s", MainAction.OpenSettings, "Settings"),
     KeyBinding(listOf("`"), "`", MainAction.OpenLogs, "View logs"),
     KeyBinding(listOf("q"), "q", MainAction.Quit, "Quit"),
 )
@@ -107,6 +109,7 @@ fun dispatchMainKey(
     globalActions: GlobalKeyActions,
     onToggleHelp: () -> Unit,
     onOpenSearch: () -> Unit,
+    onOpenSettings: () -> Unit,
     onOpenLogin: () -> Unit,
     onOpenLogs: () -> Unit,
     onToggleTheme: () -> Unit,
@@ -122,6 +125,7 @@ fun dispatchMainKey(
         MainAction.TogglePlayMode -> globalActions.onTogglePlayMode()
         MainAction.ToggleHelp -> onToggleHelp()
         MainAction.OpenSearch -> onOpenSearch()
+        MainAction.OpenSettings -> onOpenSettings()
         MainAction.OpenLogin -> onOpenLogin()
         MainAction.OpenLogs -> onOpenLogs()
         MainAction.SeekForward -> globalActions.onSeekForward()

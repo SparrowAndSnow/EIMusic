@@ -6,6 +6,8 @@
 
 ## 已完成（2026-10）
 
+- [x] terminalApp 设置页（主题/播放模式/账号/本地音乐/关于；Header 齿轮 + s）
+
 - [x] terminalApp 适配重构后的 mosaic（画布/约束、BasicTextField、鼠标、备用屏）
 - [x] 列表单击选中 / 双击打开、hover、滚轮惯性渐停
 - [x] 底部页面 tabs（1-5 / Tab / 点击切换）

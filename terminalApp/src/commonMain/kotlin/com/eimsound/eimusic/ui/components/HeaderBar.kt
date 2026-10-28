@@ -37,6 +37,7 @@ fun HeaderBar(
     onNavigate: () -> Unit,
     onOpenQueue: () -> Unit,
     onOpenTogether: () -> Unit,
+    onOpenSettings: () -> Unit,
     onToggleTheme: () -> Unit,
     channelLabel: String? = null,
 ) {
@@ -83,6 +84,10 @@ fun HeaderBar(
             Text(Icon.Queue.sym, color = palette.textDimFg)
             Spacer(Modifier.width(1))
             Text(queue, color = palette.textFg)
+        }
+        Spacer(Modifier.width(2))
+        HeaderButton(onOpenSettings) {
+            Text(Icon.Settings.sym, color = palette.textDimFg)
         }
         Spacer(Modifier.width(2))
         HeaderButton(onNavigate) {

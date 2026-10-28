@@ -21,6 +21,7 @@ enum class Icon(val sym: String) {
     User("\uF007"),
     Queue("\uF03A"),
 
+    Settings("\uF013"),
     Help("\uF059"),
     Moon("\uF186"),
     Sun("\uF185"),
