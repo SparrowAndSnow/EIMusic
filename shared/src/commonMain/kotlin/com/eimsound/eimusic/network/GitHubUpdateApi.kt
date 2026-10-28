@@ -67,11 +67,12 @@ class GitHubUpdateApi(
     }
 
     private fun selectAsset(assets: List<GitHubAsset>, platform: PlatformType, os: String): GitHubAsset? {
+        // Desktop 不再单独发行，直接打开 Release 页面。
+        if (platform == PlatformType.DESKTOP) return null
         val keyword = when (platform) {
             PlatformType.ANDROID -> ".apk"
             PlatformType.IOS -> ".ipa"
-            PlatformType.DESKTOP -> "EIMusic"
-            PlatformType.WASM, PlatformType.Native -> ""
+            PlatformType.DESKTOP, PlatformType.WASM, PlatformType.Native -> ""
             else -> ""
         }
         return assets.firstOrNull { it.name.contains(keyword, ignoreCase = true) }

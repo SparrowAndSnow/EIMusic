@@ -45,7 +45,6 @@ jobs:
           ./gradlew \
             :server:buildFatJar \
             :androidApp:assembleDebug \
-            :composeApp:packageUberJarForCurrentOS \
             :terminalApp:linkReleaseExecutableLinuxX64 \
             --no-daemon --stacktrace
 
@@ -63,7 +62,6 @@ jobs:
           mkdir -p release
           cp "androidApp/build/outputs/apk/debug/EIMusic-${VERSION}.apk" "release/EIMusic-${VERSION}.apk"
           cp "server/build/libs/server-all.jar" "release/server-all.jar"
-          cp "composeApp/build/compose/jars/EIMusic-linux-x64-${VERSION}.jar" "release/EIMusic-${VERSION}.jar"
           tar -C "terminalApp/build/bin/linuxX64/releaseExecutable" -czf "release/EIMusic-${VERSION}-terminal-linux-x86_64.tar.gz" eimusic.kexe
           ls -lh release
 

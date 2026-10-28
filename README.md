@@ -39,19 +39,7 @@ git clone https://github.com/SparrowAndSnow/mosaic
 ./gradlew :composeApp:run
 ```
 
-打包为单 jar：
-
-```bash
-./gradlew :composeApp:packageUberJarForCurrentOS
-```
-
-产物位于 `composeApp/build/compose/jars/`，可直接运行：
-
-```bash
-java -jar composeApp/build/compose/jars/EIMusic-linux-x64-1.0.0.jar
-```
-
-不再生成 native 安装包。
+Desktop 仅用于开发运行，不再发布 Desktop 发行包。桌面用户使用 terminalApp。
 
 ### Web 客户端（开发模式）
 
@@ -76,6 +64,12 @@ Linux：
 ```
 
 产物位于 `terminalApp/build/bin/linuxX64/releaseExecutable/eimusic.kexe`。
+
+GitHub Release 提供：
+
+```text
+EIMusic-<version>-terminal-linux-x86_64.tar.gz
+```
 
 macOS（Apple Silicon）：
 
@@ -103,7 +97,7 @@ Windows：
 仓库已配置 GitHub Actions：
 
 - `.github/workflows/ci.yml`：PR/主分支构建 shared、server、desktop、Android debug APK，并编译 terminal。
-- `.github/workflows/release.yml`：推送 `v*` 标签时校验 `version.toml`，构建 Android APK、server fat jar、桌面单 jar、terminal Linux 发行包，发布 GitHub Release，并推送 `ghcr.io/<owner>/eimusic-backend` 镜像。
+- `.github/workflows/release.yml`：推送 `v*` 标签时校验 `version.toml`，构建 Android APK、server fat jar、terminal Linux 发行包，发布 GitHub Release，并推送 `ghcr.io/<owner>/eimusic-backend` 镜像。
 
 发布前先把 `version.toml` 的 `version.name` 改成与标签一致，例如：
 

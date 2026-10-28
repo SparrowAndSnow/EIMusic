@@ -12,6 +12,6 @@ android = "https://github.com/SparrowAndSnow/EIMusic/releases/download/v%s/EIMus
 ios = ""
 
 [version.download.desktop]
-mac = "https://github.com/SparrowAndSnow/EIMusic/releases/download/v%s/EIMusic-%s.jar"
-windows = "https://github.com/SparrowAndSnow/EIMusic/releases/download/v%s/EIMusic-%s.jar"
-linux= "https://github.com/SparrowAndSnow/EIMusic/releases/download/v%s/EIMusic-%s.jar"
+mac = "https://github.com/SparrowAndSnow/EIMusic/releases/latest"
+windows = "https://github.com/SparrowAndSnow/EIMusic/releases/latest"
+linux= "https://github.com/SparrowAndSnow/EIMusic/releases/latest"

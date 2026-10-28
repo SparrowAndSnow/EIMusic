@@ -51,7 +51,6 @@ jobs:
             :server:test \
             :server:buildFatJar \
             :composeApp:compileKotlinDesktop \
-            :composeApp:packageUberJarForCurrentOS \
             --no-daemon --stacktrace
 
       - name: Build Android debug APK
