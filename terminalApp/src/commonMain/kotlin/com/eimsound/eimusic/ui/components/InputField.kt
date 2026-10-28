@@ -21,6 +21,9 @@ import com.jakewharton.mosaic.text.buildAnnotatedString
 import com.jakewharton.mosaic.text.withStyle
 import com.jakewharton.mosaic.ui.BasicTextField
 import com.jakewharton.mosaic.ui.Box
+import com.jakewharton.mosaic.ui.Cursor
+import com.jakewharton.mosaic.ui.CursorShape
+import com.jakewharton.mosaic.ui.Row
 import com.jakewharton.mosaic.ui.Text
 import com.jakewharton.mosaic.ui.TextOverflow
 
@@ -103,13 +106,19 @@ fun InputField(
             )
         }
         Box(Modifier.fillMaxWidth().horizontalScroll(scroll)) {
-            BasicTextField(
-                value = value,
-                onValueChange = onValueChange,
-                modifier = Modifier.focusRequester(requester),
-                enabled = active,
-                color = palette.textFg,
-            )
+            Row {
+                BasicTextField(
+                    value = value,
+                    onValueChange = onValueChange,
+                    modifier = Modifier.focusRequester(requester),
+                    enabled = active,
+                    color = palette.textFg,
+                )
+                // 终端硬件光标：给 IME 提供组合串锚点，避免 preedit 跑到屏幕左下角。
+                if (active) {
+                    Cursor(shape = CursorShape.Bar, blink = true)
+                }
+            }
         }
     }
 }
