@@ -182,7 +182,7 @@
     <string name="setting_update_download">Download Update</string>
     <string name="setting_update_download_error">Download Update Failed</string>
     <string name="setting_update_later">Later</string>
-    <string name="setting_update_install_now">Install Now</string>
+    <string name="setting_update_install_now">Open Download Page</string>
     <string name="setting_update_error">Failed to check update</string>
     <string name="setting_update_no_update">You are using the latest version</string>
 
