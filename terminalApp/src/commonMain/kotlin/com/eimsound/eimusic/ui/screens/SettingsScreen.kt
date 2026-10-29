@@ -1,6 +1,8 @@
 package com.eimsound.eimusic.ui.screens
 
 import androidx.compose.runtime.*
+import com.eimsound.eimusic.PlatformType
+import com.eimsound.eimusic.TerminalVersion
 import com.eimsound.eimusic.config.AppConfig
 import com.eimsound.eimusic.i18n.I18n
 import com.eimsound.eimusic.i18n.Language
@@ -10,6 +12,8 @@ import com.eimsound.eimusic.keyboard.SettingKeyActions
 import com.eimsound.eimusic.keyboard.dispatchSettingKey
 import com.eimsound.eimusic.keyboard.settingStatusBarHint
 import com.eimsound.eimusic.music.TrackSource
+import com.eimsound.eimusic.network.UpdateApi
+import com.eimsound.eimusic.network.models.NetworkResult
 import com.eimsound.eimusic.storage.IStorage
 import com.eimsound.eimusic.storage.Settings
 import com.eimsound.eimusic.storage.get
@@ -30,6 +34,7 @@ import com.jakewharton.mosaic.ui.Column
 import com.jakewharton.mosaic.ui.Row
 import com.jakewharton.mosaic.ui.Text
 import com.jakewharton.mosaic.ui.TextOverflow
+import kotlinx.coroutines.launch
 
 private sealed interface SettingEdit {
     data object Http : SettingEdit
@@ -48,6 +53,14 @@ private data class SettingSection(
     val title: String,
     val rows: List<SettingRow>,
 )
+
+private sealed interface UpdateStatus {
+    data object Idle : UpdateStatus
+    data object Checking : UpdateStatus
+    data class UpToDate(val version: String) : UpdateStatus
+    data class Available(val version: String, val url: String) : UpdateStatus
+    data class Failed(val message: String) : UpdateStatus
+}
 
 private val editableSources = TrackSource.entries.filter {
     it != TrackSource.LOCAL && it != TrackSource.UNKNOWN
@@ -69,6 +82,7 @@ private fun sourceLabel(source: TrackSource): String = when (source) {
 @Composable
 fun SettingsScreen(
     storage: IStorage,
+    updateApi: UpdateApi,
     isDark: Boolean,
     onToggleTheme: () -> Unit,
     onGoBack: () -> Unit,
@@ -87,6 +101,31 @@ fun SettingsScreen(
     var selected by remember { mutableIntStateOf(0) }
     var sourcePage by remember { mutableStateOf(false) }
     var sourceSelected by remember { mutableIntStateOf(0) }
+    var updateStatus by remember { mutableStateOf<UpdateStatus>(UpdateStatus.Idle) }
+    val scope = rememberCoroutineScope()
+
+    fun checkUpdate() {
+        if (updateStatus == UpdateStatus.Checking) return
+        updateStatus = UpdateStatus.Checking
+        scope.launch {
+            val result = updateApi.checkUpdate(TerminalVersion.VERSION, PlatformType.Native, "linux")
+            updateStatus = when (result) {
+                is NetworkResult.Success -> {
+                    val data = result.data
+                    if (data.hasUpdate) {
+                        UpdateStatus.Available(
+                            version = data.latestVersion ?: data.update?.version ?: "?",
+                            url = data.update?.downloadUrl.orEmpty(),
+                        )
+                    } else {
+                        UpdateStatus.UpToDate(data.latestVersion ?: TerminalVersion.VERSION)
+                    }
+                }
+                is NetworkResult.Error -> UpdateStatus.Failed(result.message)
+                is NetworkResult.Exception -> UpdateStatus.Failed(result.message ?: "unknown")
+            }
+        }
+    }
 
     fun persistConfig(update: (AppConfig) -> AppConfig) {
         val next = update(config)
@@ -191,9 +230,32 @@ fun SettingsScreen(
         ),
         SettingSection(
             t("settings.about"),
-            listOf(
-                SettingRow(t("settings.version"), "EIMusic TUI", {}),
-            ),
+            buildList {
+                add(SettingRow(t("settings.version"), "EIMusic TUI v" + TerminalVersion.VERSION, {}))
+                add(
+                    SettingRow(
+                        t("settings.update"),
+                        when (val status = updateStatus) {
+                            UpdateStatus.Idle -> t("settings.update.idle")
+                            UpdateStatus.Checking -> t("settings.update.checking")
+                            is UpdateStatus.UpToDate -> t("settings.update.upToDate", status.version)
+                            is UpdateStatus.Available -> t("settings.update.available", status.version)
+                            is UpdateStatus.Failed -> t("settings.update.failed") + ": " + status.message
+                        },
+                        { checkUpdate() },
+                    ),
+                )
+                val status = updateStatus
+                if (status is UpdateStatus.Available && status.url.isNotBlank()) {
+                    add(
+                        SettingRow(
+                            t("settings.update.download"),
+                            status.url,
+                            { notice = status.url },
+                        ),
+                    )
+                }
+            },
         ),
     )
     val flatRows = sections.flatMap { it.rows }

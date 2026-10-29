@@ -14,6 +14,8 @@ import com.eimsound.eimusic.factory.TrackUriResolverFactory
 import com.eimsound.eimusic.music.TrackSource
 import com.eimsound.eimusic.network.AuthApi
 import com.eimsound.eimusic.network.AuthApiImpl
+import com.eimsound.eimusic.network.GitHubUpdateApi
+import com.eimsound.eimusic.network.UpdateApi
 import com.eimsound.eimusic.network.HttpClientProvider
 import com.eimsound.eimusic.network.NeteaseApi
 import com.eimsound.eimusic.network.NeteaseApiImpl
@@ -57,6 +59,7 @@ fun systemModule() = module {
     single { DbSessionRepository(get()) }
     single<AppConfig> { get<IStorage>().get(AppConfig()) }
     single { HttpClientProvider("${get<AppConfig>().server.http}/auth/refresh", get()) }
+    single<UpdateApi> { GitHubUpdateApi(get()) }
     single<AuthApi> { AuthApiImpl(get<AppConfig>().server.http, get()) }
     single { AuthStore(lazy { get() }, get()) }
 }

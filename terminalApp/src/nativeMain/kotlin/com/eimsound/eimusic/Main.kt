@@ -59,6 +59,7 @@ fun main() {
     val channelViewModel = koin.get<ChannelViewModel>()
     val controller = try { koin.get<IMediaPlayerController>() } catch (_: Exception) { null }
     val storage = koin.get<IStorage>()
+    val updateApi = koin.get<com.eimsound.eimusic.network.UpdateApi>()
     I18n.setLanguage(storage.get(Settings::language, "zh"))
     val sessionRepository = koin.get<DbSessionRepository>()
     val initialTab = sessionRepository.load().lastTab
@@ -89,6 +90,7 @@ fun main() {
                 runMosaic(mouse = true, alternateScreen = true) {
                     App(
                         storage = storage,
+                        updateApi = updateApi,
                         initialTab = initialTab,
                         sessionRepository = sessionRepository,
                         playerViewModel = playerViewModel,

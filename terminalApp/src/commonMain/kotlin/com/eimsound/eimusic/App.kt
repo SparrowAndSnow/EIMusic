@@ -38,6 +38,7 @@ import com.eimsound.eimusic.util.render
 import com.eimsound.eimusic.viewmodel.AuthViewModel
 import com.eimsound.eimusic.viewmodel.ChannelViewModel
 import com.eimsound.eimusic.i18n.t
+import com.eimsound.eimusic.network.UpdateApi
 import com.eimsound.eimusic.viewmodel.LocalViewModel
 import com.eimsound.eimusic.viewmodel.PlaylistViewModel
 import com.eimsound.eimusic.viewmodel.PlayerViewModel
@@ -52,6 +53,7 @@ import kotlinx.coroutines.awaitCancellation
 @Composable
 fun App(
     storage: IStorage,
+    updateApi: UpdateApi,
     initialTab: Int,
     sessionRepository: DbSessionRepository,
     playerViewModel: PlayerViewModel,
@@ -197,6 +199,7 @@ fun App(
 
             is Route.Settings -> SettingsScreen(
                 storage = storage,
+                updateApi = updateApi,
                 isDark = isDark,
                 onToggleTheme = {
                     isDark = !isDark
