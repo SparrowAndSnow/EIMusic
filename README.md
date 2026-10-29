@@ -65,8 +65,6 @@ Linux：
 
 产物位于 `terminalApp/build/bin/linuxX64/releaseExecutable/eimusic.kexe`。
 
-调试构建：`./gradlew :terminalApp:linkDebugExecutableLinuxX64`，产物在 `terminalApp/build/bin/linuxX64/debugExecutable/eimusic.kexe`。
-
 GitHub Release 直接提供未压缩二进制：
 
 ```text
@@ -88,47 +86,14 @@ Windows：
 ./gradlew :terminalApp:linkReleaseExecutableMingwX64
 ```
 
-### 终端客户端使用
-
-首次启动会在 `~/.config/eimusic/` 下创建：
-
-- `settings.json` — 偏好（主题、语言、音量、代理等）
-- `eimusic.json` — 服务端地址与音源
-- `eimusic.db` — 歌单、最近播放、搜索历史、会话
-
-设置入口：Header 齿轮或 `s`。分类为外观（主题/语言）、网络（服务器 HTTP/WS、代理）、音源（按来源配置多个地址）、关于（版本/检查更新）。
-
-常用键位：
-
-| 键 | 作用 |
-| --- | --- |
-| `?` | 帮助 |
-| `Space` | 播放/暂停 |
-| `[` / `]` | 上一首 / 下一首 |
-| `←` / `→` | 快退 / 快进 |
-| `+` / `-` | 音量 |
-| `f` | 搜索（也可点 Header 搜索图标） |
-| `s` | 设置 |
-| `t` | 切换主题 |
-| `l` | 登录 |
-| `1`–`5` / `Tab` | 切换页面 |
-| `q` | 退出 |
-
-页面内通用：`j`/`k` 或方向键移动，`Enter` 确认/打开，`Esc` 返回。Local 页 `/` 管理音乐路径，Playlist 页 `a` 导入、`n` 新建本地歌单、`d` 删除，Queue 页 `K`/`J` 移动、`g` 跳到当前、`c` 清空，Together 页 `j` 加入、`c` 自定义频道、`m` 聊天、`l` 离开。
-
-语言在设置 → 外观中切换中英文；更新检查在设置 → 关于，只读取 GitHub Release 信息，不自动替换二进制。
-
 ## 配置
 
 - 服务端配置：`server/src/main/resources/application.conf`
 - 音乐源配置：将 `eimusic.example.json` 复制为 `eimusic.json` 后填写音乐源服务地址
-- 终端客户端配置：`~/.config/eimusic/`（settings.json / eimusic.json / eimusic.db）
 
 ## 版本检查
 
 客户端直接请求 GitHub Releases API（`SparrowAndSnow/EIMusic`）并对比 `tag_name`，不再依赖服务端 `/version/check`。服务端该接口仅保留给旧客户端兼容。仓库必须保持公开，否则匿名 API 会返回 404。
-
-terminalApp 的版本号在构建时从 `version.toml` 注入 `BuildConfig`，设置 → 关于页与更新检查都使用该值。
 
 ## CI/CD
 
