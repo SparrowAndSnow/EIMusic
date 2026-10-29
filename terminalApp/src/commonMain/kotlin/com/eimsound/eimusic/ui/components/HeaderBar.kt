@@ -1,13 +1,10 @@
 package com.eimsound.eimusic.ui.components
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.delay
 import com.eimsound.eimusic.auth.AuthState
 import com.eimsound.eimusic.i18n.t
 import com.eimsound.eimusic.keyboard.LocalGlobalActions
@@ -26,12 +23,12 @@ import com.jakewharton.mosaic.layout.padding
 import com.jakewharton.mosaic.layout.width
 import com.jakewharton.mosaic.modifier.Modifier
 import com.jakewharton.mosaic.ui.Alignment
-import com.jakewharton.mosaic.ui.BoxWithConstraints
 import com.jakewharton.mosaic.ui.Color
 import com.jakewharton.mosaic.ui.Row
 import com.jakewharton.mosaic.ui.RowScope
 import com.jakewharton.mosaic.ui.Spacer
 import com.jakewharton.mosaic.ui.Text
+import com.jakewharton.mosaic.ui.TextOverflow
 
 @Composable
 fun HeaderBar(
@@ -68,10 +65,19 @@ fun HeaderBar(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(" $title", color = palette.titleFg)
-        Spacer(Modifier.width(2))
-        BoxWithConstraints(Modifier.weight(1f)) {
-            if (maxWidth >= 8) MarqueeText(trackText, maxWidth)
+        Spacer(Modifier.width(1))
+        HeaderButton(globalActions.onPlayPause) {
+            Text(controls.playIcon, color = palette.playBtnFg)
         }
+        Spacer(Modifier.width(1))
+        Text(
+            trackText,
+            modifier = Modifier.weight(1f),
+            color = palette.textDimFg,
+            softWrap = false,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
         Spacer(Modifier.width(2))
         HeaderButton(onToggleTheme) {
             Text(themeIcon, color = palette.modeFg)
@@ -79,10 +85,6 @@ fun HeaderBar(
         Spacer(Modifier.width(1))
         HeaderButton(globalActions.onTogglePlayMode) {
             Text(controls.modeIcon, color = palette.modeFg)
-        }
-        Spacer(Modifier.width(1))
-        HeaderButton(globalActions.onPlayPause) {
-            Text(controls.playIcon, color = palette.playBtnFg)
         }
         Spacer(Modifier.width(1))
         HeaderButton(
@@ -122,79 +124,6 @@ fun HeaderBar(
             }
         }
     }
-}
-
-@Composable
-private fun MarqueeText(text: String, width: Int) {
-    val palette = LocalTuiColors.current
-    val loop = text + "   "
-    val loopCells = stringCells(loop)
-    val scrolls = stringCells(text) > width
-    var offset by remember(text) { mutableIntStateOf(0) }
-
-    LaunchedEffect(text, scrolls, loopCells) {
-        if (!scrolls || loopCells <= 0) return@LaunchedEffect
-        while (true) {
-            delay(150)
-            offset = (offset + 1) % loopCells
-        }
-    }
-
-    val shown = if (!scrolls) {
-        text
-    } else {
-        marqueeWindow(loop, offset, width)
-    }
-    Text(
-        shown,
-        modifier = Modifier.width(width),
-        color = palette.textDimFg,
-        softWrap = false,
-        maxLines = 1,
-    )
-}
-
-/** 终端单元格宽度：CJK / 全角字符按 2 格计算。 */
-private fun charCells(c: Char): Int {
-    val code = c.code
-    return if (
-        code in 0x1100..0x115F ||
-        code in 0x2E80..0xA4CF ||
-        code in 0xAC00..0xD7A3 ||
-        code in 0xF900..0xFAFF ||
-        code in 0xFE30..0xFE4F ||
-        code in 0xFF00..0xFF60 ||
-        code in 0xFFE0..0xFFE6
-    ) 2 else 1
-}
-
-private fun stringCells(s: String): Int = s.sumOf { charCells(it) }
-
-/** 从 [start] 格开始截取 [width] 格，用于跑马灯窗口。 */
-private fun marqueeWindow(loop: String, start: Int, width: Int): String {
-    if (loop.isEmpty() || width <= 0) return ""
-    val total = stringCells(loop)
-    var remaining = start % total
-    var index = 0
-    while (remaining > 0) {
-        remaining -= charCells(loop[index])
-        index++
-    }
-    val sb = StringBuilder()
-    var cells = 0
-    while (cells < width) {
-        val c = loop[index % loop.length]
-        val w = charCells(c)
-        if (cells + w > width) break
-        sb.append(c)
-        cells += w
-        index++
-    }
-    while (cells < width) {
-        sb.append(' ')
-        cells++
-    }
-    return sb.toString()
 }
 
 @Composable
