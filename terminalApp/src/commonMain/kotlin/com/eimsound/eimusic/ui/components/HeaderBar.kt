@@ -37,6 +37,7 @@ fun HeaderBar(
     isDark: Boolean,
     onNavigate: () -> Unit,
     onOpenQueue: () -> Unit,
+    onOpenSearch: () -> Unit,
     onOpenTogether: () -> Unit,
     onOpenSettings: () -> Unit,
     onToggleTheme: () -> Unit,
@@ -85,6 +86,10 @@ fun HeaderBar(
             Text(Icon.Queue.sym, color = palette.textDimFg)
             Spacer(Modifier.width(1))
             Text(queue, color = palette.textFg)
+        }
+        Spacer(Modifier.width(2))
+        HeaderButton(onOpenSearch) {
+            Text(Icon.Search.sym, color = palette.textDimFg)
         }
         Spacer(Modifier.width(2))
         HeaderButton(onOpenSettings) {

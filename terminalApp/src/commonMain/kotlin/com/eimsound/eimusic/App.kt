@@ -120,7 +120,6 @@ fun App(
         "3 " + t("tab.local") to Route.LocalSongs,
         "4 " + t("tab.together") to Route.Together,
         "5 " + t("tab.queue") to Route.Queue,
-        "6 " + t("tab.search") to Route.Search(),
     )
     val activeTabRoute = baseRoute ?: currentRoute
 
@@ -251,6 +250,7 @@ fun App(
                     isDark,
                     onNavigate = { navigate(Route.Login) },
                     onOpenQueue = { if (currentRoute !is Route.Queue) navigate(Route.Queue) },
+                    onOpenSearch = appGlobalActions.onOpenSearch,
                     onOpenTogether = { if (currentRoute !is Route.Together) navigate(Route.Together) },
                     onOpenSettings = appGlobalActions.onOpenSettings,
                     onToggleTheme = {
