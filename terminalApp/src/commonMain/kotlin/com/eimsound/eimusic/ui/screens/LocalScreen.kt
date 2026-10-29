@@ -95,6 +95,36 @@ fun LocalScreen(
                 else -> "Local Songs (${state.tracks.size})"
             }
             Text(" $title", color = palette.titleFg)
+            if (focus != LocalFocus.Input) {
+                Row(Modifier.fillMaxWidth()) {
+                    Spacer(Modifier.width(2))
+                    if (focus == LocalFocus.Songs) {
+                        Text(
+                            "Manage paths",
+                            modifier = Modifier.clickable {
+                                showPaths = true
+                                focus = LocalFocus.Paths
+                            },
+                            color = palette.highlightFg,
+                        )
+                    } else {
+                        Text(
+                            "+ Add path",
+                            modifier = Modifier.clickable { focus = LocalFocus.Input },
+                            color = palette.highlightFg,
+                        )
+                        Spacer(Modifier.width(3))
+                        Text(
+                            "Done",
+                            modifier = Modifier.clickable {
+                                showPaths = false
+                                focus = LocalFocus.Songs
+                            },
+                            color = palette.textDimFg,
+                        )
+                    }
+                }
+            }
 
             when (focus) {
                 LocalFocus.Input -> PathInputView(
@@ -105,9 +135,9 @@ fun LocalScreen(
                             localViewModel.addPath(state.pathInput.trim())
                             localViewModel.updatePathInput("")
                         }
-                        focus = LocalFocus.Songs
+                        focus = LocalFocus.Paths
                     },
-                    onCancel = { focus = LocalFocus.Songs },
+                    onCancel = { focus = LocalFocus.Paths },
                 )
                 LocalFocus.Paths -> PathListView(
                     paths = state.localPaths.toList(),

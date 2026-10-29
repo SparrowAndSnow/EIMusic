@@ -10,7 +10,6 @@ import com.eimsound.eimusic.storage.save
 import com.eimsound.eimusic.ui.components.InputField
 import com.eimsound.eimusic.ui.components.ScreenFrame
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
-import com.eimsound.eimusic.viewmodel.LocalViewModel
 import com.eimsound.eimusic.keyboard.SettingFocus
 import com.eimsound.eimusic.keyboard.SettingKeyActions
 import com.eimsound.eimusic.keyboard.dispatchSettingKey
@@ -69,15 +68,12 @@ private fun sourceLabel(source: TrackSource): String = when (source) {
 @Composable
 fun SettingsScreen(
     storage: IStorage,
-    localViewModel: LocalViewModel,
     isDark: Boolean,
     onToggleTheme: () -> Unit,
-    onOpenLocalPaths: () -> Unit,
     onGoBack: () -> Unit,
 ) {
     val palette = LocalTuiColors.current
     val terminal = LocalTerminalState.current
-    val localState by localViewModel.state.collectAsState()
 
     var config by remember { mutableStateOf(storage.get(AppConfig())) }
     var proxyEnabled by remember { mutableStateOf(storage.get(Settings::proxyEnabled, false)) }
@@ -157,9 +153,6 @@ fun SettingsScreen(
                 "${editableSources.count { config.sources[it].orEmpty().isNotEmpty() }} 个已配置",
                 { sourcePage = true },
             ),
-        )),
-        SettingSection("本地", listOf(
-            SettingRow("音乐路径", "${localState.localPaths.size} 个路径", onOpenLocalPaths),
         )),
         SettingSection("关于", listOf(
             SettingRow("版本", "EIMusic TUI", {}),

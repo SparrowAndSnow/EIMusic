@@ -197,13 +197,11 @@ fun App(
 
             is Route.Settings -> SettingsScreen(
                 storage = storage,
-                localViewModel = localViewModel,
                 isDark = isDark,
                 onToggleTheme = {
                     isDark = !isDark
                     storage.save(Settings::darkMode, isDark)
                 },
-                onOpenLocalPaths = { backStack = listOf(Route.LocalSongs) },
                 onGoBack = goBack,
             )
 
