@@ -29,6 +29,7 @@ import com.jakewharton.mosaic.ui.Row
 import com.jakewharton.mosaic.ui.RowScope
 import com.jakewharton.mosaic.ui.Spacer
 import com.jakewharton.mosaic.ui.Text
+import com.jakewharton.mosaic.ui.TextOverflow
 
 @Composable
 fun HeaderBar(
@@ -60,39 +61,13 @@ fun HeaderBar(
         if (artist.isBlank()) track.name else "${track.name} — $artist"
     } ?: t("main.noTrack")
 
-    // 窄窗口下逐级隐藏次要控件，保证曲目区域仍有空间，避免左右重叠。
+    // 窄窗口下按列数隐藏次要控件；曲目区域由 weight 自适应剩余宽度。
     val columns = LocalTerminalState.current.size.columns
-    var showTheme = columns >= 64
-    var showMode = columns >= 72
-    var showVolume = columns >= 82
-    var showUserLabel = columns >= 92
-    var showChannel = channelLabel != null && columns >= 110
-
-    fun reservedWidth(): Int {
-        var width = title.length + 1 + 1 + 3 + 1 // title + spacer + play + spacer
-        if (showTheme) width += 2 + 3
-        if (showMode) width += 1 + 3
-        if (showVolume) width += 1 + 8
-        width += 2 + (4 + queue.length) // queue
-        width += 2 + 3 // search
-        width += 2 + 3 // settings
-        width += 2 + (3 + if (showUserLabel) stringCells(authLabel) else 0) // user
-        if (showChannel) width += 2 + 3 + stringCells(channelLabel!!.take(24))
-        return width
-    }
-
-    var trackWidth = columns - reservedWidth()
-    while (trackWidth < 6) {
-        when {
-            showChannel -> showChannel = false
-            showUserLabel -> showUserLabel = false
-            showVolume -> showVolume = false
-            showMode -> showMode = false
-            showTheme -> showTheme = false
-            else -> break
-        }
-        trackWidth = columns - reservedWidth()
-    }
+    val showTheme = columns >= 64
+    val showMode = columns >= 72
+    val showVolume = columns >= 82
+    val showUserLabel = columns >= 92
+    val showChannel = channelLabel != null && columns >= 110
 
     Row(
         modifier = Modifier.fillMaxWidth().background(palette.headerBg),
@@ -104,14 +79,14 @@ fun HeaderBar(
             Text(controls.playIcon, color = palette.playBtnFg)
         }
         Spacer(Modifier.width(1))
-        if (trackWidth > 0) {
-            Text(
-                fitCells(trackText, trackWidth),
-                color = palette.textDimFg,
-                softWrap = false,
-                maxLines = 1,
-            )
-        }
+        Text(
+            trackText,
+            modifier = Modifier.weight(1f),
+            color = palette.textDimFg,
+            softWrap = true,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
         if (showTheme) {
             Spacer(Modifier.width(2))
             HeaderButton(onToggleTheme) {
@@ -166,45 +141,6 @@ fun HeaderBar(
             }
         }
     }
-}
-
-/** CJK / 全角字符按 2 格计算。 */
-private fun charCells(c: Char): Int {
-    val code = c.code
-    return if (
-        code in 0x1100..0x115F ||
-        code in 0x2E80..0xA4CF ||
-        code in 0xAC00..0xD7A3 ||
-        code in 0xF900..0xFAFF ||
-        code in 0xFE30..0xFE4F ||
-        code in 0xFF00..0xFF60 ||
-        code in 0xFFE0..0xFFE6
-    ) 2 else 1
-}
-
-private fun stringCells(s: String): Int = s.sumOf { charCells(it) }
-
-/** 按终端单元格截断到 [width] 格，超出时用省略号；不足则补空格。 */
-private fun fitCells(text: String, width: Int): String {
-    if (width <= 0) return ""
-    val total = stringCells(text)
-    if (total <= width) return text + " ".repeat(width - total)
-
-    val sb = StringBuilder()
-    var cells = 0
-    for (c in text) {
-        val w = charCells(c)
-        if (cells + w > width - 1) break
-        sb.append(c)
-        cells += w
-    }
-    sb.append('…')
-    cells++
-    while (cells < width) {
-        sb.append(' ')
-        cells++
-    }
-    return sb.toString()
 }
 
 @Composable
