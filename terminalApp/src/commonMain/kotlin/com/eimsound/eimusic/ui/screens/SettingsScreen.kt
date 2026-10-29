@@ -11,8 +11,11 @@ import com.eimsound.eimusic.ui.components.InputField
 import com.eimsound.eimusic.ui.components.ScreenFrame
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
 import com.eimsound.eimusic.viewmodel.LocalViewModel
+import com.eimsound.eimusic.keyboard.SettingFocus
+import com.eimsound.eimusic.keyboard.SettingKeyActions
+import com.eimsound.eimusic.keyboard.dispatchSettingKey
+import com.eimsound.eimusic.keyboard.settingStatusBarHint
 import com.jakewharton.mosaic.LocalTerminalState
-import com.jakewharton.mosaic.layout.KeyEvent
 import com.jakewharton.mosaic.layout.clickable
 import com.jakewharton.mosaic.layout.fillMaxSize
 import com.jakewharton.mosaic.layout.fillMaxWidth
@@ -48,33 +51,6 @@ private const val SAVED_NOTICE = "已保存，重启后生效"
 
 private val editableSources = TrackSource.entries.filter {
     it != TrackSource.LOCAL && it != TrackSource.UNKNOWN
-}
-
-private fun handleListKey(
-    event: KeyEvent,
-    selected: Int,
-    lastIndex: Int,
-    onSelect: (Int) -> Unit,
-    onConfirm: () -> Unit,
-    onBack: () -> Unit,
-): Boolean = when (event.key) {
-    "j", "ArrowDown" -> {
-        onSelect((selected + 1).coerceAtMost(lastIndex.coerceAtLeast(0)))
-        true
-    }
-    "k", "ArrowUp" -> {
-        onSelect((selected - 1).coerceAtLeast(0))
-        true
-    }
-    "Enter" -> {
-        onConfirm()
-        true
-    }
-    "Escape" -> {
-        onBack()
-        true
-    }
-    else -> false
 }
 
 private fun sourceLabel(source: TrackSource): String = when (source) {
@@ -205,34 +181,40 @@ fun SettingsScreen(
         sourceSelected = sourceSelected.coerceIn(0, (sourceRows.size - 1).coerceAtLeast(0))
     }
 
+    val focus = when {
+        editing != null -> SettingFocus.Editing
+        sourcePage -> SettingFocus.Sources
+        else -> SettingFocus.Main
+    }
+
     ScreenFrame(
-        hint = when {
-            editing != null -> "Enter:保存  Esc:取消"
-            sourcePage -> "j/k:选择  Enter:编辑  Esc:返回"
-            else -> "j/k:选择  Enter:打开  Esc:返回"
-        },
+        hint = settingStatusBarHint(focus),
         onKey = { event ->
-            if (editing != null) {
-                false
-            } else if (sourcePage) {
-                handleListKey(
-                    event = event,
-                    selected = sourceSelected,
-                    lastIndex = sourceRows.lastIndex,
-                    onSelect = { sourceSelected = it },
-                    onConfirm = { sourceRows.getOrNull(sourceSelected)?.action?.invoke() },
-                    onBack = { sourcePage = false },
-                )
-            } else {
-                handleListKey(
-                    event = event,
-                    selected = selected,
-                    lastIndex = flatRows.lastIndex,
-                    onSelect = { selected = it },
-                    onConfirm = { flatRows.getOrNull(selected)?.action?.invoke() },
-                    onBack = onGoBack,
-                )
-            }
+            dispatchSettingKey(
+                event = event,
+                focus = focus,
+                actions = SettingKeyActions(
+                    moveSelection = { delta ->
+                        if (focus == SettingFocus.Sources) {
+                            sourceSelected = (sourceSelected + delta)
+                                .coerceIn(0, sourceRows.lastIndex.coerceAtLeast(0))
+                        } else {
+                            selected = (selected + delta)
+                                .coerceIn(0, flatRows.lastIndex.coerceAtLeast(0))
+                        }
+                    },
+                    confirm = {
+                        if (focus == SettingFocus.Sources) {
+                            sourceRows.getOrNull(sourceSelected)?.action?.invoke()
+                        } else {
+                            flatRows.getOrNull(selected)?.action?.invoke()
+                        }
+                    },
+                    back = {
+                        if (focus == SettingFocus.Sources) sourcePage = false else onGoBack()
+                    },
+                ),
+            )
         },
     ) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
