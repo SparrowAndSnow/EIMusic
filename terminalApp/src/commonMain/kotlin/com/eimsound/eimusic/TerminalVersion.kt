@@ -1,6 +1,6 @@
 package com.eimsound.eimusic
 
-/** TUI 版本号；与 version.toml 的 version.name 保持一致。 */
+/** TUI 版本号；由 Gradle 从 version.toml 注入 BuildConfig。 */
 object TerminalVersion {
-    const val VERSION = "1.0.0"
+    const val VERSION: String = BuildConfig.VERSION_NAME
 }

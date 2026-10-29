@@ -1,10 +1,38 @@
+import java.io.FileInputStream
+import org.tomlj.Toml
+import org.tomlj.TomlParseResult
+
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.compose.compiler)
+    id("com.github.gmazzo.buildconfig") version "6.1.2"
 }
 
 group = "com.eimsound.eimusic"
-version = "unspecified"
+
+fun loadVersionToml(): TomlParseResult {
+    val file = file("../version.toml")
+    file.exists() || throw Error("version.toml is not found")
+    val toml = Toml.parse(FileInputStream(file)) ?: throw Error("version.toml is not valid")
+    return toml
+}
+
+val versionToml = loadVersionToml()
+val appVersionName =
+    versionToml.getString("version.name") ?: throw Error("version.name is not defined in version.toml")
+val appVersionCode = versionToml.getLong("version.code")?.toInt()
+    ?: throw Error("version.code is not defined in version.toml")
+
+version = appVersionName
+
+buildConfig {
+    useKotlinOutput()
+
+    packageName("com.eimsound.eimusic")
+    buildConfigField("VERSION_NAME", appVersionName)
+    buildConfigField("VERSION_CODE", appVersionCode)
+    buildConfigField("APP_NAME", rootProject.name)
+}
 
 repositories {
     maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
