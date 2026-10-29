@@ -12,6 +12,7 @@ import com.eimsound.eimusic.ui.components.ScreenFrame
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
 import com.eimsound.eimusic.viewmodel.LocalViewModel
 import com.jakewharton.mosaic.LocalTerminalState
+import com.jakewharton.mosaic.layout.KeyEvent
 import com.jakewharton.mosaic.layout.clickable
 import com.jakewharton.mosaic.layout.fillMaxSize
 import com.jakewharton.mosaic.layout.fillMaxWidth
@@ -43,6 +44,52 @@ private data class SettingSection(
     val rows: List<SettingRow>,
 )
 
+private const val SAVED_NOTICE = "已保存，重启后生效"
+
+private val editableSources = TrackSource.entries.filter {
+    it != TrackSource.LOCAL && it != TrackSource.UNKNOWN
+}
+
+private fun handleListKey(
+    event: KeyEvent,
+    selected: Int,
+    lastIndex: Int,
+    onSelect: (Int) -> Unit,
+    onConfirm: () -> Unit,
+    onBack: () -> Unit,
+): Boolean = when (event.key) {
+    "j", "ArrowDown" -> {
+        onSelect((selected + 1).coerceAtMost(lastIndex.coerceAtLeast(0)))
+        true
+    }
+    "k", "ArrowUp" -> {
+        onSelect((selected - 1).coerceAtLeast(0))
+        true
+    }
+    "Enter" -> {
+        onConfirm()
+        true
+    }
+    "Escape" -> {
+        onBack()
+        true
+    }
+    else -> false
+}
+
+private fun sourceLabel(source: TrackSource): String = when (source) {
+    TrackSource.NETEASE -> "网易云"
+    TrackSource.SPOTIFY -> "Spotify"
+    TrackSource.QQ -> "QQ 音乐"
+    TrackSource.XIAMI -> "虾米"
+    TrackSource.KUWO -> "酷我"
+    TrackSource.KUGOU -> "酷狗"
+    TrackSource.BAIDU -> "百度"
+    TrackSource.YOUTUBE -> "YouTube"
+    TrackSource.YOUTUBE_MUSIC -> "YouTube Music"
+    else -> source.name
+}
+
 @Composable
 fun SettingsScreen(
     storage: IStorage,
@@ -72,7 +119,7 @@ fun SettingsScreen(
         val next = update(config)
         config = next
         storage.save(next)
-        notice = "已保存，重启后生效"
+        notice = SAVED_NOTICE
     }
 
     fun persistProxy(enabled: Boolean, host: String, port: Int) {
@@ -82,7 +129,7 @@ fun SettingsScreen(
         storage.save(Settings::proxyEnabled, enabled)
         storage.save(Settings::proxyHost, host)
         storage.save(Settings::proxyPort, port)
-        notice = "已保存，重启后生效"
+        notice = SAVED_NOTICE
     }
 
     fun startEdit(field: SettingEdit, value: String) {
@@ -114,22 +161,6 @@ fun SettingsScreen(
         editing = null
     }
 
-    fun sourceLabel(source: TrackSource): String = when (source) {
-        TrackSource.NETEASE -> "网易云"
-        TrackSource.SPOTIFY -> "Spotify"
-        TrackSource.QQ -> "QQ 音乐"
-        TrackSource.XIAMI -> "虾米"
-        TrackSource.KUWO -> "酷我"
-        TrackSource.KUGOU -> "酷狗"
-        TrackSource.BAIDU -> "百度"
-        TrackSource.YOUTUBE -> "YouTube"
-        TrackSource.YOUTUBE_MUSIC -> "YouTube Music"
-        else -> source.name
-    }
-
-    val editableSources = TrackSource.entries.filter {
-        it != TrackSource.LOCAL && it != TrackSource.UNKNOWN
-    }
     val sections = listOf(
         SettingSection("外观", listOf(
             SettingRow("主题", if (isDark) "暗色" else "亮色", onToggleTheme),
@@ -170,6 +201,9 @@ fun SettingsScreen(
     LaunchedEffect(flatRows.size) {
         selected = selected.coerceIn(0, (flatRows.size - 1).coerceAtLeast(0))
     }
+    LaunchedEffect(sourceRows.size) {
+        sourceSelected = sourceSelected.coerceIn(0, (sourceRows.size - 1).coerceAtLeast(0))
+    }
 
     ScreenFrame(
         hint = when {
@@ -181,45 +215,23 @@ fun SettingsScreen(
             if (editing != null) {
                 false
             } else if (sourcePage) {
-                when (event.key) {
-                    "j", "ArrowDown" -> {
-                        sourceSelected = (sourceSelected + 1).coerceAtMost(sourceRows.lastIndex.coerceAtLeast(0))
-                        true
-                    }
-                    "k", "ArrowUp" -> {
-                        sourceSelected = (sourceSelected - 1).coerceAtLeast(0)
-                        true
-                    }
-                    "Enter" -> {
-                        sourceRows.getOrNull(sourceSelected)?.action?.invoke()
-                        true
-                    }
-                    "Escape" -> {
-                        sourcePage = false
-                        true
-                    }
-                    else -> false
-                }
+                handleListKey(
+                    event = event,
+                    selected = sourceSelected,
+                    lastIndex = sourceRows.lastIndex,
+                    onSelect = { sourceSelected = it },
+                    onConfirm = { sourceRows.getOrNull(sourceSelected)?.action?.invoke() },
+                    onBack = { sourcePage = false },
+                )
             } else {
-                when (event.key) {
-                    "j", "ArrowDown" -> {
-                        selected = (selected + 1).coerceAtMost(flatRows.lastIndex.coerceAtLeast(0))
-                        true
-                    }
-                    "k", "ArrowUp" -> {
-                        selected = (selected - 1).coerceAtLeast(0)
-                        true
-                    }
-                    "Enter" -> {
-                        flatRows.getOrNull(selected)?.action?.invoke()
-                        true
-                    }
-                    "Escape" -> {
-                        onGoBack()
-                        true
-                    }
-                    else -> false
-                }
+                handleListKey(
+                    event = event,
+                    selected = selected,
+                    lastIndex = flatRows.lastIndex,
+                    onSelect = { selected = it },
+                    onConfirm = { flatRows.getOrNull(selected)?.action?.invoke() },
+                    onBack = onGoBack,
+                )
             }
         },
     ) {
@@ -232,89 +244,41 @@ fun SettingsScreen(
 
                 val edit = editing
                 if (edit != null) {
-                    val title = when (edit) {
-                        SettingEdit.Http -> "服务器 HTTP"
-                        SettingEdit.Ws -> "服务器 WS"
-                        SettingEdit.Proxy -> "代理地址（host:port）"
-                        is SettingEdit.Source -> sourceLabel(edit.source) + " 音源"
-                    }
-                    Text(" 编辑 $title", color = palette.titleFg)
-                    Text(" 当前: $editPlaceholder", color = palette.textDimFg)
-                    InputField(
+                    SettingEditView(
+                        edit = edit,
                         value = editValue,
+                        placeholder = editPlaceholder,
                         onValueChange = { editValue = it },
-                        placeholder = "输入新值，回车保存",
                         onConfirm = { commitEdit() },
                         onCancel = { editing = null },
                     )
                 } else if (sourcePage) {
-                    Text("  音源", color = palette.titleFg)
-                    Text(
-                        "  " + "─".repeat((contentWidth - 6).coerceAtLeast(10)),
-                        color = palette.dimBorderFg,
-                    )
+                    SettingSectionHeader("音源", contentWidth)
                     sourceRows.forEachIndexed { index, row ->
-                        val isSelected = index == sourceSelected
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    sourceSelected = index
-                                    row.action()
-                                },
-                        ) {
-                            Text(
-                                if (isSelected) " ▸ " else "   ",
-                                color = if (isSelected) palette.highlightFg else palette.textDimFg,
-                            )
-                            Text(
-                                row.label,
-                                modifier = Modifier.weight(1f),
-                                color = if (isSelected) palette.highlightFg else palette.textFg,
-                            )
-                            Text("  " + row.value + " ", color = palette.textDimFg)
-                        }
+                        SettingRowView(
+                            row = row,
+                            selected = index == sourceSelected,
+                            onClick = {
+                                sourceSelected = index
+                                row.action()
+                            },
+                        )
                     }
                     Text("", color = palette.textFg)
                 } else {
                     var rowIndex = 0
                     sections.forEach { section ->
-                        Text("  ${section.title}", color = palette.titleFg)
-                        Text(
-                            "  " + "─".repeat((contentWidth - 6).coerceAtLeast(10)),
-                            color = palette.dimBorderFg,
-                        )
+                        SettingSectionHeader(section.title, contentWidth)
                         section.rows.forEach { row ->
                             val index = rowIndex++
-                            val isSelected = index == selected
-                            Row(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        selected = index
-                                        row.action()
-                                    },
-                            ) {
-                                Text(
-                                    if (isSelected) " ▸ " else "   ",
-                                    color = if (isSelected) palette.highlightFg else palette.textDimFg,
-                                )
-                                Text(
-                                    row.label,
-                                    modifier = Modifier.weight(1f),
-                                    color = if (isSelected) palette.highlightFg else palette.textFg,
-                                    softWrap = false,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                                Text(
-                                    "  " + row.value + " ",
-                                    color = palette.textDimFg,
-                                    softWrap = false,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
+                            SettingRowView(
+                                row = row,
+                                selected = index == selected,
+                                onClick = {
+                                    selected = index
+                                    row.action()
+                                },
+                            )
                         }
                         Text("", color = palette.textFg)
                     }
@@ -322,5 +286,76 @@ fun SettingsScreen(
                 notice?.let { Text("  $it", color = palette.highlightFg) }
             }
         }
+    }
+}
+
+@Composable
+private fun SettingSectionHeader(title: String, contentWidth: Int) {
+    val palette = LocalTuiColors.current
+    Text("  $title", color = palette.titleFg)
+    Text(
+        "  " + "─".repeat((contentWidth - 6).coerceAtLeast(10)),
+        color = palette.dimBorderFg,
+    )
+}
+
+@Composable
+private fun SettingEditView(
+    edit: SettingEdit,
+    value: String,
+    placeholder: String,
+    onValueChange: (String) -> Unit,
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    val palette = LocalTuiColors.current
+    val title = when (edit) {
+        SettingEdit.Http -> "服务器 HTTP"
+        SettingEdit.Ws -> "服务器 WS"
+        SettingEdit.Proxy -> "代理地址（host:port）"
+        is SettingEdit.Source -> sourceLabel(edit.source) + " 音源"
+    }
+    Text(" 编辑 $title", color = palette.titleFg)
+    Text(" 当前: $placeholder", color = palette.textDimFg)
+    InputField(
+        value = value,
+        onValueChange = onValueChange,
+        placeholder = "输入新值，回车保存",
+        onConfirm = onConfirm,
+        onCancel = onCancel,
+    )
+}
+
+@Composable
+private fun SettingRowView(
+    row: SettingRow,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    val palette = LocalTuiColors.current
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+    ) {
+        Text(
+            if (selected) " ▸ " else "   ",
+            color = if (selected) palette.highlightFg else palette.textDimFg,
+        )
+        Text(
+            row.label,
+            modifier = Modifier.weight(1f),
+            color = if (selected) palette.highlightFg else palette.textFg,
+            softWrap = false,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Text(
+            "  " + row.value + " ",
+            color = palette.textDimFg,
+            softWrap = false,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
