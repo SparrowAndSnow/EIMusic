@@ -1,5 +1,7 @@
 package com.eimsound.eimusic.ui.components
 
+import com.eimsound.eimusic.i18n.t
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -44,7 +46,7 @@ fun TrackTable(
     currentTrackId: TrackId?,
     termWidth: Int,
     visibleLines: Int,
-    emptyMessage: String = " -- empty -- ",
+    emptyMessage: String = " " + t("table.empty") + " ",
     showScrollIndicator: Boolean = true,
     enabled: Boolean = true,
     onPlayTrack: (Track) -> Unit = {},
@@ -90,14 +92,14 @@ fun TrackTable(
                 }
                 Spacer(Modifier.width(1))
                 Box(Modifier.width(nameWidth)) {
-                    Text("Title", Modifier.fillMaxWidth(), color = palette.textDimFg, softWrap = true, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(t("table.title"), Modifier.fillMaxWidth(), color = palette.textDimFg, softWrap = true, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 Box(Modifier.width(artistWidth)) {
-                    Text("Artist", Modifier.fillMaxWidth(), color = palette.textDimFg, softWrap = true, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(t("table.artist"), Modifier.fillMaxWidth(), color = palette.textDimFg, softWrap = true, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 Box(Modifier.width(durWidth)) {
                     Text(
-                        "Duration",
+                        t("table.duration"),
                         Modifier.fillMaxWidth(),
                         color = palette.textDimFg,
                         textAlign = Alignment.End,

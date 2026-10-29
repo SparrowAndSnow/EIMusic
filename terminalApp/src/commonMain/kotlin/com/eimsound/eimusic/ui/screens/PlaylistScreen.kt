@@ -1,5 +1,6 @@
 package com.eimsound.eimusic.ui.screens
 
+import com.eimsound.eimusic.i18n.t
 import androidx.compose.runtime.*
 import com.eimsound.eimusic.keyboard.PlaylistFocus
 import com.eimsound.eimusic.keyboard.PlaylistKeyActions
@@ -59,7 +60,7 @@ fun PlaylistScreen(
                 onShowInfo = { trackActions?.showInfo(track) },
                 extra = if (state.selectedPlaylist?.id?.source == TrackSource.LOCAL) {
                     listOf(
-                        ContextMenuItem("Remove from playlist") {
+                        ContextMenuItem(t("playlist.removeTrack")) {
                             playlistViewModel.removeTrackAt(index)
                             trackSelection.jumpTo((index - 1).coerceAtLeast(0))
                         },
@@ -147,8 +148,8 @@ fun PlaylistScreen(
         when (focus) {
             PlaylistFocus.Input -> InputView(
                 value = state.addUrlInput,
-                title = if (creatingLocal) "Enter local playlist name:" else "Enter playlist URL:",
-                placeholder = if (creatingLocal) "My playlist" else "https://music.163.com/playlist/...",
+                title = if (creatingLocal) t("playlist.enterName") else t("playlist.enterUrl"),
+                placeholder = if (creatingLocal) t("playlist.namePlaceholder") else t("playlist.urlPlaceholder"),
                 onValueChange = { playlistViewModel.updateAddUrl(it) },
                 onConfirm = {
                     val text = state.addUrlInput.trim()
@@ -173,28 +174,28 @@ fun PlaylistScreen(
             else -> Column {
                 // Title bar
                 val title = when (focus) {
-                    PlaylistFocus.TrackList -> (state.selectedPlaylist?.displayName() ?: "Playlist") + " · tracks"
-                    else -> "My Playlists"
+                    PlaylistFocus.TrackList -> t("playlist.tracksTitle", state.selectedPlaylist?.displayName() ?: t("playlist.title"))
+                    else -> t("playlist.title")
                 }
                 Text(" $title", color = palette.titleFg)
                 if (focus != PlaylistFocus.TrackList) {
                     Row(Modifier.fillMaxWidth()) {
                         Spacer(Modifier.width(2))
                         Text(
-                            "+ New local",
+                            t("playlist.newLocal"),
                             modifier = Modifier.clickable(onClick = startLocal),
                             color = palette.highlightFg,
                         )
                         Spacer(Modifier.width(3))
                         Text(
-                            "+ Import URL",
+                            t("playlist.importUrl"),
                             modifier = Modifier.clickable(onClick = startImport),
                             color = palette.highlightFg,
                         )
                     }
                 }
                 state.error?.let { error ->
-                    Text("  Error: $error", color = palette.errorFg)
+                    Text("  " + t("common.error", error), color = palette.errorFg)
                 }
 
                 if (focus == PlaylistFocus.TrackList && picker.isOpen) {
@@ -211,7 +212,7 @@ fun PlaylistScreen(
                         currentTrackId = playerViewModel.state.value.current?.id,
                         termWidth = termWidth,
                         visibleLines = visibleLines,
-                        emptyMessage = "No tracks in this playlist.",
+                        emptyMessage = t("playlist.emptyTracks"),
                         selection = trackSelection,
                         onSecondaryClick = showTrackMenu,
                         onPlayTrack = {
@@ -267,7 +268,7 @@ private fun InputView(
                 )
             }
             Spacer(Modifier.height(1))
-            Text(" Enter to confirm  ·  Esc to cancel", color = palette.textDimFg)
+            Text(" " + t("common.confirmHint"), color = palette.textDimFg)
         }
     }
 }
@@ -287,18 +288,18 @@ private fun PlaylistListView(
 
     if (playlists.isEmpty() && !isLoading) {
         Spacer(Modifier.height(2))
-        Text(" No playlists saved.", color = palette.textDimFg)
-        Text(" Press 'a' to import, 'n' or + New local to create.", color = palette.textDimFg)
+        Text(" " + t("playlist.empty"), color = palette.textDimFg)
+        Text(" " + t("playlist.emptyHint"), color = palette.textDimFg)
         return
     }
 
-    if (isLoading) Text(" Loading...", color = palette.textDimFg)
+    if (isLoading) Text(" " + t("playlist.loading"), color = palette.textDimFg)
 
     Row {
         Spacer(Modifier.width(2))
         Box(Modifier.width(nameWidth)) {
             Text(
-                "Name",
+                t("playlist.name"),
                 Modifier.fillMaxWidth(),
                 color = palette.textDimFg,
                 softWrap = true,
@@ -306,7 +307,7 @@ private fun PlaylistListView(
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        Text("  Tracks", color = palette.textDimFg)
+        Text("  " + t("playlist.tracks"), color = palette.textDimFg)
     }
 
     ListView(
@@ -344,7 +345,7 @@ private fun PlaylistListView(
                 }
                 Text("  ", color = palette.textDimFg)
                 Text(trackCount.padStart(4), color = palette.textDimFg)
-                Text(" tracks", color = palette.textDimFg)
+                Text(" " + t("playlist.tracksSuffix"), color = palette.textDimFg)
             }
         },
     )

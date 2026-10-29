@@ -1,5 +1,6 @@
 package com.eimsound.eimusic.ui.screens
 
+import com.eimsound.eimusic.i18n.t
 import androidx.compose.runtime.*
 import com.eimsound.eimusic.keyboard.SearchFocus
 import com.eimsound.eimusic.keyboard.dispatchSearchKey
@@ -121,7 +122,7 @@ fun SearchPage(
                     .padding(horizontal = 2, vertical = 1),
             ) {
             Text(
-                " Search",
+                " " + t("search.title"),
                 modifier = Modifier.fillMaxWidth(),
                 color = palette.titleFg,
                 textAlign = Alignment.CenterHorizontally,
@@ -133,7 +134,7 @@ fun SearchPage(
             InputField(
                 value = searchState.query,
                 onValueChange = { searchViewModel.updateQuery(it) },
-                placeholder = "Type and press Enter to search",
+                placeholder = t("search.placeholder"),
                 showCursor = focus == SearchFocus.Input,
                 enabled = focus == SearchFocus.Input,
                 onConfirm = {
@@ -174,10 +175,10 @@ fun SearchPage(
             }
 
             if (searchState.isLoading) {
-                Text("  Searching...", color = palette.textDimFg)
+                Text("  " + t("search.searching"), color = palette.textDimFg)
             }
             searchState.error?.let {
-                Text("  Error: $it", color = palette.errorFg)
+                Text("  " + t("common.error", it), color = palette.errorFg)
             }
 
             PlaylistPicker(
@@ -190,7 +191,7 @@ fun SearchPage(
 
             if (!picker.isOpen && !searchState.isLoading && searchState.query.isNotBlank() && searchState.results.isNotEmpty()) {
                 Text(" ", color = palette.textFg)
-                val focusLabel = if (focus == SearchFocus.Results) "▸ Results" else "Results"
+                val focusLabel = if (focus == SearchFocus.Results) "▸ " + t("search.results") else t("search.results")
                 Text("  $focusLabel", color = palette.titleFg)
                 ListView(
                     items = searchState.results,

@@ -1,5 +1,8 @@
 package com.eimsound.eimusic.ui.screens
 
+import com.eimsound.eimusic.i18n.t
+import com.eimsound.eimusic.i18n.tDesc
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import com.eimsound.eimusic.keyboard.helpStatusBarHint
@@ -27,7 +30,7 @@ fun HelpDialog(
     }
 
     OverlayDialog(onDismissRequest = onGoBack) {
-        DialogPanel(title = "Keyboard Controls", onDismiss = onGoBack) {
+        DialogPanel(title = t("help.title"), onDismiss = onGoBack) {
             Column {
                 mainHelpEntries.forEach { (key, desc) ->
                     Text(
@@ -35,7 +38,7 @@ fun HelpDialog(
                             spacer(4)
                             withStyle(SpanStyle(color = palette.highlightFg)) { append(key) }
                             spacer(4)
-                            withStyle(SpanStyle(color = palette.textDimFg)) { append(desc) }
+                            withStyle(SpanStyle(color = palette.textDimFg)) { append(tDesc(desc)) }
                         },
                         color = palette.textFg,
                     )

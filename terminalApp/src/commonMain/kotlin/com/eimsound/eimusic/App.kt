@@ -37,6 +37,7 @@ import com.eimsound.eimusic.util.bridgeToMutable
 import com.eimsound.eimusic.util.render
 import com.eimsound.eimusic.viewmodel.AuthViewModel
 import com.eimsound.eimusic.viewmodel.ChannelViewModel
+import com.eimsound.eimusic.i18n.t
 import com.eimsound.eimusic.viewmodel.LocalViewModel
 import com.eimsound.eimusic.viewmodel.PlaylistViewModel
 import com.eimsound.eimusic.viewmodel.PlayerViewModel
@@ -114,12 +115,12 @@ fun App(
 
     // 底部标签页：只放可切换的页面，弹窗类路由不算标签。
     val tabRoutes = listOf(
-        "1 Home" to Route.Main,
-        "2 Playlists" to Route.Playlists,
-        "3 Local" to Route.LocalSongs,
-        "4 Together" to Route.Together,
-        "5 Queue" to Route.Queue,
-        "6 Search" to Route.Search(),
+        "1 " + t("tab.home") to Route.Main,
+        "2 " + t("tab.playlists") to Route.Playlists,
+        "3 " + t("tab.local") to Route.LocalSongs,
+        "4 " + t("tab.together") to Route.Together,
+        "5 " + t("tab.queue") to Route.Queue,
+        "6 " + t("tab.search") to Route.Search(),
     )
     val activeTabRoute = baseRoute ?: currentRoute
 

@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.eimsound.eimusic.auth.AuthState
+import com.eimsound.eimusic.i18n.t
 import com.eimsound.eimusic.keyboard.LocalGlobalActions
 import com.eimsound.eimusic.music.PlayerState
 import com.eimsound.eimusic.ui.Icon
@@ -47,7 +48,7 @@ fun HeaderBar(
     val authLabel = when (val s = authState) {
         is AuthState.Authenticated -> s.user.username
         is AuthState.Loading -> "..."
-        else -> "login"
+        else -> t("header.login")
     }.take(18)
     val queue = "${state.queue.size}"
     val themeIcon = if (isDark) Icon.Moon.sym else Icon.Sun.sym

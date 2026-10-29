@@ -1,5 +1,7 @@
 package com.eimsound.eimusic.keyboard
 
+import com.eimsound.eimusic.i18n.t
+
 import com.jakewharton.mosaic.layout.KeyEvent
 
 sealed interface LogViewerAction : KeyAction {
@@ -31,6 +33,4 @@ fun dispatchLogViewerKey(
     }
 }
 
-fun logViewerStatusBarHint(): String = listViewKeyBindings
-    .joinToString("  ") { "${it.display}:${it.description}" } + "  " +
-    logViewerKeyBindings.joinToString("  ") { "${it.display}:${it.description}" }
+fun logViewerStatusBarHint(): String = t("hint.logviewer")

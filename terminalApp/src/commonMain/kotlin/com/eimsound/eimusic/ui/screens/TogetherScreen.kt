@@ -1,5 +1,7 @@
 package com.eimsound.eimusic.ui.screens
 
+import com.eimsound.eimusic.i18n.t
+
 import androidx.compose.runtime.*
 import com.eimsound.eimusic.keyboard.TogetherFocus
 import com.eimsound.eimusic.keyboard.TogetherKeyActions
@@ -126,14 +128,14 @@ private fun WelcomeView(
             })
             Spacer(Modifier.height(1))
 
-            Text("  Listen together in real-time", color = palette.textDimFg)
+            Text("  " + t("together.welcomeSubtitle"), color = palette.textDimFg)
             Spacer(Modifier.height(2))
 
             val (dot, label, dotColor) = when (connectionState) {
-                ConnectionState.CONNECTED -> Triple("●", "Connected", palette.highlightFg)
-                ConnectionState.CONNECTING -> Triple("◌", "Connecting...", palette.textDimFg)
-                ConnectionState.RECONNECTING -> Triple("◌", "Reconnecting...", palette.textDimFg)
-                ConnectionState.DISCONNECTED -> Triple("○", "Disconnected", palette.textDimFg)
+                ConnectionState.CONNECTED -> Triple("●", t("together.connected"), palette.highlightFg)
+                ConnectionState.CONNECTING -> Triple("◌", t("together.connecting"), palette.textDimFg)
+                ConnectionState.RECONNECTING -> Triple("◌", t("together.reconnecting"), palette.textDimFg)
+                ConnectionState.DISCONNECTED -> Triple("○", t("together.disconnected"), palette.textDimFg)
             }
             Text(buildAnnotatedString {
                 withStyle(SpanStyle(color = dotColor)) { append("  $dot") }
@@ -143,15 +145,15 @@ private fun WelcomeView(
 
             Text(buildAnnotatedString {
                 withStyle(SpanStyle(color = palette.highlightFg)) { append("  j") }
-                withStyle(SpanStyle(color = palette.textDimFg)) { append("  Join default channel") }
+                withStyle(SpanStyle(color = palette.textDimFg)) { append("  " + t("together.join")) }
             })
             Text(buildAnnotatedString {
                 withStyle(SpanStyle(color = palette.highlightFg)) { append("  l") }
-                withStyle(SpanStyle(color = palette.textDimFg)) { append("  Leave / Disconnect") }
+                withStyle(SpanStyle(color = palette.textDimFg)) { append("  " + t("together.leave")) }
             })
             Text(buildAnnotatedString {
                 withStyle(SpanStyle(color = palette.highlightFg)) { append("  Esc") }
-                withStyle(SpanStyle(color = palette.textDimFg)) { append("  Back") }
+                withStyle(SpanStyle(color = palette.textDimFg)) { append("  " + t("together.back")) }
             })
         }
     }
@@ -167,7 +169,7 @@ private fun ChannelIdInputView(
     val palette = LocalTuiColors.current
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.align(Alignment.Center)) {
-            Text(" Enter channel ID:", color = palette.titleFg)
+            Text(" " + t("together.enterChannel"), color = palette.titleFg)
             Spacer(Modifier.height(1))
             Box(modifier = Modifier.border(color = palette.dimBorderFg)) {
                 InputField(
@@ -179,7 +181,7 @@ private fun ChannelIdInputView(
                 )
             }
             Spacer(Modifier.height(1))
-            Text(" Enter to join  ·  Esc to cancel", color = palette.textDimFg)
+            Text(" " + t("together.confirmJoin"), color = palette.textDimFg)
         }
     }
 }
@@ -214,7 +216,7 @@ private fun ChatLayout(
             InputField(
                 value = state.chatInput,
                 onValueChange = { channelViewModel.updateChatInput(it) },
-                placeholder = "Type a message and press Enter...",
+                placeholder = t("together.chatPlaceholder"),
                 onConfirm = onSendMessage,
                 onCancel = onCancelChat,
             )
@@ -228,10 +230,10 @@ private fun ConnectionBar(
     palette: com.eimsound.eimusic.ui.theme.TuiColors,
 ) {
     val (dot, label, dotColor) = when (connectionState) {
-        ConnectionState.CONNECTED -> Triple("●", "Connected", palette.highlightFg)
-        ConnectionState.CONNECTING -> Triple("◌", "Connecting...", palette.textDimFg)
-        ConnectionState.RECONNECTING -> Triple("◌", "Reconnecting...", palette.textDimFg)
-        ConnectionState.DISCONNECTED -> Triple("○", "Disconnected", palette.textDimFg)
+        ConnectionState.CONNECTED -> Triple("●", t("together.connected"), palette.highlightFg)
+        ConnectionState.CONNECTING -> Triple("◌", t("together.connecting"), palette.textDimFg)
+        ConnectionState.RECONNECTING -> Triple("◌", t("together.reconnecting"), palette.textDimFg)
+        ConnectionState.DISCONNECTED -> Triple("○", t("together.disconnected"), palette.textDimFg)
     }
     Text(buildAnnotatedString {
         withStyle(SpanStyle(color = dotColor)) { append("  $dot") }
@@ -251,8 +253,8 @@ private fun MessageListView(
     if (messages.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.align(Alignment.Center)) {
-                Text("  No messages yet.", color = palette.textDimFg)
-                Text("  Press 'm' to start chatting.", color = palette.textDimFg)
+                Text("  " + t("together.emptyMessages"), color = palette.textDimFg)
+                Text("  " + t("together.emptyHint"), color = palette.textDimFg)
             }
         }
         return
@@ -353,14 +355,14 @@ private fun ChatBubble(
             val sender = message.sender.username.render()
             val ev = message.event
             val action = when (ev) {
-                is com.eimsound.eimusic.together.PlayControlEvent.Play -> "▶ played"
-                is com.eimsound.eimusic.together.PlayControlEvent.Pause -> "⏸ paused"
-                is com.eimsound.eimusic.together.PlayControlEvent.ChangeTrack -> "🎵 changed to ${ev.track.name}"
-                is com.eimsound.eimusic.together.PlayControlEvent.Seek -> "⏩ seeked"
-                is com.eimsound.eimusic.together.PlayControlEvent.Next -> "⏭ skipped"
-                is com.eimsound.eimusic.together.PlayControlEvent.Previous -> "⏮ went back"
-                is com.eimsound.eimusic.together.PlayControlEvent.PlayModeChanged -> "🔄 switched mode"
-                else -> "⚡ controlled"
+                is com.eimsound.eimusic.together.PlayControlEvent.Play -> t("together.play")
+                is com.eimsound.eimusic.together.PlayControlEvent.Pause -> t("together.pause")
+                is com.eimsound.eimusic.together.PlayControlEvent.ChangeTrack -> t("together.changeTrack", ev.track.name)
+                is com.eimsound.eimusic.together.PlayControlEvent.Seek -> t("together.seek")
+                is com.eimsound.eimusic.together.PlayControlEvent.Next -> t("together.next")
+                is com.eimsound.eimusic.together.PlayControlEvent.Previous -> t("together.previous")
+                is com.eimsound.eimusic.together.PlayControlEvent.PlayModeChanged -> t("together.playMode")
+                else -> t("together.controlled")
             }
             Box(modifier = Modifier.fillMaxWidth()) {
                 Text(

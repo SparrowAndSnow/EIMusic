@@ -1,5 +1,7 @@
 package com.eimsound.eimusic.ui.components
 
+import com.eimsound.eimusic.i18n.t
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -50,11 +52,11 @@ fun PlaylistPicker(
     val track = state.track ?: return
     val palette = LocalTuiColors.current
 
-    Text("  Add to local playlist", color = palette.titleFg)
+    Text("  " + t("picker.title"), color = palette.titleFg)
     ListView(
         items = playlists,
         visibleLines = visibleLines,
-        emptyMessage = "No local playlists.",
+        emptyMessage = t("picker.empty"),
         selection = state.selection,
         onConfirm = { playlist ->
             onAdd(playlist, track)

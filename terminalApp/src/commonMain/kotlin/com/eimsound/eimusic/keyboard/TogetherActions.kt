@@ -1,5 +1,7 @@
 package com.eimsound.eimusic.keyboard
 
+import com.eimsound.eimusic.i18n.t
+
 import com.jakewharton.mosaic.layout.KeyEvent
 
 // ── Focus ──
@@ -72,8 +74,8 @@ fun dispatchTogetherKey(
 }
 
 fun togetherStatusBarHint(focus: TogetherFocus): String = when (focus) {
-    TogetherFocus.Welcome -> "j:Join  c:Custom  l:Leave  Esc:Back"
-    TogetherFocus.Messages -> "j/k:Scroll  m:Chat  l:Leave  Esc:Back"
-    TogetherFocus.ChatInput -> "Enter:Send  Esc:Cancel"
-    TogetherFocus.ChannelIdInput -> "Enter:Join  Esc:Cancel"
+    TogetherFocus.Welcome -> t("hint.together.welcome")
+    TogetherFocus.Messages -> t("hint.together.messages")
+    TogetherFocus.ChatInput -> t("hint.together.chat")
+    TogetherFocus.ChannelIdInput -> t("hint.together.channel")
 }

@@ -2,6 +2,7 @@ package com.eimsound.eimusic
 
 import com.eimsound.eimusic.db.DbSessionRepository
 import com.eimsound.eimusic.di.initKoin
+import com.eimsound.eimusic.i18n.I18n
 import com.eimsound.eimusic.mpris.createMprisManager
 import com.eimsound.eimusic.util.initTuiLogging
 import com.eimsound.eimusic.playback.IMediaPlayerController
@@ -58,6 +59,7 @@ fun main() {
     val channelViewModel = koin.get<ChannelViewModel>()
     val controller = try { koin.get<IMediaPlayerController>() } catch (_: Exception) { null }
     val storage = koin.get<IStorage>()
+    I18n.setLanguage(storage.get(Settings::language, "zh"))
     val sessionRepository = koin.get<DbSessionRepository>()
     val initialTab = sessionRepository.load().lastTab
     // Install CJK→ASCII transliteration for terminal display

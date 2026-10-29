@@ -1,5 +1,7 @@
 package com.eimsound.eimusic.keyboard
 
+import com.eimsound.eimusic.i18n.t
+
 import com.jakewharton.mosaic.layout.KeyEvent
 
 // ── Focus ──
@@ -79,6 +81,6 @@ fun dispatchLocalSongsKey(
 
 fun localSongsStatusBarHint(focus: LocalFocus): String = when (focus) {
     LocalFocus.Input -> inputFieldStatusBarHint()
-    LocalFocus.Paths -> "j/k:Scroll  d:Delete  a:Add  /:Toggle  Esc:Back"
-    LocalFocus.Songs -> "j/k:Scroll  Enter:Play  r:Refresh  /:ManagePaths  m:Menu  Esc:Back"
+    LocalFocus.Paths -> t("hint.local.paths")
+    LocalFocus.Songs -> t("hint.local.songs")
 }

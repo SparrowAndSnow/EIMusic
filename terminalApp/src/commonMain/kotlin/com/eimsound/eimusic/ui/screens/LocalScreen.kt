@@ -1,6 +1,7 @@
 package com.eimsound.eimusic.ui.screens
 
 import androidx.compose.runtime.*
+import com.eimsound.eimusic.i18n.t
 import com.eimsound.eimusic.keyboard.LocalFocus
 import com.eimsound.eimusic.keyboard.LocalSongsActions
 import com.eimsound.eimusic.keyboard.dispatchLocalSongsKey
@@ -90,9 +91,9 @@ fun LocalScreen(
     ) {
         Column {
             val title = when {
-                focus == LocalFocus.Input -> "Add Path"
-                showPaths -> "Local Paths (${state.localPaths.size})"
-                else -> "Local Songs (${state.tracks.size})"
+                focus == LocalFocus.Input -> t("local.title.addPath")
+                showPaths -> t("local.title.paths", state.localPaths.size)
+                else -> t("local.title.songs", state.tracks.size)
             }
             Text(" $title", color = palette.titleFg)
             if (focus != LocalFocus.Input) {
@@ -100,7 +101,7 @@ fun LocalScreen(
                     Spacer(Modifier.width(2))
                     if (focus == LocalFocus.Songs) {
                         Text(
-                            "Manage paths",
+                            t("local.managePaths"),
                             modifier = Modifier.clickable {
                                 showPaths = true
                                 focus = LocalFocus.Paths
@@ -109,13 +110,13 @@ fun LocalScreen(
                         )
                     } else {
                         Text(
-                            "+ Add path",
+                            t("local.addPath"),
                             modifier = Modifier.clickable { focus = LocalFocus.Input },
                             color = palette.highlightFg,
                         )
                         Spacer(Modifier.width(3))
                         Text(
-                            "Done",
+                            t("local.done"),
                             modifier = Modifier.clickable {
                                 showPaths = false
                                 focus = LocalFocus.Songs
@@ -156,12 +157,12 @@ fun LocalScreen(
                         }
                     } else {
                         if (state.isLoading) {
-                            Text(" Scanning...", color = palette.textDimFg)
+                            Text(" " + t("local.scanning"), color = palette.textDimFg)
                         }
                         if (state.tracks.isEmpty() && !state.isLoading) {
                             Spacer(Modifier.height(2))
-                            Text(" No local songs found.", color = palette.textDimFg)
-                            Text(" Press '/' to manage paths.", color = palette.textDimFg)
+                            Text(" " + t("local.empty"), color = palette.textDimFg)
+                            Text(" " + t("local.emptyHint"), color = palette.textDimFg)
                         }
                         TrackTable(
                             tracks = state.tracks,
@@ -196,19 +197,19 @@ private fun PathInputView(
     val palette = LocalTuiColors.current
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.align(Alignment.Center)) {
-            Text(" Enter directory path:", color = palette.titleFg)
+            Text(" " + t("local.enterPath"), color = palette.titleFg)
             Spacer(Modifier.height(1))
             Box(modifier = Modifier.border(color = palette.dimBorderFg)) {
                 InputField(
                     value = value,
                     onValueChange = onValueChange,
-                    placeholder = "/home/user/Music",
+                    placeholder = t("local.placeholder"),
                     onConfirm = onConfirm,
                     onCancel = onCancel,
                 )
             }
             Spacer(Modifier.height(1))
-            Text(" Enter to confirm  ·  Esc to cancel", color = palette.textDimFg)
+            Text(" " + t("common.confirmHint"), color = palette.textDimFg)
         }
     }
 }
@@ -225,14 +226,14 @@ private fun PathListView(
 
     if (paths.isEmpty()) {
         Spacer(Modifier.height(2))
-        Text(" No paths configured.", color = palette.textDimFg)
-        Text(" Press 'a' to add a music directory.", color = palette.textDimFg)
+        Text(" " + t("local.noPaths"), color = palette.textDimFg)
+        Text(" " + t("local.noPathsHint"), color = palette.textDimFg)
         return
     }
 
     Text(buildAnnotatedString {
         spacer(1)
-        withStyle(SpanStyle(color = palette.textDimFg)) { append("Path") }
+        withStyle(SpanStyle(color = palette.textDimFg)) { append(t("local.pathHeader")) }
     })
 
     ListView(

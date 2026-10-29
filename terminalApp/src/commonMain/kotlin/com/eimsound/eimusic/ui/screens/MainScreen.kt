@@ -1,5 +1,6 @@
 package com.eimsound.eimusic.ui.screens
 
+import com.eimsound.eimusic.i18n.t
 import androidx.compose.runtime.*
 import com.eimsound.eimusic.keyboard.LocalGlobalActions
 import com.eimsound.eimusic.keyboard.dispatchGlobalKey
@@ -74,7 +75,7 @@ private fun PlayerCenter(
                     textAlign = Alignment.CenterHorizontally,
                 )
                 Text(
-                    "No track playing",
+                    t("main.noTrack"),
                     modifier = Modifier.fillMaxWidth(),
                     color = palette.textDimFg,
                     textAlign = Alignment.CenterHorizontally,
@@ -82,7 +83,7 @@ private fun PlayerCenter(
                 Spacer(Modifier.height(2))
                 if (recentTracks.isEmpty()) {
                     Text(
-                        "Press 'f' to search  •  1-5 switch tabs",
+                        t("main.searchHint"),
                         modifier = Modifier.fillMaxWidth(),
                         color = palette.textDimFg,
                         textAlign = Alignment.CenterHorizontally,
@@ -91,7 +92,7 @@ private fun PlayerCenter(
                     Box(Modifier.width(recentWidth).align(Alignment.CenterHorizontally)) {
                         Column {
                             Text(
-                                "Recent",
+                                t("main.recent"),
                                 modifier = Modifier.fillMaxWidth(),
                                 color = palette.titleFg,
                                 textAlign = Alignment.CenterHorizontally,
@@ -139,10 +140,10 @@ private fun PlayerCenter(
 
                 // ── Title & Artist ──
                 val title = playerState.current?.name
-                    ?.ifBlank { playerState.current?.id?.toString() ?: "Unknown" }
-                    ?: "Unknown"
+                    ?.ifBlank { playerState.current?.id?.toString() ?: t("main.unknown") }
+                    ?: t("main.unknown")
                 val artist = playerState.current?.artists?.firstOrNull()?.name
-                    ?.ifBlank { "Unknown Artist" } ?: "Unknown Artist"
+                    ?.ifBlank { t("main.unknownArtist") } ?: t("main.unknownArtist")
 
                 Text(
                     buildAnnotatedString {
@@ -174,7 +175,7 @@ private fun PlayerCenter(
 
                 if (playerState.isLoading) {
                     Text(
-                        "  Loading...  ",
+                        "  " + t("main.loading") + "  ",
                         color = palette.highlightFg,
                         modifier = Modifier.align(Alignment.CenterHorizontally),
                     )

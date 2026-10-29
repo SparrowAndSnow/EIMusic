@@ -1,5 +1,7 @@
 package com.eimsound.eimusic.keyboard
 
+import com.eimsound.eimusic.i18n.t
+
 import com.jakewharton.mosaic.layout.KeyEvent
 
 sealed interface QueueAction : KeyAction {
@@ -57,7 +59,4 @@ fun dispatchQueueKey(
     }
 }
 
-fun queueStatusBarHint(): String = trackTableKeyBindings
-    .filter { it.action in setOf(TrackTableBindingAction.ScrollDown, TrackTableBindingAction.ScrollUp, TrackTableBindingAction.PlayTrack) }
-    .joinToString("  ") { "${it.display}:${it.description}" } + "  " +
-    queueKeyBindings.joinToString("  ") { "${it.display}:${it.description}" }
+fun queueStatusBarHint(): String = t("hint.queue")

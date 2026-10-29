@@ -1,5 +1,7 @@
 package com.eimsound.eimusic.ui.components
 
+import com.eimsound.eimusic.i18n.t
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -115,8 +117,8 @@ fun trackContextItems(
     onShowInfo: () -> Unit,
     extra: List<ContextMenuItem> = emptyList(),
 ): List<ContextMenuItem> = buildList {
-    add(ContextMenuItem("Add to playlist", onAddToPlaylist))
-    add(ContextMenuItem("Play next", onPlayNext))
-    add(ContextMenuItem("Track info", onShowInfo))
+    add(ContextMenuItem(t("menu.addToPlaylist"), onAddToPlaylist))
+    add(ContextMenuItem(t("menu.playNext"), onPlayNext))
+    add(ContextMenuItem(t("menu.trackInfo"), onShowInfo))
     addAll(extra)
 }

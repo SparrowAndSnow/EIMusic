@@ -1,5 +1,7 @@
 package com.eimsound.eimusic.keyboard
 
+import com.eimsound.eimusic.i18n.t
+
 import com.jakewharton.mosaic.layout.KeyEvent
 
 sealed interface ListViewBindingAction : KeyAction {
@@ -45,9 +47,7 @@ fun dispatchListViewKey(
     }
 }
 
-fun listViewStatusBarHint(): String = listViewKeyBindings
-    .filter { it.action in setOf(ListViewBindingAction.ScrollDown, ListViewBindingAction.ScrollUp, ListViewBindingAction.Confirm) }
-    .joinToString("  ") { "${it.display}:${it.description}" }
+fun listViewStatusBarHint(): String = t("hint.listview")
 
 val listViewHelpEntries: List<Pair<String, String>> = listViewKeyBindings
     .distinctBy { it.display }

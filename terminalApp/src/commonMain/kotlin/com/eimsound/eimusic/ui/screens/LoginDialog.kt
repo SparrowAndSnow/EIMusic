@@ -1,5 +1,7 @@
 package com.eimsound.eimusic.ui.screens
 
+import com.eimsound.eimusic.i18n.t
+
 import androidx.compose.runtime.*
 import com.eimsound.eimusic.auth.AuthState
 import com.eimsound.eimusic.keyboard.dispatchLoginKey
@@ -42,7 +44,7 @@ fun LoginDialog(
     }
 
     OverlayDialog(onDismissRequest = onGoBack) {
-        DialogPanel(title = "Login", onDismiss = onGoBack) {
+        DialogPanel(title = t("login.title"), onDismiss = onGoBack) {
             Column(
                 modifier = Modifier.onKeyEvent { event ->
                     dispatchLoginKey(event, onGoBack)
@@ -50,10 +52,10 @@ fun LoginDialog(
             ) {
                 val s = authState
                 val displayName = when (s) {
-                    is AuthState.Authenticated -> "Logged in as ${s.user.username}"
-                    is AuthState.Loading -> "Logging in..."
-                    is AuthState.Error -> "Error: ${s.message}"
-                    is AuthState.Unauthenticated -> "Not logged in"
+                    is AuthState.Authenticated -> t("login.loggedInAs", s.user.username)
+                    is AuthState.Loading -> t("login.loggingIn")
+                    is AuthState.Error -> t("common.error", s.message)
+                    is AuthState.Unauthenticated -> t("login.notLoggedIn")
                 }
                 Text(
                     "  $displayName",
@@ -69,11 +71,11 @@ fun LoginDialog(
                     InputField(
                         value = loginInput,
                         onValueChange = { loginInput = it },
-                        placeholder = "Enter username",
+                        placeholder = t("login.usernamePlaceholder"),
                         onConfirm = { authViewModel.login(loginInput) },
                         onCancel = onGoBack,
                     )
-                    Text("  Enter to login  |  Esc to cancel", color = palette.textDimFg)
+                    Text("  " + t("login.confirm"), color = palette.textDimFg)
                 }
             }
         }

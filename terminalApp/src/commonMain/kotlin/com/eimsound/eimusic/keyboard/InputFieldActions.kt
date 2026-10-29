@@ -1,5 +1,7 @@
 package com.eimsound.eimusic.keyboard
 
+import com.eimsound.eimusic.i18n.t
+
 sealed interface InputFieldBindingAction : KeyAction {
     data object Confirm : InputFieldBindingAction
     data object Cancel : InputFieldBindingAction
@@ -28,9 +30,7 @@ val inputFieldKeyBindings: List<KeyBinding<InputFieldBindingAction>> = listOf(
     KeyBinding(listOf("ArrowDown"), "↓", InputFieldBindingAction.MoveCursorDown, "Cursor down"),
 )
 
-fun inputFieldStatusBarHint(): String = inputFieldKeyBindings
-    .filter { it.action in setOf(InputFieldBindingAction.Confirm, InputFieldBindingAction.Cancel) }
-    .joinToString("  ") { "${it.display}:${it.description}" }
+fun inputFieldStatusBarHint(): String = t("hint.input")
 
 val inputFieldHelpEntries: List<Pair<String, String>> = inputFieldKeyBindings
     .distinctBy { it.display }

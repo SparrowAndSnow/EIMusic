@@ -1,5 +1,7 @@
 package com.eimsound.eimusic.keyboard
 
+import com.eimsound.eimusic.i18n.t
+
 import com.jakewharton.mosaic.layout.KeyEvent
 
 // ── Focus ──
@@ -96,6 +98,6 @@ fun dispatchPlaylistKey(
 
 fun playlistStatusBarHint(focus: PlaylistFocus): String = when (focus) {
     PlaylistFocus.Input -> inputFieldStatusBarHint()
-    PlaylistFocus.List -> "j/k:Scroll  Enter:Open  a:Add  n:New  d:Delete  Tab:Open  Esc:Back"
-    PlaylistFocus.TrackList -> "j/k:Scroll  Enter:Play  K/J:Move  d:Remove  r:Refresh  m:Menu"
+    PlaylistFocus.List -> t("hint.playlist.list")
+    PlaylistFocus.TrackList -> t("hint.playlist.tracks")
 }

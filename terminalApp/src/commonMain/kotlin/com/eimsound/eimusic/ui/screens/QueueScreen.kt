@@ -1,5 +1,6 @@
 package com.eimsound.eimusic.ui.screens
 
+import com.eimsound.eimusic.i18n.t
 import androidx.compose.runtime.*
 import com.eimsound.eimusic.keyboard.QueueKeyActions
 import com.eimsound.eimusic.keyboard.dispatchQueueKey
@@ -48,7 +49,7 @@ fun QueueScreen(
                 onPlayNext = { playerViewModel.playNext(track) },
                 onShowInfo = { trackActions?.showInfo(track) },
                 extra = listOf(
-                    ContextMenuItem("Remove from queue") {
+                    ContextMenuItem(t("queue.remove")) {
                         playerViewModel.removeTrack(index)
                         selection.jumpTo((index - 1).coerceAtLeast(0))
                     },
@@ -110,7 +111,7 @@ fun QueueScreen(
         },
     ) {
         Column {
-            Text(" Queue", color = palette.titleFg)
+            Text(" " + t("queue.title"), color = palette.titleFg)
 
             if (picker.isOpen) {
                 PlaylistPicker(

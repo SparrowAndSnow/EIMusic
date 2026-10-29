@@ -2,6 +2,13 @@ package com.eimsound.eimusic.ui.screens
 
 import androidx.compose.runtime.*
 import com.eimsound.eimusic.config.AppConfig
+import com.eimsound.eimusic.i18n.I18n
+import com.eimsound.eimusic.i18n.Language
+import com.eimsound.eimusic.i18n.t
+import com.eimsound.eimusic.keyboard.SettingFocus
+import com.eimsound.eimusic.keyboard.SettingKeyActions
+import com.eimsound.eimusic.keyboard.dispatchSettingKey
+import com.eimsound.eimusic.keyboard.settingStatusBarHint
 import com.eimsound.eimusic.music.TrackSource
 import com.eimsound.eimusic.storage.IStorage
 import com.eimsound.eimusic.storage.Settings
@@ -10,10 +17,6 @@ import com.eimsound.eimusic.storage.save
 import com.eimsound.eimusic.ui.components.InputField
 import com.eimsound.eimusic.ui.components.ScreenFrame
 import com.eimsound.eimusic.ui.theme.LocalTuiColors
-import com.eimsound.eimusic.keyboard.SettingFocus
-import com.eimsound.eimusic.keyboard.SettingKeyActions
-import com.eimsound.eimusic.keyboard.dispatchSettingKey
-import com.eimsound.eimusic.keyboard.settingStatusBarHint
 import com.jakewharton.mosaic.LocalTerminalState
 import com.jakewharton.mosaic.layout.clickable
 import com.jakewharton.mosaic.layout.fillMaxSize
@@ -46,22 +49,20 @@ private data class SettingSection(
     val rows: List<SettingRow>,
 )
 
-private const val SAVED_NOTICE = "已保存，重启后生效"
-
 private val editableSources = TrackSource.entries.filter {
     it != TrackSource.LOCAL && it != TrackSource.UNKNOWN
 }
 
 private fun sourceLabel(source: TrackSource): String = when (source) {
-    TrackSource.NETEASE -> "网易云"
-    TrackSource.SPOTIFY -> "Spotify"
-    TrackSource.QQ -> "QQ 音乐"
-    TrackSource.XIAMI -> "虾米"
-    TrackSource.KUWO -> "酷我"
-    TrackSource.KUGOU -> "酷狗"
-    TrackSource.BAIDU -> "百度"
-    TrackSource.YOUTUBE -> "YouTube"
-    TrackSource.YOUTUBE_MUSIC -> "YouTube Music"
+    TrackSource.NETEASE -> t("source.netease")
+    TrackSource.SPOTIFY -> t("source.spotify")
+    TrackSource.QQ -> t("source.qq")
+    TrackSource.XIAMI -> t("source.xiami")
+    TrackSource.KUWO -> t("source.kuwo")
+    TrackSource.KUGOU -> t("source.kugou")
+    TrackSource.BAIDU -> t("source.baidu")
+    TrackSource.YOUTUBE -> t("source.youtube")
+    TrackSource.YOUTUBE_MUSIC -> t("source.youtubeMusic")
     else -> source.name
 }
 
@@ -91,7 +92,7 @@ fun SettingsScreen(
         val next = update(config)
         config = next
         storage.save(next)
-        notice = SAVED_NOTICE
+        notice = t("settings.saved")
     }
 
     fun persistProxy(enabled: Boolean, host: String, port: Int) {
@@ -101,7 +102,14 @@ fun SettingsScreen(
         storage.save(Settings::proxyEnabled, enabled)
         storage.save(Settings::proxyHost, host)
         storage.save(Settings::proxyPort, port)
-        notice = SAVED_NOTICE
+        notice = t("settings.saved")
+    }
+
+    fun switchLanguage() {
+        val next = if (I18n.language == Language.Chinese) Language.English else Language.Chinese
+        I18n.setLanguage(next)
+        storage.save(Settings::language, next.code)
+        notice = t("settings.saved")
     }
 
     fun startEdit(field: SettingEdit, value: String) {
@@ -134,36 +142,66 @@ fun SettingsScreen(
     }
 
     val sections = listOf(
-        SettingSection("外观", listOf(
-            SettingRow("主题", if (isDark) "暗色" else "亮色", onToggleTheme),
-        )),
-        SettingSection("网络", listOf(
-            SettingRow("服务器 HTTP", config.server.http, { startEdit(SettingEdit.Http, config.server.http) }),
-            SettingRow("服务器 WS", config.server.ws, { startEdit(SettingEdit.Ws, config.server.ws) }),
-            SettingRow("代理", if (proxyEnabled) "开启" else "关闭", {
-                persistProxy(!proxyEnabled, proxyHost, proxyPort)
-            }),
-            SettingRow("代理地址", "$proxyHost:$proxyPort", {
-                startEdit(SettingEdit.Proxy, "$proxyHost:$proxyPort")
-            }),
-        )),
-        SettingSection("音源", listOf(
-            SettingRow(
-                "音源配置",
-                "${editableSources.count { config.sources[it].orEmpty().isNotEmpty() }} 个已配置",
-                { sourcePage = true },
+        SettingSection(
+            t("settings.appearance"),
+            listOf(
+                SettingRow(
+                    t("settings.theme"),
+                    if (isDark) t("settings.theme.dark") else t("settings.theme.light"),
+                    onToggleTheme,
+                ),
+                SettingRow(
+                    t("settings.language"),
+                    if (I18n.language == Language.Chinese) t("settings.language.zh") else t("settings.language.en"),
+                    { switchLanguage() },
+                ),
             ),
-        )),
-        SettingSection("关于", listOf(
-            SettingRow("版本", "EIMusic TUI", {}),
-        )),
+        ),
+        SettingSection(
+            t("settings.network"),
+            listOf(
+                SettingRow(t("settings.serverHttp"), config.server.http, {
+                    startEdit(SettingEdit.Http, config.server.http)
+                }),
+                SettingRow(t("settings.serverWs"), config.server.ws, {
+                    startEdit(SettingEdit.Ws, config.server.ws)
+                }),
+                SettingRow(
+                    t("settings.proxy"),
+                    if (proxyEnabled) t("settings.proxy.on") else t("settings.proxy.off"),
+                    { persistProxy(!proxyEnabled, proxyHost, proxyPort) },
+                ),
+                SettingRow(t("settings.proxyAddress"), "$proxyHost:$proxyPort", {
+                    startEdit(SettingEdit.Proxy, "$proxyHost:$proxyPort")
+                }),
+            ),
+        ),
+        SettingSection(
+            t("settings.sources"),
+            listOf(
+                SettingRow(
+                    t("settings.sourcesConfig"),
+                    t(
+                        "settings.sourcesConfigured",
+                        editableSources.count { config.sources[it].orEmpty().isNotEmpty() },
+                    ),
+                    { sourcePage = true },
+                ),
+            ),
+        ),
+        SettingSection(
+            t("settings.about"),
+            listOf(
+                SettingRow(t("settings.version"), "EIMusic TUI", {}),
+            ),
+        ),
     )
     val flatRows = sections.flatMap { it.rows }
     val sourceRows = editableSources.map { source ->
         val urls = config.sources[source].orEmpty()
         SettingRow(
             sourceLabel(source),
-            if (urls.isEmpty()) "未配置" else "${urls.size} 个地址",
+            if (urls.isEmpty()) t("settings.sourceUnset") else t("settings.sourceUrls", urls.size),
             { startEdit(SettingEdit.Source(source), urls.joinToString(", ")) },
         )
     }
@@ -213,8 +251,8 @@ fun SettingsScreen(
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
             val contentWidth = (terminal.size.columns * 0.72f).toInt().coerceIn(54, 92)
             Column(Modifier.width(contentWidth).padding(horizontal = 2, vertical = 1)) {
-                Text(" Settings", color = palette.titleFg)
-                Text(" 终端设置", color = palette.textDimFg)
+                Text(" " + t("settings.title"), color = palette.titleFg)
+                Text(" " + t("settings.subtitle"), color = palette.textDimFg)
                 Text("", color = palette.textFg)
 
                 val edit = editing
@@ -228,7 +266,7 @@ fun SettingsScreen(
                         onCancel = { editing = null },
                     )
                 } else if (sourcePage) {
-                    SettingSectionHeader("音源", contentWidth)
+                    SettingSectionHeader(t("settings.sources"), contentWidth)
                     sourceRows.forEachIndexed { index, row ->
                         SettingRowView(
                             row = row,
@@ -285,17 +323,17 @@ private fun SettingEditView(
 ) {
     val palette = LocalTuiColors.current
     val title = when (edit) {
-        SettingEdit.Http -> "服务器 HTTP"
-        SettingEdit.Ws -> "服务器 WS"
-        SettingEdit.Proxy -> "代理地址（host:port）"
-        is SettingEdit.Source -> sourceLabel(edit.source) + " 音源"
+        SettingEdit.Http -> t("settings.serverHttp")
+        SettingEdit.Ws -> t("settings.serverWs")
+        SettingEdit.Proxy -> t("settings.proxyAddress")
+        is SettingEdit.Source -> sourceLabel(edit.source)
     }
-    Text(" 编辑 $title", color = palette.titleFg)
-    Text(" 当前: $placeholder", color = palette.textDimFg)
+    Text(" " + t("settings.edit", title), color = palette.titleFg)
+    Text(" " + t("settings.current", placeholder), color = palette.textDimFg)
     InputField(
         value = value,
         onValueChange = onValueChange,
-        placeholder = "输入新值，回车保存",
+        placeholder = t("settings.placeholder"),
         onConfirm = onConfirm,
         onCancel = onCancel,
     )

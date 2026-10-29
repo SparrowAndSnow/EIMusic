@@ -1,5 +1,7 @@
 package com.eimsound.eimusic.keyboard
 
+import com.eimsound.eimusic.i18n.t
+
 import com.jakewharton.mosaic.layout.KeyEvent
 
 // ── Screen focus ──
@@ -39,7 +41,7 @@ fun dispatchSearchKey(
 }
 
 fun searchStatusBarHint(focus: SearchFocus): String = when (focus) {
-    SearchFocus.Input -> "Enter:Search  ↓:History"
-    SearchFocus.History -> "↑/↓:Select  Enter:Search"
-    SearchFocus.Results -> "j/k:Move  Enter:Play  m:Menu"
+    SearchFocus.Input -> t("hint.search.input")
+    SearchFocus.History -> t("hint.search.history")
+    SearchFocus.Results -> t("hint.search.results")
 }

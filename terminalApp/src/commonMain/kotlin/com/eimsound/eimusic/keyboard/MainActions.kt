@@ -1,5 +1,6 @@
 package com.eimsound.eimusic.keyboard
 
+import com.eimsound.eimusic.i18n.t
 import com.eimsound.eimusic.util.spacer
 
 // ── Main screen actions ──
@@ -84,12 +85,12 @@ fun mainStatusBarHint(): String {
         MainAction.Quit,
     )
     val labels: Map<MainAction, String> = mapOf(
-        MainAction.ToggleHelp to "Help",
-        MainAction.PlayPause to "Play/Pause",
-        MainAction.Previous to "Prev",
-        MainAction.Next to "Next",
-        MainAction.OpenSearch to "Search",
-        MainAction.Quit to "Quit",
+        MainAction.ToggleHelp to t("hint.main.help"),
+        MainAction.PlayPause to t("hint.main.playPause"),
+        MainAction.Previous to t("hint.main.prev"),
+        MainAction.Next to t("hint.main.next"),
+        MainAction.OpenSearch to t("hint.main.search"),
+        MainAction.Quit to t("hint.main.quit"),
     )
     return mainKeyBindings
         .filter { it.action in show }

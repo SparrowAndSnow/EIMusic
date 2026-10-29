@@ -1,5 +1,6 @@
 package com.eimsound.eimusic.keyboard
 
+import com.eimsound.eimusic.i18n.t
 import com.jakewharton.mosaic.layout.KeyEvent
 
 // ── Focus ──
@@ -55,7 +56,7 @@ fun dispatchSettingKey(
 }
 
 fun settingStatusBarHint(focus: SettingFocus): String = when (focus) {
-    SettingFocus.Main -> "j/k:选择  Enter:打开  Esc:返回"
-    SettingFocus.Sources -> "j/k:选择  Enter:编辑  Esc:返回"
-    SettingFocus.Editing -> "Enter:保存  Esc:取消"
+    SettingFocus.Main -> t("hint.settings.main")
+    SettingFocus.Sources -> t("hint.settings.sources")
+    SettingFocus.Editing -> t("hint.settings.editing")
 }

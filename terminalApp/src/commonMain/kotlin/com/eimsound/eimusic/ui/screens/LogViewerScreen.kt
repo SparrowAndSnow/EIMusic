@@ -1,5 +1,7 @@
 package com.eimsound.eimusic.ui.screens
 
+import com.eimsound.eimusic.i18n.t
+
 import androidx.compose.runtime.*
 import com.eimsound.eimusic.keyboard.dispatchLogViewerKey
 import com.eimsound.eimusic.keyboard.logViewerStatusBarHint
@@ -52,7 +54,7 @@ fun LogViewerScreen(
         },
     ) {
         Column {
-            Text("Logs (Esc to close, j/k to scroll)", color = palette.titleFg)
+            Text(t("logs.title"), color = palette.titleFg)
             Text("", color = palette.textFg)
             ListView(
                 items = wrappedLines,

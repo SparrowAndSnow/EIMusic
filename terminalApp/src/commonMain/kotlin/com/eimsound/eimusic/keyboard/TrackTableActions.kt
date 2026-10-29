@@ -1,5 +1,7 @@
 package com.eimsound.eimusic.keyboard
 
+import com.eimsound.eimusic.i18n.t
+
 import com.jakewharton.mosaic.layout.KeyEvent
 
 sealed interface TrackTableBindingAction : KeyAction {
@@ -51,9 +53,7 @@ fun dispatchTrackTableKey(
     }
 }
 
-fun trackTableStatusBarHint(): String = trackTableKeyBindings
-    .filter { it.action in setOf(TrackTableBindingAction.ScrollDown, TrackTableBindingAction.ScrollUp, TrackTableBindingAction.PlayTrack) }
-    .joinToString("  ") { "${it.display}:${it.description}" }
+fun trackTableStatusBarHint(): String = t("hint.tracktable")
 
 val trackTableHelpEntries: List<Pair<String, String>> = trackTableKeyBindings
     .distinctBy { it.display }
