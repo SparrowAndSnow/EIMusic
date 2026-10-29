@@ -32,6 +32,12 @@ class GlobalKeyActions(
     val onTogglePlayMode: () -> Unit = {},
     val onToggleMute: () -> Unit = {},
     val onOpenSearch: () -> Unit = {},
+    val onOpenSettings: () -> Unit = {},
+    val onToggleHelp: () -> Unit = {},
+    val onOpenLogin: () -> Unit = {},
+    val onOpenLogs: () -> Unit = {},
+    val onToggleTheme: () -> Unit = {},
+    val onQuit: () -> Unit = {},
 )
 
 /** 通过 CompositionLocal 提供，避免层层传参。在 App.kt 顶层创建一次即可。 */
@@ -52,6 +58,12 @@ fun dispatchGlobalKey(event: KeyEvent, actions: GlobalKeyActions): Boolean {
         MainAction.VolumeUp -> { actions.onVolumeUp(); true }
         MainAction.VolumeDown -> { actions.onVolumeDown(); true }
         MainAction.OpenSearch -> { actions.onOpenSearch(); true }
+        MainAction.OpenSettings -> { actions.onOpenSettings(); true }
+        MainAction.ToggleHelp -> { actions.onToggleHelp(); true }
+        MainAction.OpenLogin -> { actions.onOpenLogin(); true }
+        MainAction.OpenLogs -> { actions.onOpenLogs(); true }
+        MainAction.ToggleTheme -> { actions.onToggleTheme(); true }
+        MainAction.Quit -> { actions.onQuit(); true }
         else -> false
     }
 }

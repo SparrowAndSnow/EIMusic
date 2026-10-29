@@ -128,7 +128,7 @@ fun App(
         if (index >= 0) sessionRepository.saveTab(index)
     }
 
-    val appGlobalActions = remember(playerViewModel) {
+    val appGlobalActions = remember(playerViewModel, currentRoute, isDark) {
         GlobalKeyActions(
             onPlayPause = { playerViewModel.togglePlayPause() },
             onNext = { playerViewModel.next() },
@@ -141,6 +141,15 @@ fun App(
             onTogglePlayMode = { playerViewModel.togglePlayMode() },
             onToggleMute = { playerViewModel.toggleMute() },
             onOpenSearch = { backStack = listOf(Route.Search()) },
+            onOpenSettings = { backStack = listOf(Route.Settings) },
+            onToggleHelp = { navigate(Route.Help) },
+            onOpenLogin = { navigate(Route.Login) },
+            onOpenLogs = { navigate(Route.LogViewer) },
+            onToggleTheme = {
+                isDark = !isDark
+                storage.save(Settings::darkMode, isDark)
+            },
+            onQuit = onQuit,
         )
     }
 
@@ -151,16 +160,6 @@ fun App(
                 MainScreen(
                     playerState = playerState,
                     playerViewModel = playerViewModel,
-                    onOpenHelp = { navigate(Route.Help) },
-                    onOpenSearch = { backStack = listOf(Route.Search()) },
-                    onOpenSettings = { backStack = listOf(Route.Settings) },
-                    onOpenLogin = { navigate(Route.Login) },
-                    onOpenLogs = { navigate(Route.LogViewer) },
-                    onToggleTheme = {
-                        isDark = !isDark
-                        storage.save(Settings::darkMode, isDark)
-                    },
-                    onQuit = onQuit,
                 )
             }
 
@@ -254,7 +253,7 @@ fun App(
                     onNavigate = { navigate(Route.Login) },
                     onOpenQueue = { if (currentRoute !is Route.Queue) navigate(Route.Queue) },
                     onOpenTogether = { if (currentRoute !is Route.Together) navigate(Route.Together) },
-                    onOpenSettings = { if (currentRoute !is Route.Settings) navigate(Route.Settings) },
+                    onOpenSettings = appGlobalActions.onOpenSettings,
                     onToggleTheme = {
                         isDark = !isDark
                         storage.save(Settings::darkMode, isDark)
@@ -282,9 +281,6 @@ fun App(
                         val delta = if (event.shift) -1 else 1
                         val next = (base + delta + tabRoutes.size) % tabRoutes.size
                         backStack = listOf(tabRoutes[next].second)
-                        true
-                    } else if (event.key == "s" && !event.ctrl && !event.alt && !overlayRoute) {
-                        backStack = listOf(Route.Settings)
                         true
                     } else if (overlayRoute) {
                         // 弹窗打开时除切页外，全局快捷键停用。

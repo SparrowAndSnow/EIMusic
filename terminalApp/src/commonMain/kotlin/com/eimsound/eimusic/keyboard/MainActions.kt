@@ -1,7 +1,6 @@
 package com.eimsound.eimusic.keyboard
 
 import com.eimsound.eimusic.util.spacer
-import com.jakewharton.mosaic.layout.KeyEvent
 
 // ── Main screen actions ──
 sealed interface MainAction : KeyAction {
@@ -22,9 +21,6 @@ sealed interface MainAction : KeyAction {
     data object Quit : MainAction
 }
 
-/**
- * A keybinding entry: one or more physical keys + a display label + description.
- */
 /**
  * All main-screen keybindings listed in one place.
  * Used both for key dispatch and for rendering the help dialog.
@@ -101,39 +97,3 @@ fun mainStatusBarHint(): String {
         .joinToString(2.spacer) { "${it.display}:${labels[it.action] ?: ""}" }
 }
 
-/**
- * Central key event dispatcher for the main screen.
- */
-fun dispatchMainKey(
-    event: KeyEvent,
-    globalActions: GlobalKeyActions,
-    onToggleHelp: () -> Unit,
-    onOpenSearch: () -> Unit,
-    onOpenSettings: () -> Unit,
-    onOpenLogin: () -> Unit,
-    onOpenLogs: () -> Unit,
-    onToggleTheme: () -> Unit,
-    onQuit: () -> Unit,
-): Boolean {
-    val action = if (event.ctrl) mapCtrlKey(event.key) else mapMainKey(event.key)
-    if (action == null) return false
-
-    when (action) {
-        MainAction.PlayPause -> globalActions.onPlayPause()
-        MainAction.Next -> globalActions.onNext()
-        MainAction.Previous -> globalActions.onPrevious()
-        MainAction.TogglePlayMode -> globalActions.onTogglePlayMode()
-        MainAction.ToggleHelp -> onToggleHelp()
-        MainAction.OpenSearch -> onOpenSearch()
-        MainAction.OpenSettings -> onOpenSettings()
-        MainAction.OpenLogin -> onOpenLogin()
-        MainAction.OpenLogs -> onOpenLogs()
-        MainAction.SeekForward -> globalActions.onSeekForward()
-        MainAction.SeekBackward -> globalActions.onSeekBackward()
-        MainAction.VolumeUp -> globalActions.onVolumeUp()
-        MainAction.VolumeDown -> globalActions.onVolumeDown()
-        MainAction.ToggleTheme -> onToggleTheme()
-        MainAction.Quit -> onQuit()
-    }
-    return true
-}

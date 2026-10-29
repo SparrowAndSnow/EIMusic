@@ -2,7 +2,7 @@ package com.eimsound.eimusic.ui.screens
 
 import androidx.compose.runtime.*
 import com.eimsound.eimusic.keyboard.LocalGlobalActions
-import com.eimsound.eimusic.keyboard.dispatchMainKey
+import com.eimsound.eimusic.keyboard.dispatchGlobalKey
 import com.eimsound.eimusic.keyboard.mainStatusBarHint
 import com.eimsound.eimusic.music.PlayerState
 import com.eimsound.eimusic.music.Track
@@ -29,32 +29,13 @@ import com.jakewharton.mosaic.ui.*
 fun MainScreen(
     playerState: PlayerState,
     playerViewModel: PlayerViewModel,
-    onOpenHelp: () -> Unit,
-    onOpenSearch: () -> Unit,
-    onOpenSettings: () -> Unit,
-    onOpenLogin: () -> Unit,
-    onOpenLogs: () -> Unit,
-    onToggleTheme: () -> Unit,
-    onQuit: () -> Unit,
 ) {
     val displayPos by playerViewModel.displayPosition.bridgeToMutable()
     val recentTracks by playerViewModel.recentTracks.collectAsState()
     val globalActions = LocalGlobalActions.current
     ScreenFrame(
         hint = mainStatusBarHint(),
-        onKey = { event ->
-            dispatchMainKey(
-                event = event,
-                globalActions = globalActions,
-                onToggleHelp = onOpenHelp,
-                onOpenSearch = onOpenSearch,
-                onOpenSettings = onOpenSettings,
-                onOpenLogin = onOpenLogin,
-                onOpenLogs = onOpenLogs,
-                onToggleTheme = onToggleTheme,
-                onQuit = onQuit,
-            )
-        },
+        onKey = { event -> dispatchGlobalKey(event, globalActions) },
     ) {
         PlayerCenter(
             playerState = playerState,
