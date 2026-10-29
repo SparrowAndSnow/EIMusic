@@ -1,5 +1,6 @@
-# EIMusic TODO
+# terminalApp 跟进（TODO）
 
+> 位置：`docs/terminalApp-TODO.md` · 维护规矩见 [`PROJECT_RULES.md`](PROJECT_RULES.md)
 > 更新：2026-10-29 · 范围：terminalApp（TUI）
 > 状态标记：`[ ]` 未开始 · `[~]` 进行中 · `[x]` 完成
 > 约定：每项先 debug + pty 验证，最后重建 release 一次；不改变现有键位语义。
@@ -17,7 +18,7 @@
 - [x] 底部页面 tabs（1-5 / Tab / 点击切换）；Search 从 tabs 移到 Header 搜索图标（f 仍可用）
 - [x] Header 显示当前曲目（单行 TextOverflow.Ellipsis，窄窗口按列数隐藏次要控件）
 - [x] 中英文 i18n（`i18n/I18n.kt`，设置页切换并持久化 Settings::language）
-- [x] Search / Login / Help 改为库版 OverlayHost + Dialog（模态输入屏障）
+- [x] Login / Help 改为库版 OverlayHost + Dialog（模态输入屏障）；Search 为 Header 入口的整页路由
 - [x] Local/Playlist/Queue/Together 的键位回调收口为 Actions 对象
 
 ## P0 / 交互体验
@@ -38,8 +39,8 @@
 ## P1 / 功能
 
 - [x] **搜索历史 + 最近播放**
-  - [x] SearchViewModel 持久化最近查询；空查询显示历史，点击可直接搜索
-  - [x] PlayerViewModel 记录最近播放（最近 12 首），Main 空状态 ListView 展示，回车/点击播放
+  - [x] SearchStore 持久化最近查询（SearchViewModel 为薄壳）；空查询显示历史，点击可直接搜索
+  - [x] PlaybackStore 记录最近播放（最近 12 首，PlayerViewModel 为薄壳）；Main 空状态 ListView 展示，回车/点击播放
 - [~] **队列增强**
   - [x] 上移/下移（K/J）、播放已存在曲目不再重排、移动/删除后选择跟随
   - [x] `g` 跳到当前播放
@@ -48,7 +49,7 @@
   - [x] 导入歌单只读，本地歌单可编辑
   - [x] 从 Search/Queue 通过通用 PlaylistPicker 加入本地歌单
   - [x] 歌单内 `d` 删除、`K/J` 排序；`r` 刷新导入歌单
-  - [x] 本地歌单可混合加入网易/Spotify 等来源的曲目
+  - [x] 仓储层支持混合来源（测试覆盖 Spotify 曲目）；terminalApp 当前仅接入网易云与本地，Spotify 尚未注册/接入
 - [x] **会话恢复**
   - [x] 重启恢复上次 tab、队列、当前曲目（暂停，不恢复位置）；首次播放时才打开音频/网络流
 
@@ -57,13 +58,14 @@
 - [~] **窄终端响应式布局**
   - [x] Header：曲目 `weight(1f)` + `softWrap=true`/`maxLines=1`/`Ellipsis`；按列宽隐藏主题/模式/音量/用户名/频道
   - [ ] 其余页面断点按列宽（如 <80 / <100）切换紧凑模式
-  - TabRow 窄屏只显示编号 + 短名，hint 截断
-  - TrackTable 列优先级：名称优先，窄屏隐藏艺术家/时长；列宽按显示宽度算
-  - Dialog 宽度 clamp 到终端宽度，内容超高时滚动或截断
-  - Main 高度不足时缩小/隐藏专辑图，控制条与进度条始终可见
-- [~] **图标体系统一**（单宽/集中已完成，ASCII 回退待做）
+  - [ ] TabRow 窄屏只显示编号 + 短名，hint 截断
+  - [ ] TrackTable 列优先级：名称优先，窄屏隐藏艺术家/时长；列宽按显示宽度算
+  - [ ] Dialog 宽度 clamp 到终端宽度，内容超高时滚动或截断
+  - [ ] Main 高度不足时缩小/隐藏专辑图，控制条与进度条始终可见
+- [~] **图标体系统一**（Font Awesome 图标集中，ASCII 回退/字形清理待做）
   - [x] `Icon.Together` 从 emoji 👥（双宽）换成 Nerd Font 单宽 `\uF0C0`
-  - [x] 所有图标集中在 `ui/Icon.kt`，统一用 Font Awesome 单宽码位
+  - [x] Font Awesome 图标集中在 `ui/Icon.kt`，统一用单宽码位
+  - [ ] `♪`、`▶`、`▸`、`▓/░` 等页面字形仍为硬编码，后续统一/替换
   - [ ] 无 Nerd Font / 不支持 PUA 的终端提供 ASCII 回退（配置或环境变量）
   - [ ] Header、按钮、空状态、列表标记的图标与文字基线对齐；CJK/emoji 列宽按显示宽度
 - [ ] **间距与对齐规范**
@@ -72,10 +74,11 @@
 
 ## P2 / 美化与增强
 
-- [x] **更新检查**
+- [~] **更新检查**
   - 关于页读取 GitHub Releases 最新版本，显示当前/最新/失败状态与下载地址
   - 只读检查，不自动替换二进制；复用 shared GitHubUpdateApi
   - 版本号由 Gradle 从 version.toml 注入 BuildConfig
+  - [ ] 平台参数目前固定为 `PlatformType.Native, "linux"`；Windows/macOS 的资产选择待修
 
 - [ ] **主题预设**
   - 在 dark/light 之外加 3–4 套中性命名配色，`t` 循环或设置页选择
@@ -90,19 +93,23 @@
 
 ## 工程
 
-- [ ] **CI**
-  - push 自动跑 `:shared:jvmTest` + terminalApp release 构建
+- [~] **CI**
+  - [x] push 已跑 `:shared:jvmTest`、`:server:test`（当前 `NO-SOURCE`）、`:composeApp:compileKotlinDesktop`、`:androidApp:assembleDebug`、`:terminalApp:compileKotlinLinuxX64`
+  - [ ] terminalApp release 链接只在 tag release workflow 中跑，未加入 push CI
+  - [ ] wasm 编译未加入 CI（当前 wasm 编译失败）
 - [ ] **terminalApp 测试基建**
   - 增加 commonTest；先覆盖列表窗口、格式化、Actions 映射等纯逻辑
-- [ ] **安装/打包**
-  - Linux release 二进制安装脚本、README 使用说明
+- [~] **安装/打包**
+  - [x] README 已补平台支持/构建说明
+  - [ ] 终端使用说明（键位/设置页）与 Linux 安装脚本待做
 
 ## 已知问题 / 待查
 
 - [ ] **主页 PlayerControls 在空状态→播放切换后尺寸错误（kitty）**
   - 现象：Main 从空状态切到播放状态后，播放/音量控件看起来变小；鼠标悬停一次后恢复。仅在 kitty 复现，alacritty 正常。
   - 已排除：不是图标字形（同一套 Icon 在 Header 正常）；hover 前后控件 cell 内容完全一致。
-  - 规避：去掉 `PlayerControls` 所在的 if/else 空状态分支，让控件常驻/不参与分支切换后正常。
+  - 临时规避方案（尚未落地）：去掉 `PlayerControls` 所在的 if/else 空状态分支，让控件常驻/不参与分支切换。
+  - 当前代码仍保留空状态 if/else 分支（`MainScreen.kt:69`，`PlayerControls` 在 `:187`）。
   - 怀疑：Mosaic 在 if/else 分支替换时布局/测量缓存未正确失效，控件复用了旧的测量结果；hover 触发重绘后重新测量。
   - 下一步：在 Mosaic 做最小复现（分支前后同位置同控件），或临时用 `key(...)` 强制重建验证。
 
@@ -115,21 +122,21 @@
   - JVM 测试覆盖本地顺序/移动/删除、导入只读、混合来源
 - [x] **接入 UI**：PlaylistViewModel/Screen 改用 DbPlaylistRepository；URL 导入写库；旧 Settings.playlists 迁移
   - [x] `n` 新建本地歌单；`a` 导入 URL；`d` 删除记录；本地歌单持久化已验证
-  - [x] Search/Queue 按 `l` 添加曲目到本地歌单
+  - [x] Search/Queue 通过右键菜单或 `m` 添加曲目到本地歌单
   - [x] 本地歌单内 `d` 删除、`K/J` 排序；导入歌单只读
-- [x] **最近播放/搜索历史迁 DB**：recent / search_history 表 + 迁移；Settings 只留偏好
+- [x] **最近播放/搜索历史迁 DB**：recent / search_history 表 + 迁移；Settings 保留偏好与迁移用旧字段
 - [x] **会话恢复（DB session）**：lastTab / 队列 / 当前曲目（暂停恢复，不记录位置）
 
-- 当前：`Settings` JSON 存偏好、最近搜索、最近播放；队列只存在内存。
-- 目标：按领域拆分，避免单文件频繁整写：
-  - `settings.json`：主题/音量/静音/播放模式/tab
-  - `session.json`：队列、当前曲目、位置
-  - `playlists.json` / `recent.json`
-  - 原子写（tmp + rename + .bak）+ version 字段 + 节流落盘
-- 换 SQLite：用 SQLDelight；表：track / playlist / playlist_track / recent / queue_item / session / search_history。
+- 当前：
+  - `Settings` JSON 只存偏好/认证/配置；`settings.json` 仍是偏好主存储。
+  - 歌单、最近播放、搜索历史、会话/队列已迁 SQLDelight；`Settings` 中的 `playlists` / `recentSearches` / `recentTracks` 仅用于一次性迁移兼容。
+  - SQLDelight 表：track / playlist / playlist_track / recent / search_history / session / queue_item。
+- 仍待做：
+  - 队列另存为歌单。
+  - 播放位置恢复（当前只恢复 lastTab/队列/当前曲目，不恢复位置）。
+  - 如需进一步拆分 Settings，可按领域拆文件并加原子写/节流；目前未做。
 - 歌单模型：`playlist.source`（LOCAL / NETEASE / SPOTIFY…）即“本地歌单”标记；只有 `source=LOCAL` 可增删/排序曲目；导入歌单只读。
 - 曲目模型：`track.id` 全局唯一（如 `netease:123`、`spotify:...`、`local:<hash>`），本地歌单可混合加入各来源曲目。
-- 在此之前不引入数据库依赖，保持接口可替换。
 
 ## 暂不做
 
