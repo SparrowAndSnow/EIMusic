@@ -1,16 +1,22 @@
 # EIMusic TODO
 
-> 更新：2026-10-23 · 范围：terminalApp（TUI）
+> 更新：2026-10-29 · 范围：terminalApp（TUI）
 > 状态标记：`[ ]` 未开始 · `[~]` 进行中 · `[x]` 完成
 > 约定：每项先 debug + pty 验证，最后重建 release 一次；不改变现有键位语义。
 
 ## 已完成（2026-10）
 
-- [x] terminalApp 设置页（主题/播放模式/账号/本地音乐/关于；Header 齿轮 + s）
+- [x] terminalApp 设置页（外观/网络/音源/关于；Header 齿轮 + s）
+  - 外观：主题、语言；网络：服务器 HTTP/WS、代理开关与地址
+  - 音源：按 TrackSource 分类的子页，逗号分隔多地址
+  - 关于：版本（来自 version.toml）、GitHub Release 更新检查
+  - 已移除播放模式/账号/本地路径（本地路径移到 Local 页 Manage paths）
 
 - [x] terminalApp 适配重构后的 mosaic（画布/约束、BasicTextField、鼠标、备用屏）
 - [x] 列表单击选中 / 双击打开、hover、滚轮惯性渐停
-- [x] 底部页面 tabs（1-5 / Tab / 点击切换）
+- [x] 底部页面 tabs（1-5 / Tab / 点击切换）；Search 从 tabs 移到 Header 搜索图标（f 仍可用）
+- [x] Header 显示当前曲目（单行 TextOverflow.Ellipsis，窄窗口按列数隐藏次要控件）
+- [x] 中英文 i18n（`i18n/I18n.kt`，设置页切换并持久化 Settings::language）
 - [x] Search / Login / Help 改为库版 OverlayHost + Dialog（模态输入屏障）
 - [x] Local/Playlist/Queue/Together 的键位回调收口为 Actions 对象
 
@@ -48,9 +54,9 @@
 
 ## P1 / 布局与图标
 
-- [ ] **窄终端响应式布局**
-  - 断点按列宽（如 <80 / <100）切换紧凑模式
-  - Header 按优先级隐藏次要段（音量百分比、Together、登录名），保留播放/队列
+- [~] **窄终端响应式布局**
+  - [x] Header：曲目 `weight(1f)` + `softWrap=true`/`maxLines=1`/`Ellipsis`；按列宽隐藏主题/模式/音量/用户名/频道
+  - [ ] 其余页面断点按列宽（如 <80 / <100）切换紧凑模式
   - TabRow 窄屏只显示编号 + 短名，hint 截断
   - TrackTable 列优先级：名称优先，窄屏隐藏艺术家/时长；列宽按显示宽度算
   - Dialog 宽度 clamp 到终端宽度，内容超高时滚动或截断
@@ -62,9 +68,14 @@
   - [ ] Header、按钮、空状态、列表标记的图标与文字基线对齐；CJK/emoji 列宽按显示宽度
 - [ ] **间距与对齐规范**
   - spacer/内边距常量统一；标题、列表头、对话框边框与内容对齐
-  - 长标题 marquee 或两行截断（与响应式一起做）
+  - 长标题统一 Ellipsis 截断（Header 已做，其余页面与响应式一起做）
 
 ## P2 / 美化与增强
+
+- [x] **更新检查**
+  - 关于页读取 GitHub Releases 最新版本，显示当前/最新/失败状态与下载地址
+  - 只读检查，不自动替换二进制；复用 shared GitHubUpdateApi
+  - 版本号由 Gradle 从 version.toml 注入 BuildConfig
 
 - [ ] **主题预设**
   - 在 dark/light 之外加 3–4 套中性命名配色，`t` 循环或设置页选择
