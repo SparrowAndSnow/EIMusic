@@ -10,7 +10,6 @@ import com.eimsound.eimusic.storage.IStorage
 import com.eimsound.eimusic.storage.NativeStorage
 import com.eimsound.eimusic.storage.Settings
 import com.eimsound.eimusic.storage.get
-import platform.posix.setenv
 import com.eimsound.eimusic.util.AnyAsciiProcessor
 import com.eimsound.eimusic.util.Renderer
 import com.eimsound.eimusic.viewmodel.AuthViewModel
@@ -34,9 +33,9 @@ fun main() {
             val host = bootstrapStorage.get(Settings::proxyHost, "127.0.0.1")
             val port = bootstrapStorage.get(Settings::proxyPort, 8080)
             val proxy = if (host.contains("://")) host else "http://$host:$port"
-            setenv("http_proxy", proxy, 1)
-            setenv("https_proxy", proxy, 1)
-            setenv("all_proxy", proxy, 1)
+            setEnv("http_proxy", proxy)
+            setEnv("https_proxy", proxy)
+            setEnv("all_proxy", proxy)
         }
     }
 
