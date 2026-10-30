@@ -96,15 +96,18 @@
 ## 工程
 
 - [~] **CI**
-  - [~] push workflow 已配置 `:shared:jvmTest`、`:server:test`（当前 `NO-SOURCE`）、`:composeApp:compileKotlinDesktop`、`:androidApp:assembleDebug`、`:terminalApp:compileKotlinLinuxX64`
-  - 2026-10-29 前 27 次 CI run 全部失败在第 5 步 `Set up Android SDK`：`setup-android@v3` 默认安装已被 Google 移除的 `tools` 包；已改 `@v4`，待新 run 验证
+  - [x] push workflow 已配置 `:shared:jvmTest`、`:server:test`（当前 `NO-SOURCE`）、`:composeApp:compileKotlinDesktop`、`:androidApp:assembleDebug`、`:terminalApp:compileKotlinLinuxX64`
+  - 2026-10-29 前 27 次 CI run 全部失败在第 5 步 `Set up Android SDK`：`setup-android@v3` 默认安装已被 Google 移除的 `tools` 包；已改 `@v4`
+  - [x] 2026-10-30 Release run `41004387700` 成功：签名 APK、Linux/Windows terminal、GitHub Release、GHCR 镜像均已发布
+  - [x] 同日修复 `platforms;android-37` 包名（应为 `platforms;android-37.0`）、Ubuntu 26.04 的 `libsqlite3`/`libsystemd` 链接路径、Windows `setenv` 编译错误
+  - [x] CI 的 Gradle wrapper 改为官方分发地址，规避腾讯镜像超时；run `41006839469` 已通过
   - [ ] terminalApp release 链接只在 tag release workflow 中跑，未加入 push CI
   - [ ] wasm 编译未加入 CI（当前 wasm 编译失败）
 - [ ] **terminalApp 测试基建**
   - 增加 commonTest；先覆盖列表窗口、格式化、Actions 映射等纯逻辑
 - [~] **安装/打包**
   - [x] README 已补平台支持/构建说明
-  - [~] Release 改为签名 release APK；需要 `ANDROID_KEYSTORE_BASE64` 等 4 个 GitHub Secrets，待配置后验证
+  - [x] Release 改为签名 release APK；4 个 GitHub Secrets 已配置，v0.1.0 APK 签名验证通过（SHA-256 `F1:68:E5:AE:...:12:E6`）
   - [ ] 终端使用说明（键位/设置页）与 Linux 安装脚本待做
 
 ## 已知问题 / 待查

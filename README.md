@@ -118,7 +118,7 @@ Web 开发中：
 ## 已知限制
 
 - Web（wasmJs）当前不可用。
-- 尚无已发布 GitHub Release；版本检查/Release 下载在发布前不可用。
+- 已发布 [v0.1.0 测试 Release](https://github.com/SparrowAndSnow/EIMusic/releases/tag/v0.1.0)；客户端版本检查可直接读取 GitHub Releases。
 - macOS terminal 暂未加入 Release 构建；macOS 更新检查回退到 Release 页面。
 - server 没有测试；composeApp/terminalApp 缺少平台级测试（shared 已有 JVM 测试）。
 - terminalApp 更新检查只显示下载地址，不自动替换二进制。
