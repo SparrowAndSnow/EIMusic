@@ -275,7 +275,7 @@ val viewModelModule = module {
     single { ConfigViewModel(get()) }
     viewModel { AuthViewModel(get()) }
     viewModel { ChannelViewModel(get(), get()) }
-    single { SearchStore(get(), get(), get()) }
+    single { SearchStore(get(), get()) }
     viewModel { SearchResultViewModel(get()) }
     single { PlaylistStore(get(), get(), get(), get()) }
     viewModel { MyViewModel(get()) }

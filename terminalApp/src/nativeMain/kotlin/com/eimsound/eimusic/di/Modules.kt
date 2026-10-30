@@ -84,7 +84,7 @@ val repositoryModule = module {
 fun viewModelModule() = module {
     single { PlaybackStore(get(), get(), get(), get(), get()) }
     single { PlayerViewModel(get()) }
-    single { SearchStore(get(), get(), get()) }
+    single { SearchStore(get(), get()) }
     single { SearchViewModel(get()) }
     single { AuthViewModel(get()) }
     single { TogetherWebSocketClient(get<AppConfig>().server.ws, get(), get()) }

@@ -90,13 +90,6 @@ class PlaybackStore(
             }
         }
 
-        if (_recentTracks.value.isEmpty()) {
-            storage.get<Settings, List<Track>>(Settings::recentTracks, emptyList()).forEach {
-                library.recordRecent(it.toDbTrack())
-            }
-            _recentTracks.value = library.recentTracks().map { it.toTrack() }
-        }
-
         scope.launch {
             state.map { it.queue to it.current?.id }
                 .distinctUntilChanged()

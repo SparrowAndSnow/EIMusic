@@ -1,7 +1,6 @@
 package com.eimsound.eimusic.storage
 
 import com.eimsound.eimusic.music.PlayMode
-import com.eimsound.eimusic.music.Track
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -20,8 +19,6 @@ data class Settings(
     var proxyEnabled: Boolean = false,
     var enabledNotification: Boolean = true,
     var enabledNotificationSound: Boolean = true,
-    var recentSearches: List<String> = emptyList(),
-    var recentTracks: List<Track> = emptyList(),
 ) : Store {
     companion object {
         val DEFAULT = Settings(

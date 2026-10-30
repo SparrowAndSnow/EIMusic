@@ -30,7 +30,7 @@
   - `PlayerViewModel`/`PlaybackStore` 保存队列和当前曲目（不记录位置）
   - `App.kt` 用 `DbSessionRepository.load().lastTab` 恢复上次页面；`PlaybackStore` 恢复队列/当前曲目
 - [x] **旧数据迁移**
-  - `Settings.playlists`、`Settings.recentTracks`、`Settings.recentSearches` 均已接入一次性迁移
+  - `Settings.playlists` 已接入一次性迁移；`Settings.recentTracks` / `recentSearches` 已从 Settings 删除，对应迁移代码移除
 
 ## 进行中
 

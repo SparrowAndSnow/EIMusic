@@ -131,12 +131,12 @@
   - [x] `n` 新建本地歌单；`a` 导入 URL；`d` 删除记录；本地歌单持久化已验证
   - [x] Search/Queue 通过右键菜单或 `m` 添加曲目到本地歌单
   - [x] 本地歌单内 `d` 删除、`K/J` 排序；导入歌单只读
-- [x] **最近播放/搜索历史迁 DB**：recent / search_history 表 + 迁移；Settings 保留偏好与迁移用旧字段
+- [x] **最近播放/搜索历史迁 DB**：recent / search_history 表；`Settings.recentSearches` / `recentTracks` 已移除，旧 JSON 迁移代码删除
 - [x] **会话恢复（DB session）**：lastTab / 队列 / 当前曲目（暂停恢复，不记录位置）
 
 - 当前：
   - `Settings` JSON 只存偏好/认证/配置；`settings.json` 仍是偏好主存储。
-  - 歌单、最近播放、搜索历史、会话/队列已迁 SQLDelight；`Settings` 中的 `playlists` / `recentSearches` / `recentTracks` 仅用于一次性迁移兼容。
+  - 歌单、最近播放、搜索历史、会话/队列已迁 SQLDelight；`Settings` 中仅剩 `playlists` 用于一次性迁移兼容，`recentSearches` / `recentTracks` 已删除。
   - SQLDelight 表：track / playlist / playlist_track / recent / search_history / session / queue_item。
 - 仍待做：
   - 队列另存为歌单。
