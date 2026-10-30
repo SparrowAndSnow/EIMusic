@@ -4,5 +4,12 @@ services:
   backend:
     restart: unless-stopped
     image: ${EIMUSIC_IMAGE:-ghcr.io/sparrowandsnow/eimusic-backend:latest}
+    environment:
+      EIMUSIC_DB: /data/eimusic.db
+    volumes:
+      - eimusic-data:/data
     ports:
       - "43679:8080"
+
+volumes:
+  eimusic-data:

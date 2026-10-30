@@ -5,10 +5,16 @@ import com.eimsound.eimusic.auth.AuthResponse
 import com.eimsound.eimusic.auth.AuthUser
 import com.eimsound.eimusic.auth.RefreshRequest
 import com.eimsound.eimusic.network.NeteaseApi
+import com.eimsound.eimusic.network.RequestUrlProvider
 import com.eimsound.eimusic.network.models.NetworkResult
 import com.eimsound.eimusic.network.models.netease.NeteaseResult
 import com.eimsound.eimusic.server.manager.ChannelManager
 import com.eimsound.eimusic.server.manager.UserSessionManager
+import com.eimsound.eimusic.server.admin.AdminAccountService
+import com.eimsound.eimusic.server.admin.adminRoutes
+import com.eimsound.eimusic.server.db.AuditRepository
+import com.eimsound.eimusic.server.db.SourceRepository
+import com.eimsound.eimusic.server.db.UserRepository
 import com.eimsound.eimusic.server.util.JwtUtil
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.*
@@ -23,6 +29,13 @@ import org.koin.ktor.ext.inject
 fun Application.configureRouting() {
     routing {
         val neteaseApi by inject<NeteaseApi>()
+        val sourceRepository by inject<SourceRepository>()
+        val userRepository by inject<UserRepository>()
+        val auditRepository by inject<AuditRepository>()
+        val requestUrlProvider by inject<RequestUrlProvider>()
+        val adminAccounts by inject<AdminAccountService>()
+        val channelManager by inject<ChannelManager>()
+        val userSessionManager by inject<UserSessionManager>()
         // 健康检查
         get("/health") {
             call.respondText("OK")
@@ -171,9 +184,6 @@ fun Application.configureRouting() {
                         )
                     )
                 }
-                val channelManager by inject<ChannelManager>()
-                val userSessionManager by inject<UserSessionManager>()
-
                 post("/logout") {
                     val principal =
                         call.principal<JWTPrincipal>() ?: return@post call.respond(HttpStatusCode.Unauthorized)
@@ -190,5 +200,14 @@ fun Application.configureRouting() {
                 }
             }
         }
+        adminRoutes(
+            sourceRepository = sourceRepository,
+            userRepository = userRepository,
+            auditRepository = auditRepository,
+            requestUrlProvider = requestUrlProvider,
+            adminAccounts = adminAccounts,
+            sessionManager = userSessionManager,
+            channelManager = channelManager,
+        )
     }
 }

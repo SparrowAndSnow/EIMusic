@@ -28,3 +28,7 @@ scripts/*
 terminalApp/src/nativeInterop/cinterop/*.o
 terminalApp/src/nativeInterop/cinterop/*.a
 
+# 服务端 SQLite 数据库
+/server/eimusic.db
+/eimusic.db
+

@@ -103,8 +103,10 @@ Web 开发中：
 ## 配置
 
 - 服务端：`server/src/main/resources/application.conf`
-- 服务端音乐源/地址：首次运行会在工作目录生成 `eimusic.json`，可直接编辑
-- 配置目录（存放 `settings.json` / `eimusic.json` / `eimusic.db`）：
+- 服务端音乐源：持久化在 SQLite 的 `source_urls` 表；首次启动写入默认 NETEASE 源，后续通过 `/admin/sources` 管理
+- 管理端：`/admin`；首次访问会进入初始化页面，创建第一个管理员账号（写入 `users` 表），之后使用该账号登录。生产环境可选设置 `EIMUSIC_ADMIN_SESSION_SECRET` 固定 Session 密钥，HTTPS 下设置 `EIMUSIC_ADMIN_SECURE_COOKIE=true`
+- 服务端数据库：SQLite + Exposed，默认放在平台配置目录下的 `server.db`（Linux `~/.config/eimusic/server.db`；macOS `~/Library/Application Support/eimusic/server.db`；Windows `%APPDATA%\eimusic\server.db`），可用 `EIMUSIC_DB` 指定路径
+- 客户端配置目录（存放 `settings.json` / `eimusic.db`）：
   - Linux：`~/.config/eimusic/`
   - macOS：`~/Library/Application Support/eimusic/`
   - Windows：`%APPDATA%\eimusic\`

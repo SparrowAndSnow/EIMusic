@@ -1,9 +1,13 @@
 package com.eimsound.eimusic.server
 
-import com.eimsound.eimusic.config.AppConfig
 import com.eimsound.eimusic.network.NeteaseApi
 import com.eimsound.eimusic.network.NeteaseApiImpl
 import com.eimsound.eimusic.network.FallbackHttpClientFactory
+import com.eimsound.eimusic.server.admin.AdminAccountService
+import com.eimsound.eimusic.server.db.AuditRepository
+import com.eimsound.eimusic.server.db.ServerDatabase
+import com.eimsound.eimusic.server.db.SourceRepository
+import com.eimsound.eimusic.server.db.UserRepository
 import com.eimsound.eimusic.server.handler.WebSocketHandler
 import com.eimsound.eimusic.server.manager.ChannelManager
 import com.eimsound.eimusic.server.manager.UserSessionManager
@@ -14,23 +18,8 @@ import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 import org.koin.logger.slf4jLogger
 import org.slf4j.LoggerFactory
-import java.io.File
 import com.eimsound.eimusic.music.TrackSource
 import kotlin.time.Duration.Companion.seconds
-
-private fun loadAppConfig(): AppConfig {
-    val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true; prettyPrint = true; encodeDefaults = true }
-    val configFile = File("eimusic.json")
-    if (configFile.exists()) {
-        return try {
-            json.decodeFromString(configFile.readText())
-        } catch (_: Exception) {
-            AppConfig()
-        }
-    }
-    configFile.writeText(json.encodeToString(AppConfig()))
-    return AppConfig()
-}
 
 data class ServerSettings(
     val maxChannels: Int = 1000,
@@ -52,11 +41,21 @@ private fun Application.loadServerSettings(): ServerSettings {
 }
 
 fun Application.configureFrameworks() {
-    val appConfig = loadAppConfig()
     val serverSettings = loadServerSettings()
+    val database = ServerDatabase.connect()
+    val sourceRepository = SourceRepository(database)
+    sourceRepository.ensureDefaults()
+    val sources = sourceRepository.load()
+    val userRepository = UserRepository(database)
+    val adminAccounts = AdminAccountService(userRepository)
     install(Koin) {
         slf4jLogger()
         modules(module {
+            single { database }
+            single { sourceRepository }
+            single { userRepository }
+            single { adminAccounts }
+            single { AuditRepository(get()) }
             single<ServerSettings> { serverSettings }
             single<ChannelManager> {
                 ChannelManager(
@@ -78,7 +77,10 @@ fun Application.configureFrameworks() {
                 WebSocketHandler(get(), get())
             }
             single<RequestUrlProvider> {
-                RequestUrlProvider(appConfig.sources[TrackSource.NETEASE] ?: emptyList())
+                RequestUrlProvider(
+                    sources[TrackSource.NETEASE]
+                        ?: SourceRepository.DEFAULT_SOURCES.getValue(TrackSource.NETEASE)
+                )
             }
             single<NeteaseApi> {
                 val requestUrlProvider = get<RequestUrlProvider>()

@@ -7,6 +7,7 @@
 - [项目维护规矩](PROJECT_RULES.md)
 - [terminalApp 跟进](terminalApp-TODO.md)
 - [composeApp 跟进](composeApp-TODO.md)
+- [管理端跟进](admin-TODO.md)
 
 ## 审查记录
 
