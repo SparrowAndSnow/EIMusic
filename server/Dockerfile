@@ -1,6 +1,7 @@
 # 服务端镜像只负责运行产物，jar 由宿主 / CI 预先生成（容器内不跑 Gradle）：
 #   ./gradlew :server:buildFatJar
-#   docker build -f server/Dockerfile -t eimusic-backend:$(git rev-parse --short HEAD) server/build/libs
+#   docker build -f server/Dockerfile -t eimusic-backend:local server/build/libs
+# CI 使用 release/ 目录作为构建上下文（其中包含 server-all.jar）。
 ARG MIRROR=docker.io
 FROM ${MIRROR}/eclipse-temurin:25.0.2_10-jre-noble
 

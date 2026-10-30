@@ -2,7 +2,7 @@
 
 > 目的：保证 README、跟进文档、审查记录与代码、构建、Release 状态一致；信息不缺失、不重复、不漂移。
 > 适用范围：所有功能、修复、构建/CI/发布变更。
-> 最后核对：2026-10-29
+> 最后核对：2026-10-30
 
 ## 1. 信息分层（单一来源）
 
@@ -72,9 +72,11 @@ README 平台表：
 - [ ] `:server:buildFatJar` 通过
 - [ ] `:composeApp:compileKotlinDesktop` 通过
 - [ ] `:androidApp:assembleDebug` 通过
+- [ ] Android release 签名 secrets 已配置（`ANDROID_KEYSTORE_BASE64` / `ANDROID_KEYSTORE_PASSWORD` / `ANDROID_KEY_ALIAS` / `ANDROID_KEY_PASSWORD`）
+- [ ] `:androidApp:assembleRelease` 产出可安装的签名 APK
 - [ ] `:terminalApp:compileKotlinLinuxX64` 通过
 - [ ] 已知 wasm 状态已记录（当前不可用）
-- [ ] GitHub Release 资产存在（Linux/Windows）
+- [ ] GitHub Release 资产存在（Android APK / Linux / Windows）
 - [ ] 更新检查能读到新版本
 - [ ] README 平台表/CI 段与 release workflow 一致
 - [ ] TODO 中已完成项有验证证据

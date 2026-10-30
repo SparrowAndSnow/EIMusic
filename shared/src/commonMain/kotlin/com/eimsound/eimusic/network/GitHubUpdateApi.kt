@@ -2,10 +2,10 @@ package com.eimsound.eimusic.network
 
 import com.eimsound.eimusic.PlatformType
 import com.eimsound.eimusic.network.models.NetworkResult
-import com.eimsound.eimusic.version.GitHubAsset
 import com.eimsound.eimusic.version.GitHubRelease
 import com.eimsound.eimusic.version.UpdateInfo
 import com.eimsound.eimusic.version.UpdateResponse
+import com.eimsound.eimusic.version.compareVersions
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
@@ -42,7 +42,7 @@ class GitHubUpdateApi(
                 if (compareVersions(currentVersion, version) >= 0) {
                     NetworkResult.Success(UpdateResponse(false, null, version))
                 } else {
-                    val asset = selectAsset(release.assets, platformType, os)
+                    val asset = selectUpdateAsset(release.assets, platformType, os)
                     NetworkResult.Success(
                         UpdateResponse(
                             hasUpdate = true,
@@ -50,9 +50,11 @@ class GitHubUpdateApi(
                                 version = version,
                                 versionCode = 0,
                                 title = release.name ?: ("EIMusic " + version),
-                                description = release.body ?: "发现新版本",
+                                // release body 只放在 releaseNotes，避免对话框重复显示同一段内容。
+                                description = "发现新版本",
                                 releaseDate = release.publishedAt?.take(10) ?: "",
                                 downloadUrl = asset?.browserDownloadUrl ?: release.htmlUrl,
+                                // GitHub Release 没有强制更新标记；version.toml 的 force 仅服务端路径使用。
                                 isCritical = false,
                                 releaseNotes = release.body,
                             ),
@@ -65,35 +67,4 @@ class GitHubUpdateApi(
     } catch (e: Exception) {
         NetworkResult.Exception(e.message)
     }
-
-    private fun selectAsset(assets: List<GitHubAsset>, platform: PlatformType, os: String): GitHubAsset? {
-        // Desktop 不再单独发行，直接打开 Release 页面。
-        if (platform == PlatformType.DESKTOP) return null
-        val keyword = when (platform) {
-            PlatformType.ANDROID -> ".apk"
-            PlatformType.IOS -> ".ipa"
-            PlatformType.DESKTOP, PlatformType.WASM, PlatformType.Native -> ""
-            else -> ""
-        }
-        return assets.firstOrNull { it.name.contains(keyword, ignoreCase = true) }
-            ?: if (platform == PlatformType.ANDROID) {
-                assets.firstOrNull { it.name.endsWith(".apk", ignoreCase = true) }
-            } else {
-                null
-            }
-    }
-
-    private fun compareVersions(a: String, b: String): Int {
-        val left = parse(a)
-        val right = parse(b)
-        val size = maxOf(left.size, right.size)
-        for (i in 0 until size) {
-            val diff = left.getOrElse(i) { 0 } - right.getOrElse(i) { 0 }
-            if (diff != 0) return diff
-        }
-        return 0
-    }
-
-    private fun parse(v: String): List<Int> =
-        v.removePrefix("v").removePrefix("V").split(".").mapNotNull { it.toIntOrNull() }
 }

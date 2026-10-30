@@ -3,6 +3,7 @@ package com.eimsound.eimusic.ui.screens
 import androidx.compose.runtime.*
 import com.eimsound.eimusic.PlatformType
 import com.eimsound.eimusic.TerminalVersion
+import com.eimsound.eimusic.currentOsName
 import com.eimsound.eimusic.config.AppConfig
 import com.eimsound.eimusic.i18n.I18n
 import com.eimsound.eimusic.i18n.Language
@@ -108,7 +109,7 @@ fun SettingsScreen(
         if (updateStatus == UpdateStatus.Checking) return
         updateStatus = UpdateStatus.Checking
         scope.launch {
-            val result = updateApi.checkUpdate(TerminalVersion.VERSION, PlatformType.Native, "linux")
+            val result = updateApi.checkUpdate(TerminalVersion.VERSION, PlatformType.Native, currentOsName())
             updateStatus = when (result) {
                 is NetworkResult.Success -> {
                     val data = result.data

@@ -28,7 +28,7 @@ jobs:
           java-version: "25"
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
 
       - name: Install Android platform 37
         run: |
@@ -38,15 +38,40 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build backend and APK
+      - name: Prepare Android signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for name in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "Missing required secret: $name" >&2
+              exit 1
+            fi
+          done
+          KEYSTORE_PATH="${RUNNER_TEMP}/eimusic-release.keystore"
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$KEYSTORE_PATH"
+          chmod 600 "$KEYSTORE_PATH"
+          {
+            echo "sdk.dir=${ANDROID_HOME}"
+            echo "KEY_STORE_FILE=$KEYSTORE_PATH"
+            echo "KEY_STORE_PASSWORD=$ANDROID_KEYSTORE_PASSWORD"
+            echo "KEY_ALIAS=$ANDROID_KEY_ALIAS"
+            echo "KEY_PASSWORD=$ANDROID_KEY_PASSWORD"
+          } > local.properties
+
+      - name: Build backend, tests and release APK
         run: |
           chmod +x gradlew
-          ./gradlew :server:buildFatJar :androidApp:assembleDebug --no-daemon --stacktrace
+          ./gradlew :shared:jvmTest :server:test :server:buildFatJar :androidApp:assembleRelease --no-daemon --stacktrace
 
       - name: Stage backend artifacts
         run: |
           mkdir -p dist
-          cp androidApp/build/outputs/apk/debug/*.apk dist/
+          cp androidApp/build/outputs/apk/release/*.apk dist/
           cp server/build/libs/server-all.jar dist/
 
       - name: Upload backend artifacts
@@ -92,6 +117,10 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
+
+      - name: Install Linux link dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libsystemd-dev
 
       - name: Build terminal (Linux)
         if: runner.os == 'Linux'
@@ -153,6 +182,7 @@ jobs:
           test -f "release/server-all.jar"
           test -f "release/eimusic.kexe"
           test -f "release/eimusic.exe"
+          test -f "release/EIMusic-${VERSION}.apk"
           ls -lh release
 
       - name: Publish GitHub Release

@@ -6,7 +6,6 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.ktor)
     alias(libs.plugins.kotlin.serialization)
-    id("com.github.gmazzo.buildconfig") version "6.1.2"
 }
 
 repositories {
@@ -31,29 +30,7 @@ fun loadVersionToml(): TomlParseResult {
 
 val versionToml = loadVersionToml()
 val appVersionName =
-    versionToml.getString("version.name") ?: throw Error("version.name is not defined in version.properties")
-val appVersionCode = versionToml.getLong("version.code")?.toInt()
-    ?: throw Error("version.code is not defined in version.properties")
-val appVersionTitle =
-    versionToml.getString("version.title") ?: throw Error("version.title is not defined in version.properties")
-val appVersionDescription = versionToml.getString("version.description")
-    ?: throw Error("version.description is not defined in version.properties")
-val appVersionDownloadDesktopWindows = String.format(versionToml.getString("version.download.desktop.windows")
-    ?: throw Error("version.download.desktop.windows is not defined in version.properties"), appVersionName, appVersionName)
-
-val appVersionDownloadDesktopMac = String.format(versionToml.getString("version.download.desktop.mac")
-    ?: throw Error("version.download.desktop.mac is not defined in version.properties"),appVersionName,appVersionName)
-
-val appVersionDownloadDesktopLinux = String.format(versionToml.getString("version.download.desktop.linux")
-    ?: throw Error("version.download.desktop.linux is not defined in version.properties"),appVersionName,appVersionName)
-val appVersionDownloadAndroid = String.format(versionToml.getString("version.download.android")
-    ?: throw Error("version.download.android is not defined in version.properties"),appVersionName,appVersionName)
-
-val appVersionDownloadIOS = String.format(versionToml.getString("version.download.ios")
-    ?: throw Error("version.download.ios is not defined in version.properties"),appVersionName,appVersionName)
-
-val appVersionForce = versionToml.getBoolean("version.force")
-    ?: throw Error("version.force is not defined in version.properties")
+    versionToml.getString("version.name") ?: throw Error("version.name is not defined in version.toml")
 
 group = "com.eimsound"
 version = appVersionName
@@ -64,20 +41,6 @@ application {
 
 kotlin {
     jvmToolchain(25)
-}
-
-buildConfig {
-    packageName("com.eimsound.eimusic.server")
-    buildConfigField("String", "VERSION_NAME","\"$appVersionName\"")
-    buildConfigField("Int", "VERSION_CODE", appVersionCode)
-    buildConfigField("String", "VERSION_TITLE", "\"$appVersionTitle\"")
-    buildConfigField("String", "VERSION_DESCRIPTION", "\"$appVersionDescription\"")
-    buildConfigField("String", "VERSION_DOWNLOAD_DESKTOP_WINDOWS", "\"$appVersionDownloadDesktopWindows\"")
-    buildConfigField("String", "VERSION_DOWNLOAD_DESKTOP_MAC", "\"$appVersionDownloadDesktopMac\"")
-    buildConfigField("String", "VERSION_DOWNLOAD_DESKTOP_LINUX", "\"$appVersionDownloadDesktopLinux\"")
-    buildConfigField("String", "VERSION_DOWNLOAD_ANDROID", "\"$appVersionDownloadAndroid\"")
-    buildConfigField("String", "VERSION_DOWNLOAD_IOS", "\"$appVersionDownloadIOS\"")
-    buildConfigField("Boolean", "VERSION_FORCE", appVersionForce)
 }
 
 dependencies {

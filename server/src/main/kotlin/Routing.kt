@@ -1,6 +1,5 @@
 package com.eimsound.eimusic.server
 
-import com.eimsound.eimusic.PlatformType
 import com.eimsound.eimusic.auth.AuthRequest
 import com.eimsound.eimusic.auth.AuthResponse
 import com.eimsound.eimusic.auth.AuthUser
@@ -11,8 +10,6 @@ import com.eimsound.eimusic.network.models.netease.NeteaseResult
 import com.eimsound.eimusic.server.manager.ChannelManager
 import com.eimsound.eimusic.server.manager.UserSessionManager
 import com.eimsound.eimusic.server.util.JwtUtil
-import com.eimsound.eimusic.version.UpdateInfo
-import com.eimsound.eimusic.version.UpdateResponse
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -22,39 +19,8 @@ import io.ktor.server.request.receiveParameters
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.koin.ktor.ext.inject
-import org.slf4j.LoggerFactory
-
-/**
- * 解析版本号字符串为可比较的列表
- */
-fun parseVersion(version: String): List<Int> {
-    return version
-        .removePrefix("v")
-        .removePrefix("V")
-        .split(".")
-        .mapNotNull { it.toIntOrNull() }
-}
-
-/**
- * 比较两个版本号
- */
-fun compareVersions(version1: String, version2: String): Int {
-    val v1Parts = parseVersion(version1)
-    val v2Parts = parseVersion(version2)
-    val maxLength = maxOf(v1Parts.size, v2Parts.size)
-    for (i in 0 until maxLength) {
-        val part1 = v1Parts.getOrElse(i) { 0 }
-        val part2 = v2Parts.getOrElse(i) { 0 }
-        if (part1 != part2) {
-            return part1 - part2
-        }
-    }
-    return 0
-}
 
 fun Application.configureRouting() {
-    val logger = LoggerFactory.getLogger("Routing")
-
     routing {
         val neteaseApi by inject<NeteaseApi>()
         // 健康检查
@@ -62,74 +28,6 @@ fun Application.configureRouting() {
             call.respondText("OK")
         }
 
-        route("/version") {
-            get("/check") {
-                val currentVersion = call.request.queryParameters["version"]
-                    ?: return@get call.response.status(HttpStatusCode.BadRequest)
-                val platform = call.request.queryParameters["platform"]
-                    ?.let { runCatching { PlatformType.valueOf(it) }.getOrNull() }
-                    ?: return@get call.response.status(HttpStatusCode.BadRequest)
-                val os = call.request.queryParameters["os"]
-                    ?: return@get call.response.status(HttpStatusCode.BadRequest)
-                // 从 BuildConfig 读取最新版本号
-                val latestVersion = BuildConfig.VERSION_NAME
-                val latestVersionCode = BuildConfig.VERSION_CODE
-                val downloadUrl = when (platform) {
-                    PlatformType.DESKTOP -> {
-                        when {
-                            os.startsWith("osx") -> BuildConfig.VERSION_DOWNLOAD_DESKTOP_MAC
-                            os.startsWith("linux") -> BuildConfig.VERSION_DOWNLOAD_DESKTOP_LINUX
-                            os.startsWith("windows") -> BuildConfig.VERSION_DOWNLOAD_DESKTOP_WINDOWS
-                            else -> return@get call.response.status(HttpStatusCode.BadRequest)
-                        }
-                    }
-
-                    PlatformType.ANDROID -> {
-                        BuildConfig.VERSION_DOWNLOAD_ANDROID
-                    }
-
-                    PlatformType.IOS -> {
-                        BuildConfig.VERSION_DOWNLOAD_IOS
-                    }
-
-                    PlatformType.WASM -> {
-                        return@get call.response.status(HttpStatusCode.BadRequest)
-                    }
-
-                    else -> {
-                        ""
-                    }
-                }
-
-                // 比较版本号
-                val hasUpdate = compareVersions(currentVersion, latestVersion) < 0
-
-                val response = if (hasUpdate) {
-                    UpdateResponse(
-                        hasUpdate = true,
-                        update = UpdateInfo(
-                            version = latestVersion,
-                            versionCode = latestVersionCode,
-                            title = BuildConfig.VERSION_TITLE,
-                            description = BuildConfig.VERSION_DESCRIPTION,
-                            releaseDate = java.time.LocalDate.now().toString(),
-                            downloadUrl = downloadUrl,
-                            isCritical = BuildConfig.VERSION_FORCE,
-                            releaseNotes = null,
-                        ),
-                        latestVersion = latestVersion
-                    )
-                } else {
-                    UpdateResponse(
-                        hasUpdate = false,
-                        update = null,
-                        latestVersion = latestVersion
-                    )
-                }
-
-                call.respond(response)
-            }
-        }
         route("/netease") {
             authenticate("auth-jwt") {
                 post("/Song_V1") {

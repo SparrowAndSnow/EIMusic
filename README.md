@@ -6,7 +6,7 @@
 
 | 平台/组件 | 状态 | 说明 |
 | --- | --- | --- |
-| Android | ✅ | `:androidApp:assembleDebug` 通过；构建/发布均使用 debug APK |
+| Android | ✅ | `:androidApp:assembleDebug` 通过；CI 构建 debug APK，Release 使用签名 release APK |
 | iOS | 🚧 | 代码/目标已接入，未在本机编译验证 |
 | Desktop | ✅ | 开发用目标；不发布 Desktop 发行包 |
 | Web（wasmJs） | ❌ | 当前编译失败，暂不可用 |
@@ -22,7 +22,7 @@
 - `composeApp` — Compose Multiplatform 共享客户端
 - `androidApp` — Android 应用入口
 - `shared` — 共享核心代码（模型、网络、认证、SQLDelight 仓储）
-- `server` — Ktor 服务端（房间同步、版本检查兼容）
+- `server` — Ktor 服务端（认证、房间同步、网易云接口代理）
 - `terminalApp` — 基于 Mosaic 的终端（TUI）客户端
 
 ## 技术栈
@@ -45,6 +45,8 @@ git clone https://github.com/SparrowAndSnow/mosaic
 ```
 
 - Web（wasmJs）当前不可用。
+- Release 的 Android 签名依赖仓库 Secrets：`ANDROID_KEYSTORE_BASE64`、`ANDROID_KEYSTORE_PASSWORD`、`ANDROID_KEY_ALIAS`、`ANDROID_KEY_PASSWORD`；未配置时 release workflow 会直接失败。
+  - `ANDROID_KEYSTORE_BASE64` 可用 `base64 -w0 release.keystore` 生成；keystore 生成后请离线备份，不要提交到仓库。
 
 ## 构建与运行
 
@@ -107,14 +109,19 @@ Web 开发中：
   - macOS：`~/Library/Application Support/eimusic/`
   - Windows：`%APPDATA%\eimusic\`
 
+## CI / Release
+
+- CI：push `main` / PR 构建 shared、server、desktop，构建 Android debug APK，并编译 terminal Linux。
+- Release：推送 `v<version.toml 的 version.name>` tag 触发；构建签名 release APK、server fat jar、Linux/Windows terminal，发布 GitHub Release 并推送 GHCR 镜像。
+- 更新检查：客户端直接读取 GitHub Releases 最新版本；服务端不再提供版本检查接口。
+
 ## 已知限制
 
 - Web（wasmJs）当前不可用。
 - 尚无已发布 GitHub Release；版本检查/Release 下载在发布前不可用。
-- macOS terminal 暂未加入 Release 构建。
-- server 没有测试；composeApp/terminalApp 缺少平台级测试（shared 已有 18 个 JVM 测试）。
-- terminalApp 更新检查的平台参数目前固定为 Linux，Windows/macOS 资产选择待修。
-
+- macOS terminal 暂未加入 Release 构建；macOS 更新检查回退到 Release 页面。
+- server 没有测试；composeApp/terminalApp 缺少平台级测试（shared 已有 JVM 测试）。
+- terminalApp 更新检查只显示下载地址，不自动替换二进制。
 
 ## License
 

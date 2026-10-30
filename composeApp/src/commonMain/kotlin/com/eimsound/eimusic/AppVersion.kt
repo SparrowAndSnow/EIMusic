@@ -1,5 +1,8 @@
 package com.eimsound.eimusic
 
+import com.eimsound.eimusic.version.compareVersions as compareVersionsShared
+import com.eimsound.eimusic.version.parseVersion as parseVersionShared
+
 /**
  * 版本信息工具类
  * 提供应用版本信息的读取和比较功能
@@ -28,13 +31,7 @@ object AppVersion {
      * @param version 版本号字符串 (例如："1.0.1")
      * @return 整数列表 (例如：[1, 0, 1])
      */
-    fun parseVersion(version: String): List<Int> {
-        return version
-            .removePrefix("v")
-            .removePrefix("V")
-            .split(".")
-            .mapNotNull { it.toIntOrNull() }
-    }
+    fun parseVersion(version: String): List<Int> = parseVersionShared(version)
 
     /**
      * 比较两个版本号
@@ -42,23 +39,8 @@ object AppVersion {
      * @param version2 版本号 2
      * @return 负数表示 version1 < version2, 0 表示相等，正数表示 version1 > version2
      */
-    fun compareVersions(version1: String, version2: String): Int {
-        val v1Parts = parseVersion(version1)
-        val v2Parts = parseVersion(version2)
-
-        val maxLength = maxOf(v1Parts.size, v2Parts.size)
-
-        for (i in 0 until maxLength) {
-            val part1 = v1Parts.getOrElse(i) { 0 }
-            val part2 = v2Parts.getOrElse(i) { 0 }
-
-            if (part1 != part2) {
-                return part1 - part2
-            }
-        }
-
-        return 0
-    }
+    fun compareVersions(version1: String, version2: String): Int =
+        compareVersionsShared(version1, version2)
 
     /**
      * 检查是否有新版本可用

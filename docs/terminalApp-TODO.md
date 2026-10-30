@@ -1,7 +1,7 @@
 # terminalApp 跟进（TODO）
 
 > 位置：`docs/terminalApp-TODO.md` · 维护规矩见 [`PROJECT_RULES.md`](PROJECT_RULES.md)
-> 更新：2026-10-29 · 范围：terminalApp（TUI）
+> 更新：2026-10-30 · 范围：terminalApp（TUI）
 > 状态标记：`[ ]` 未开始 · `[~]` 进行中 · `[x]` 完成
 > 约定：每项先 debug + pty 验证，最后重建 release 一次；不改变现有键位语义。
 
@@ -78,7 +78,9 @@
   - 关于页读取 GitHub Releases 最新版本，显示当前/最新/失败状态与下载地址
   - 只读检查，不自动替换二进制；复用 shared GitHubUpdateApi
   - 版本号由 Gradle 从 version.toml 注入 BuildConfig
-  - [ ] 平台参数目前固定为 `PlatformType.Native, "linux"`；Windows/macOS 的资产选择待修
+  - [x] 平台参数改为实际 OS（`currentOsName()`）；Native 按 `.kexe` / `.exe` 选择资产
+  - [x] WASM/未知 OS 不再返回第一个 asset，而是回退 Release 页面
+  - [ ] Windows/macOS 实机验证；macOS terminal 暂无 Release 资产
 
 - [ ] **主题预设**
   - 在 dark/light 之外加 3–4 套中性命名配色，`t` 循环或设置页选择
@@ -94,13 +96,15 @@
 ## 工程
 
 - [~] **CI**
-  - [x] push 已跑 `:shared:jvmTest`、`:server:test`（当前 `NO-SOURCE`）、`:composeApp:compileKotlinDesktop`、`:androidApp:assembleDebug`、`:terminalApp:compileKotlinLinuxX64`
+  - [~] push workflow 已配置 `:shared:jvmTest`、`:server:test`（当前 `NO-SOURCE`）、`:composeApp:compileKotlinDesktop`、`:androidApp:assembleDebug`、`:terminalApp:compileKotlinLinuxX64`
+  - 2026-10-29 前 27 次 CI run 全部失败在第 5 步 `Set up Android SDK`：`setup-android@v3` 默认安装已被 Google 移除的 `tools` 包；已改 `@v4`，待新 run 验证
   - [ ] terminalApp release 链接只在 tag release workflow 中跑，未加入 push CI
   - [ ] wasm 编译未加入 CI（当前 wasm 编译失败）
 - [ ] **terminalApp 测试基建**
   - 增加 commonTest；先覆盖列表窗口、格式化、Actions 映射等纯逻辑
 - [~] **安装/打包**
   - [x] README 已补平台支持/构建说明
+  - [~] Release 改为签名 release APK；需要 `ANDROID_KEYSTORE_BASE64` 等 4 个 GitHub Secrets，待配置后验证
   - [ ] 终端使用说明（键位/设置页）与 Linux 安装脚本待做
 
 ## 已知问题 / 待查
