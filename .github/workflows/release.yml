@@ -33,7 +33,7 @@ jobs:
       - name: Install Android platform 37
         run: |
           yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager "platforms;android-37" "platform-tools"
+          sdkmanager "platforms;android-37.0" "platform-tools"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -120,7 +120,7 @@ jobs:
 
       - name: Install Linux link dependencies
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libsystemd-dev
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev libsystemd-dev
 
       - name: Build terminal (Linux)
         if: runner.os == 'Linux'

@@ -86,8 +86,9 @@ kotlin {
                 linkerOpts.add("-lm")
                 linkerOpts.add("-ldl")
                 linkerOpts.add("-lpthread")
-                linkerOpts.add("-lsqlite3")
                 linkerOpts.add("-L/usr/lib")
+                linkerOpts.add("-L/usr/lib/x86_64-linux-gnu")
+                linkerOpts.add("-lsqlite3")
                 linkerOpts.add("-lsystemd")
                 linkerOpts.add("--allow-shlib-undefined")
             }
