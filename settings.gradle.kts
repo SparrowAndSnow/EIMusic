@@ -3,14 +3,6 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
     repositories {
-
-        maven { url = uri("https://www.jitpack.io") }
-//        maven { url = uri("https://maven.aliyun.com/repository/releases") }
-//        maven { url = uri("https://maven.aliyun.com/repository/google") }
-//        maven { url = uri("https://maven.aliyun.com/repository/central") }
-//        maven { url = uri("https://maven.aliyun.com/repository/gradle-plugin") }
-//        maven { url = uri("https://maven.aliyun.com/repository/public") }
-        maven("https://packages.jetbrains.team/maven/p/firework/dev")
         google()
         mavenCentral()
         gradlePluginPortal()
@@ -19,13 +11,12 @@ pluginManagement {
 
 dependencyResolutionManagement {
     repositories {
-        maven { url = uri("https://www.jitpack.io") }
-//        maven { url = uri("https://maven.aliyun.com/repository/releases") }
-//        maven { url = uri("https://maven.aliyun.com/repository/google") }
-//        maven { url = uri("https://maven.aliyun.com/repository/central") }
-//        maven { url = uri("https://maven.aliyun.com/repository/gradle-plugin") }
-//        maven { url = uri("https://maven.aliyun.com/repository/public") }
-        maven("https://packages.jetbrains.team/maven/p/firework/dev")
+        maven {
+            url = uri("https://jitpack.io")
+            content {
+                includeGroup("com.github.SparrowAndSnow.mosaic")
+            }
+        }
         google()
         mavenCentral()
     }
@@ -39,8 +30,3 @@ include(":androidApp")
 include(":shared")
 include("server")
 include("terminalApp")
-// mosaic 复合构建：优先项目根目录，其次是相邻目录
-val mosaicDir = listOf("mosaic", "../mosaic", "../../mosaic")
-    .map { file(it) }
-    .firstOrNull { it.isDirectory }
-includeBuild(mosaicDir ?: file("mosaic"))

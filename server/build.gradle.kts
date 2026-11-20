@@ -8,19 +8,6 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
-repositories {
-    maven { url = uri("https://www.jitpack.io") }
-    maven { url = uri("https://maven.aliyun.com/repository/releases") }
-    maven { url = uri("https://maven.aliyun.com/repository/google") }
-    maven { url = uri("https://maven.aliyun.com/repository/central") }
-    maven { url = uri("https://maven.aliyun.com/repository/gradle-plugin") }
-    maven { url = uri("https://maven.aliyun.com/repository/public") }
-    maven("https://packages.jetbrains.team/maven/p/firework/dev")
-    google()
-    mavenCentral()
-    gradlePluginPortal()
-}
-
 fun loadVersionToml(): TomlParseResult {
     val file = file("../version.toml")
     file.exists() || throw Error("version.toml is not found")

@@ -21,14 +21,6 @@ plugins {
     id("com.github.gmazzo.buildconfig") version "6.1.2"
 }
 
-repositories {
-    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
-    maven("https://packages.jetbrains.team/maven/p/firework/dev")
-    google()
-    mavenCentral()
-    gradlePluginPortal()
-}
-
 kotlin {
     android {
         namespace = "com.eimsound.eimusic.composeapp"
