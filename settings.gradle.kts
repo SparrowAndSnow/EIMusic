@@ -3,14 +3,6 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
     repositories {
-
-        maven { url = uri("https://www.jitpack.io") }
-//        maven { url = uri("https://maven.aliyun.com/repository/releases") }
-//        maven { url = uri("https://maven.aliyun.com/repository/google") }
-//        maven { url = uri("https://maven.aliyun.com/repository/central") }
-//        maven { url = uri("https://maven.aliyun.com/repository/gradle-plugin") }
-//        maven { url = uri("https://maven.aliyun.com/repository/public") }
-        maven("https://packages.jetbrains.team/maven/p/firework/dev")
         google()
         mavenCentral()
         gradlePluginPortal()
@@ -19,13 +11,12 @@ pluginManagement {
 
 dependencyResolutionManagement {
     repositories {
-        maven { url = uri("https://www.jitpack.io") }
-//        maven { url = uri("https://maven.aliyun.com/repository/releases") }
-//        maven { url = uri("https://maven.aliyun.com/repository/google") }
-//        maven { url = uri("https://maven.aliyun.com/repository/central") }
-//        maven { url = uri("https://maven.aliyun.com/repository/gradle-plugin") }
-//        maven { url = uri("https://maven.aliyun.com/repository/public") }
-        maven("https://packages.jetbrains.team/maven/p/firework/dev")
+        maven {
+            url = uri("https://jitpack.io")
+            content {
+                includeGroup("com.github.SparrowAndSnow.mosaic")
+            }
+        }
         google()
         mavenCentral()
     }

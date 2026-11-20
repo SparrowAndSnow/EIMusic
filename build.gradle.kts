@@ -10,8 +10,6 @@ plugins {
 }
 buildscript {
     repositories {
-        maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
-        maven("https://packages.jetbrains.team/maven/p/firework/dev")
         google()
         mavenCentral()
         gradlePluginPortal()

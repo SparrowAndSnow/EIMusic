@@ -137,15 +137,6 @@ buildConfig {
     buildConfigField("APP_NAME", rootProject.name)
 }
 
-repositories {
-    maven("https://jitpack.io")
-    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
-    maven("https://packages.jetbrains.team/maven/p/firework/dev")
-    google()
-    mavenCentral()
-    gradlePluginPortal()
-}
-
 val cinteropDir = project.file("src/nativeInterop/cinterop")
 val nativeCacheRoot = gradle.gradleUserHomeDir.resolve("caches/eimusic-native")
 val miniaudioCacheDir = nativeCacheRoot.resolve("miniaudio/0.11.25")
