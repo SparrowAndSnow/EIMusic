@@ -2,7 +2,7 @@ package com.eimsound.eimusic.playlist
 
 import com.eimsound.eimusic.Result
 import com.eimsound.eimusic.db.DbPlaylist
-import com.eimsound.eimusic.db.DbPlaylistRepository
+import com.eimsound.eimusic.db.PlaylistRepository
 import com.eimsound.eimusic.db.DbTrack
 import com.eimsound.eimusic.db.toDbTrack
 import com.eimsound.eimusic.db.toTrack
@@ -44,7 +44,7 @@ class PlaylistStore(
     private val trackRepositoryFactory: TrackRepositoryFactory,
     private val shareLinkResolverFactory: ShareLinkResolverFactory,
     private val storage: IStorage,
-    private val db: DbPlaylistRepository,
+    private val db: PlaylistRepository,
     private val log: (String) -> Unit = {},
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)

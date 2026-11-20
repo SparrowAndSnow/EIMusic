@@ -48,7 +48,7 @@ import com.eimsound.eimusic.route.Route
 import com.eimsound.eimusic.route.TopLevelRoute
 import com.eimsound.eimusic.route.WelcomeRoute
 import com.eimsound.eimusic.route.localizedRouteName
-import com.eimsound.eimusic.db.DbSessionRepository
+import com.eimsound.eimusic.db.SessionRepository
 import com.eimsound.eimusic.route.routes
 import com.eimsound.eimusic.theme.LocalPalette
 import eimusic.composeapp.generated.resources.Res
@@ -74,7 +74,7 @@ fun Navigation(
     content: @Composable () -> Unit = {}
 ) {
     var selected by rememberSerializable { mutableStateOf<TopLevelRoute>(WelcomeRoute) }
-    val sessionRepository = koinInject<DbSessionRepository>()
+    val sessionRepository = koinInject<SessionRepository>()
 
     LaunchedEffect(backStack.lastOrNull()) {
         val currentRoute = backStack.lastOrNull()

@@ -125,3 +125,65 @@ jobs:
             :terminalApp:linkReleaseExecutableMacosArm64 \
             --no-daemon --stacktrace
           test -f terminalApp/build/bin/macosArm64/releaseExecutable/eimusic.kexe
+
+  ios-simulator-debug:
+    name: iOS Simulator Debug (unsigned)
+    runs-on: macos-15
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build iOS Simulator Debug app without signing
+        run: |
+          chmod +x gradlew
+          xcodebuild \
+            -project iosApp/iosApp.xcodeproj \
+            -scheme iosApp \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            ENABLE_USER_SCRIPT_SANDBOXING=NO \
+            build
+
+  wasm-development:
+    name: WebAssembly browser development bundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build WebAssembly browser development bundle
+        run: |
+          chmod +x gradlew
+          ./gradlew :composeApp:wasmJsBrowserDevelopmentWebpack --no-daemon --stacktrace
+
+      - name: Verify WebAssembly browser output
+        run: |
+          webpack_dir=composeApp/build/kotlin-webpack/wasmJs/developmentExecutable
+          resources_dir=composeApp/build/processedResources/wasmJs/main
+          test -n "$(find "$webpack_dir" -type f -name '*.js' -print -quit)"
+          test -n "$(find "$webpack_dir" -type f -name '*.wasm' -print -quit)"
+          test -n "$(find "$resources_dir" -type f -name '*.html' -print -quit)"
+          test -n "$(find "$resources_dir" -type f -name '*.css' -print -quit)"

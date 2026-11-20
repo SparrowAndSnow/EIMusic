@@ -7,6 +7,9 @@ import com.eimsound.eimusic.config.AppConfig
 import com.eimsound.eimusic.db.DbLibraryRepository
 import com.eimsound.eimusic.db.DbPlaylistRepository
 import com.eimsound.eimusic.db.DbSessionRepository
+import com.eimsound.eimusic.db.LibraryRepository
+import com.eimsound.eimusic.db.PlaylistRepository
+import com.eimsound.eimusic.db.SessionRepository
 import com.eimsound.eimusic.db.createEIMusicDatabase
 import com.eimsound.eimusic.factory.ShareLinkResolverFactory
 import com.eimsound.eimusic.factory.TrackRepositoryFactory
@@ -57,6 +60,9 @@ fun systemModule() = module {
     single { DbPlaylistRepository(get()) }
     single { DbLibraryRepository(get()) }
     single { DbSessionRepository(get()) }
+    single<PlaylistRepository> { get<DbPlaylistRepository>() }
+    single<LibraryRepository> { get<DbLibraryRepository>() }
+    single<SessionRepository> { get<DbSessionRepository>() }
     single<AppConfig> { get<IStorage>().get(AppConfig()) }
     single { HttpClientProvider("${get<AppConfig>().server.http}/auth/refresh", get()) }
     single<UpdateApi> { GitHubUpdateApi(get()) }
