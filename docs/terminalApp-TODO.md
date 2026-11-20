@@ -95,13 +95,17 @@
 
 ## 工程
 
+- [x] 按需下载 SQLite 3.54.1 和 miniaudio 0.11.25，并校验 SHA-256。2026-11-20 在 Linux 验证两项下载任务和离线 Debug 构建，cinterop 和 C 编译重新执行，链接复用现有产物。Windows 链接待验证。
+- [x] AnyAscii C 源码和头文件按需从固定提交下载，逐文件校验 SHA-256。2026-11-20 在 Linux 验证 `:terminalApp:prepareAnyasciiSources` 联网下载，以及 `:terminalApp:cinteropAnyasciiLinuxX64 :terminalApp:compileAnyasciiLinux` 离线构建。
 - [~] **CI**
-  - [x] push workflow 已配置 `:shared:jvmTest`、`:server:test`（当前 `NO-SOURCE`）、`:composeApp:compileKotlinDesktop`、`:androidApp:assembleDebug`、`:terminalApp:compileKotlinLinuxX64`
+  - [x] push workflow 曾配置 `:terminalApp:compileKotlinLinuxX64`；现由独立 Linux `linkDebugExecutableLinuxX64` job 覆盖编译/链接，故移除重复步骤。历史配置记录保留。
+  - [~] PR/main CI 已配置 Linux/Windows terminal Debug 可执行文件链接；Linux 安装 SQLite/systemd 链接依赖，Windows 使用 MSYS2 下的 `cmd.exe` 验证 gcc 与 `ar` 命令可见，并通过 `gradlew.bat` 链接。静态检查通过，尚未实际运行；下一步等待 CI job 验证。
   - 2026-10-29 前 27 次 CI run 全部失败在第 5 步 `Set up Android SDK`：`setup-android@v3` 默认安装已被 Google 移除的 `tools` 包；已改 `@v4`
   - [x] 2026-10-30 Release run `41004387700` 成功：签名 APK、Linux/Windows terminal、GitHub Release、GHCR 镜像均已发布
   - [x] 同日修复 `platforms;android-37` 包名（应为 `platforms;android-37.0`）、Ubuntu 26.04 的 `libsqlite3`/`libsystemd` 链接路径、Windows `setenv` 编译错误
   - [x] CI 的 Gradle wrapper 改为官方分发地址，规避腾讯镜像超时；run `41006839469` 已通过
-  - [ ] terminalApp release 链接只在 tag release workflow 中跑，未加入 push CI
+  - [~] Release Windows 链接已同步改为 MSYS2 shell，并通过 `cmd.exe` 检查 gcc 与 `ar` 命令可见，构建使用 `gradlew.bat`。静态检查通过，尚未实际运行；下一步等待 Release workflow 验证。
+  - [~] GitHub Release 发布步骤已移到 GHCR 镜像 build/push 成功之后；发布产物检查及原有权限保留。静态检查通过，尚未实际运行；下一步等待 Release workflow 验证。
   - [ ] wasm 编译未加入 CI（当前 wasm 编译失败）
 - [ ] **terminalApp 测试基建**
   - 增加 commonTest；先覆盖列表窗口、格式化、Actions 映射等纯逻辑

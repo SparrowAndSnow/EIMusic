@@ -16,3 +16,4 @@
 ## 项目概览
 
 - [README](../README.md)
+- [仓库协作指南](../agent.md)

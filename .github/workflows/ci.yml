@@ -22,9 +22,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Checkout Mosaic composite build
-        run: git clone --depth 1 https://github.com/SparrowAndSnow/mosaic.git mosaic
-
       - name: Set up JDK 25
         uses: actions/setup-java@v4
         with:
@@ -56,9 +53,6 @@ jobs:
       - name: Build Android debug APK
         run: ./gradlew :androidApp:assembleDebug --no-daemon --stacktrace
 
-      - name: Compile terminal (Linux)
-        run: ./gradlew :terminalApp:compileKotlinLinuxX64 --no-daemon --stacktrace
-
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -67,3 +61,56 @@ jobs:
             androidApp/build/outputs/apk/debug/*.apk
             server/build/libs/*-all.jar
           if-no-files-found: ignore
+
+  terminal-debug-link:
+    name: Terminal debug link (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            name: linux
+          - os: windows-latest
+            name: windows
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Set up MSYS2 MinGW
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: mingw-w64-x86_64-gcc
+          path-type: inherit
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Install Linux link dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev libsystemd-dev
+
+      - name: Verify MinGW tools are available to Gradle
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: MSYS2_ARG_CONV_EXCL='*' cmd.exe /d /c 'where x86_64-w64-mingw32-gcc && where ar'
+
+      - name: Link terminal debug (Linux)
+        if: runner.os == 'Linux'
+        run: ./gradlew :terminalApp:linkDebugExecutableLinuxX64 --no-daemon --stacktrace
+
+      - name: Link terminal debug (Windows)
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: MSYS2_ARG_CONV_EXCL='*' cmd.exe /d /c 'gradlew.bat :terminalApp:linkDebugExecutableMingwX64 --no-daemon --stacktrace'

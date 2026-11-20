@@ -10,8 +10,8 @@
 | iOS | 🚧 | 代码/目标已接入，未在本机编译验证 |
 | Desktop | ✅ | 开发用目标；不发布 Desktop 发行包 |
 | Web（wasmJs） | ❌ | 当前编译失败，暂不可用 |
-| Terminal Linux | ✅ | release 二进制已构建 |
-| Terminal Windows | ✅ | release workflow 构建 |
+| Terminal Linux | ✅ | Release 二进制已构建；Debug 链接已加入 CI，待 CI 实际运行验证 |
+| Terminal Windows | ✅ | Release workflow 曾成功构建；MSYS2 shell 下 Debug/Release 链接路径待新 workflow 实际运行验证 |
 | Terminal macOS | 🚧 | 构建目标存在；未加入 Release |
 | Server | ✅ | fat jar 已构建；暂无测试 |
 
@@ -38,11 +38,9 @@
 
 - JDK 25（`server` 使用 `jvmToolchain(25)`，CI 也使用 JDK 25；Gradle 可通过 foojay resolver 自动下载）
 - Android SDK platform 37（构建 Android 端时需要）
-- terminalApp 依赖本地 `mosaic` 复合构建，`settings.gradle.kts` 会无条件 `includeBuild`：
-
-```bash
-git clone https://github.com/SparrowAndSnow/mosaic
-```
+- terminalApp 使用 JitPack 仓库中的 `com.github.SparrowAndSnow.mosaic:mosaic-runtime:0.19.1`，无需单独检出 Mosaic。
+- terminalApp 按需下载 miniaudio 0.11.25 头文件、AnyAscii 固定提交的 C 源码/头文件，以及 Windows 所需的 SQLite 3.54.1 amalgamation。下载文件通过 SHA-256 校验并缓存到 Gradle 用户目录。
+- 可先联网执行 `./gradlew :terminalApp:prepareMiniaudioSources :terminalApp:prepareAnyasciiSources` 预热缓存。构建 Windows 可执行文件时，还可运行 `./gradlew :terminalApp:prepareSqliteSources`。缓存有效后可用 `--offline` 构建。
 
 - Web（wasmJs）当前不可用。
 - Release 的 Android 签名依赖仓库 Secrets：`ANDROID_KEYSTORE_BASE64`、`ANDROID_KEYSTORE_PASSWORD`、`ANDROID_KEY_ALIAS`、`ANDROID_KEY_PASSWORD`；未配置时 release workflow 会直接失败。
@@ -113,8 +111,8 @@ Web 开发中：
 
 ## CI / Release
 
-- CI：push `main` / PR 构建 shared、server、desktop，构建 Android debug APK，并编译 terminal Linux。
-- Release：推送 `v<version.toml 的 version.name>` tag 触发；构建签名 release APK、server fat jar、Linux/Windows terminal，发布 GitHub Release 并推送 GHCR 镜像。
+- CI：push `main` / PR 构建 shared、server、desktop、Android debug APK，并在 Linux/Windows 链接 terminal Debug 可执行文件。PR workflow 仅有 `contents: read` 权限，不使用 secrets。
+- Release：推送 `v<version.toml 的 version.name>` tag 触发；构建签名 release APK、server fat jar、Linux/Windows terminal，检查全部发布产物并成功推送 GHCR 镜像后，再发布 GitHub Release。
 - 更新检查：客户端直接读取 GitHub Releases 最新版本；服务端不再提供版本检查接口。
 
 ## 已知限制

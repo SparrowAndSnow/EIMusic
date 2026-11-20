@@ -39,8 +39,3 @@ include(":androidApp")
 include(":shared")
 include("server")
 include("terminalApp")
-// mosaic 复合构建：优先项目根目录，其次是相邻目录
-val mosaicDir = listOf("mosaic", "../mosaic", "../../mosaic")
-    .map { file(it) }
-    .firstOrNull { it.isDirectory }
-includeBuild(mosaicDir ?: file("mosaic"))

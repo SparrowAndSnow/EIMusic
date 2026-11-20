@@ -10,14 +10,14 @@ plugins {
 
 repositories {
     maven { url = uri("https://www.jitpack.io") }
+    maven("https://packages.jetbrains.team/maven/p/firework/dev")
+    google()
+    mavenCentral()
     maven { url = uri("https://maven.aliyun.com/repository/releases") }
     maven { url = uri("https://maven.aliyun.com/repository/google") }
     maven { url = uri("https://maven.aliyun.com/repository/central") }
     maven { url = uri("https://maven.aliyun.com/repository/gradle-plugin") }
     maven { url = uri("https://maven.aliyun.com/repository/public") }
-    maven("https://packages.jetbrains.team/maven/p/firework/dev")
-    google()
-    mavenCentral()
     gradlePluginPortal()
 }
 
