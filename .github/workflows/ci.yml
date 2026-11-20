@@ -74,6 +74,8 @@ jobs:
             name: linux
           - os: windows-latest
             name: windows
+          - os: macos-15
+            name: macos-arm64
 
     steps:
       - name: Checkout
@@ -114,3 +116,12 @@ jobs:
         if: runner.os == 'Windows'
         shell: msys2 {0}
         run: MSYS2_ARG_CONV_EXCL='*' cmd.exe /d /c 'gradlew.bat :terminalApp:linkDebugExecutableMingwX64 --no-daemon --stacktrace'
+
+      - name: Link terminal debug and release (macOS ARM64)
+        if: runner.os == 'macOS'
+        run: |
+          ./gradlew \
+            :terminalApp:linkDebugExecutableMacosArm64 \
+            :terminalApp:linkReleaseExecutableMacosArm64 \
+            --no-daemon --stacktrace
+          test -f terminalApp/build/bin/macosArm64/releaseExecutable/eimusic.kexe

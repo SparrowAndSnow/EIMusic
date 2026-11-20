@@ -20,11 +20,13 @@ internal fun selectUpdateAsset(
     PlatformType.WASM -> null
     PlatformType.Native -> when {
         os.startsWith("linux", ignoreCase = true) ->
-            assets.firstOrNull { it.name.endsWith(".kexe", ignoreCase = true) }
+            assets.firstOrNull { it.name == "eimusic-linux-x64.kexe" }
+                ?: assets.firstOrNull { it.name == "eimusic.kexe" }
         os.startsWith("windows", ignoreCase = true) ->
-            assets.firstOrNull { it.name.endsWith(".exe", ignoreCase = true) }
-        // macOS terminal 暂未加入 Release；不要误选 APK 或 jar。
-        os.startsWith("mac", ignoreCase = true) || os.startsWith("osx", ignoreCase = true) -> null
+            assets.firstOrNull { it.name == "eimusic-windows-x64.exe" }
+                ?: assets.firstOrNull { it.name == "eimusic.exe" }
+        os.startsWith("mac", ignoreCase = true) || os.startsWith("osx", ignoreCase = true) ->
+            assets.firstOrNull { it.name == "eimusic-macos-arm64.kexe" }
         else -> null
     }
 }

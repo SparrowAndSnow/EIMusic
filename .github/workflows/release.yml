@@ -89,7 +89,8 @@ jobs:
             name: linux
           - os: windows-latest
             name: windows
-          # macos-latest intentionally omitted for now
+          - os: macos-15
+            name: macos-arm64
 
     steps:
       - uses: actions/checkout@v4
@@ -130,14 +131,20 @@ jobs:
         shell: msys2 {0}
         run: MSYS2_ARG_CONV_EXCL='*' cmd.exe /d /c 'gradlew.bat :terminalApp:linkReleaseExecutableMingwX64 --no-daemon --stacktrace'
 
+      - name: Build terminal (macOS ARM64)
+        if: runner.os == 'macOS'
+        run: ./gradlew :terminalApp:linkReleaseExecutableMacosArm64 --no-daemon --stacktrace
+
       - name: Stage terminal binary
         shell: bash
         run: |
           mkdir -p dist
           if [ "${{ matrix.name }}" = "linux" ]; then
-            cp terminalApp/build/bin/linuxX64/releaseExecutable/eimusic.kexe dist/
+            cp terminalApp/build/bin/linuxX64/releaseExecutable/eimusic.kexe dist/eimusic-linux-x64.kexe
+          elif [ "${{ matrix.name }}" = "windows" ]; then
+            cp terminalApp/build/bin/mingwX64/releaseExecutable/eimusic.exe dist/eimusic-windows-x64.exe
           else
-            cp terminalApp/build/bin/mingwX64/releaseExecutable/eimusic.exe dist/
+            cp terminalApp/build/bin/macosArm64/releaseExecutable/eimusic.kexe dist/eimusic-macos-arm64.kexe
           fi
 
       - name: Upload terminal binary
@@ -180,8 +187,9 @@ jobs:
             exit 1
           fi
           test -f "release/server-all.jar"
-          test -f "release/eimusic.kexe"
-          test -f "release/eimusic.exe"
+          test -f "release/eimusic-linux-x64.kexe"
+          test -f "release/eimusic-windows-x64.exe"
+          test -f "release/eimusic-macos-arm64.kexe"
           test -f "release/EIMusic-${VERSION}.apk"
           ls -lh release
 

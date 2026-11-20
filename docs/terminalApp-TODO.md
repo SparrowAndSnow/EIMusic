@@ -80,7 +80,8 @@
   - 版本号由 Gradle 从 version.toml 注入 BuildConfig
   - [x] 平台参数改为实际 OS（`currentOsName()`）；Native 按 `.kexe` / `.exe` 选择资产
   - [x] WASM/未知 OS 不再返回第一个 asset，而是回退 Release 页面
-  - [ ] Windows/macOS 实机验证；macOS terminal 暂无 Release 资产
+  - [~] 更新器优先按 `eimusic-linux-x64.kexe`、`eimusic-windows-x64.exe`、`eimusic-macos-arm64.kexe` 精确匹配，并兼容旧版 Linux/Windows 资产名；缺少对应资产时回退 Release 页面
+  - [ ] Windows/macOS 实机验证
 
 - [ ] **主题预设**
   - 在 dark/light 之外加 3–4 套中性命名配色，`t` 循环或设置页选择
@@ -99,12 +100,12 @@
 - [x] AnyAscii C 源码和头文件按需从固定提交下载，逐文件校验 SHA-256。2026-11-20 在 Linux 验证 `:terminalApp:prepareAnyasciiSources` 联网下载，以及 `:terminalApp:cinteropAnyasciiLinuxX64 :terminalApp:compileAnyasciiLinux` 离线构建。
 - [~] **CI**
   - [x] push workflow 曾配置 `:terminalApp:compileKotlinLinuxX64`；现由独立 Linux `linkDebugExecutableLinuxX64` job 覆盖编译/链接，故移除重复步骤。历史配置记录保留。
-  - [~] PR/main CI 已配置 Linux/Windows terminal Debug 可执行文件链接；Linux 安装 SQLite/systemd 链接依赖，Windows 使用 MSYS2 下的 `cmd.exe` 验证 gcc 与 `ar` 命令可见，并通过 `gradlew.bat` 链接。静态检查通过，尚未实际运行；下一步等待 CI job 验证。
+  - [~] PR/main CI 已配置 Linux/Windows/macOS ARM64 terminal Debug 链接；macOS 同一 job 也链接 Release 并检查产物路径。Linux 安装 SQLite/systemd 链接依赖，Windows 使用 MSYS2 下的 `cmd.exe` 验证 gcc 与 `ar` 命令可见，并通过 `gradlew.bat` 链接。静态检查通过，待 CI job 验证。
   - 2026-10-29 前 27 次 CI run 全部失败在第 5 步 `Set up Android SDK`：`setup-android@v3` 默认安装已被 Google 移除的 `tools` 包；已改 `@v4`
   - [x] 2026-10-30 Release run `41004387700` 成功：签名 APK、Linux/Windows terminal、GitHub Release、GHCR 镜像均已发布
   - [x] 同日修复 `platforms;android-37` 包名（应为 `platforms;android-37.0`）、Ubuntu 26.04 的 `libsqlite3`/`libsystemd` 链接路径、Windows `setenv` 编译错误
   - [x] CI 的 Gradle wrapper 改为官方分发地址，规避腾讯镜像超时；run `41006839469` 已通过
-  - [~] Release Windows 链接已同步改为 MSYS2 shell，并通过 `cmd.exe` 检查 gcc 与 `ar` 命令可见，构建使用 `gradlew.bat`。静态检查通过，尚未实际运行；下一步等待 Release workflow 验证。
+  - [~] Release 纳入 macOS ARM64 terminal；stage 资产名为 `eimusic-linux-x64.kexe`、`eimusic-windows-x64.exe`、`eimusic-macos-arm64.kexe`，发布前逐项检查存在。Windows 链接已同步改为 MSYS2 shell，并通过 `cmd.exe` 检查 gcc 与 `ar` 命令可见，构建使用 `gradlew.bat`。静态检查通过，待 Release workflow 验证。
   - [~] GitHub Release 发布步骤已移到 GHCR 镜像 build/push 成功之后；发布产物检查及原有权限保留。静态检查通过，尚未实际运行；下一步等待 Release workflow 验证。
   - [ ] wasm 编译未加入 CI（当前 wasm 编译失败）
 - [ ] **terminalApp 测试基建**
