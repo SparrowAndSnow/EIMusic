@@ -2,7 +2,7 @@
 
 > 位置：`docs/composeApp-TODO.md` · 维护规矩见 [`PROJECT_RULES.md`](PROJECT_RULES.md)
 > 持久化改造跟踪。terminalApp 已先迁移到 SQLDelight；composeApp 已完成歌单、最近播放/搜索历史的数据接入和会话恢复，`Settings` / `Auth` / `AppConfig` 仍使用 JSON。
-> 更新：2026-10-29
+> 更新：2026-11-20
 
 ## 背景
 
@@ -15,8 +15,8 @@
 - composeApp 已接入：
   - Android：`AndroidSqliteDriver`（构建通过，待设备验证）
   - Desktop/JVM：`JdbcSqliteDriver`，DB 位于 `~/.config/eimusic/eimusic.db`
-  - iOS：`NativeSqliteDriver`（代码已加，待 macOS 编译验证）
-  - wasmJs：当前不可用。编译缺少 `NotificationService` / `log` 的 actual；且 `createEIMusicDatabase()` 是 eager 创建并直接 `error()`，JSON fallback 未接
+  - iOS：`NativeSqliteDriver`（Kotlin 模拟器目标编译通过，待 Xcode 运行验证）
+  - wasmJs：启动时注入内存仓储，歌单、历史和会话在当前页面内可用。刷新页面会清空数据。
 - shared schema 迁移：`1.sqm`（recent/search_history）、`2.sqm`（session/queue_item）。
 
 ## 已完成
@@ -37,8 +37,8 @@
 - [~] **Driver 接入**
   - [x] Desktop/JVM：`JdbcSqliteDriver`，建库路径 `~/.config/eimusic/eimusic.db`
   - [x] Android：`AndroidSqliteDriver`，构建通过，待设备验证
-  - [ ] iOS：`NativeSqliteDriver`，待 macOS 编译验证
-  - [ ] wasmJs：待修复（见下）
+  - [~] iOS：`NativeSqliteDriver` 和 AVPlayer 播放已接入。2026-11-20 验证 `:composeApp:compileKotlinIosSimulatorArm64`，待用 Xcode 链接并验证建库、队列恢复和播放。
+  - [~] wasmJs：启动接入内存仓储，跨页面刷新持久化待实现。
   - [x] schema 版本/migration 与 terminalApp 共用
   - 建库路径：Desktop 与 terminalApp 一致；Android 为应用私有目录，iOS 为 `NSHomeDirectory()/.config/eimusic`
 - [~] **最近播放 / 搜索历史**
@@ -52,11 +52,11 @@
 
 ## 待做
 
-- [ ] **wasmJs 修复**
-  - 补 `NotificationService` / `log` 的 wasm actual（no-op）
-  - 将 `createEIMusicDatabase()` 改为惰性/内存 fallback，避免 `createdAtStart` 直接抛错
-  - `Storage.wasmJs` 持久化，或明确“内存态、不持久化”的语义
-  - 在 CI 增加 `:composeApp:compileKotlinWasmJs`
+- [~] **wasmJs 平台**
+  - 2026-11-20 使用 `:composeApp:compileKotlinWasmJs` 验证音频控制、平台日志、通知接口和内存仓储的 Kotlin 编译。
+  - 浏览器启动、选曲和播放待验证。当前设置和仓储数据均为页面内存态。
+  - CI 已加入 `:composeApp:wasmJsBrowserDevelopmentWebpack`，并检查 `composeApp/build/kotlin-webpack/wasmJs/developmentExecutable` 中的 JS/Wasm 产物，以及 `composeApp/build/processedResources/wasmJs/main` 中的 HTML/CSS。使用仓库跟踪的 `kotlin-js-store/wasm/yarn.lock`。
+  - iOS CI 在 `macos-15` 使用 JDK 25 和 Xcode 对 `iosApp` 执行无签名 Debug Simulator build；包含 `embedAndSignAppleFrameworkForXcode` Gradle 脚本调用，并关闭 user script sandboxing。两项新增平台 CI 均待 GitHub Actions 远程运行验证；不涉及 Release 或 secrets。
 - [ ] **composeApp 测试**
   - JVM 覆盖 repository CRUD / 导入只读 / 迁移（shared 已有 18 个 JVM 测试）
   - 各平台建库/迁移 smoke test

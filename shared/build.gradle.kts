@@ -11,6 +11,8 @@ plugins {
 }
 
 kotlin {
+    applyDefaultHierarchyTemplate()
+
     android {
         namespace = "com.eimsound.eimusic.shared"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
@@ -53,6 +55,20 @@ kotlin {
 
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+        }
+
+        val commonMain by getting
+        val nonIosNativeMain by creating {
+            dependsOn(commonMain)
+        }
+        val linuxX64Main by getting {
+            dependsOn(nonIosNativeMain)
+        }
+        val mingwX64Main by getting {
+            dependsOn(nonIosNativeMain)
+        }
+        val macosArm64Main by getting {
+            dependsOn(nonIosNativeMain)
         }
 
         jvmTest.dependencies {

@@ -1,7 +1,7 @@
 package com.eimsound.eimusic.search
 
 import com.eimsound.eimusic.Result
-import com.eimsound.eimusic.db.DbLibraryRepository
+import com.eimsound.eimusic.db.LibraryRepository
 import com.eimsound.eimusic.factory.TrackRepositoryFactory
 import com.eimsound.eimusic.music.Track
 import com.eimsound.eimusic.music.TrackSource
@@ -26,7 +26,7 @@ data class SearchState(
 /** 与壳无关的搜索逻辑与历史；terminal/compose 共用。 */
 class SearchStore(
     private val trackRepositoryFactory: TrackRepositoryFactory,
-    private val library: DbLibraryRepository,
+    private val library: LibraryRepository,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 

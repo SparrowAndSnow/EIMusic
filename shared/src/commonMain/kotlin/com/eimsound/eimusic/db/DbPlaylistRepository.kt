@@ -30,48 +30,48 @@ data class DbPlaylist(
 
 class DbPlaylistRepository(
     private val db: EIMusicDatabase,
-) {
+) : PlaylistRepository {
     private val playlists get() = db.playlistQueries
     private val tracks get() = db.trackQueries
 
-    fun localPlaylists(): List<DbPlaylist> =
+    override fun localPlaylists(): List<DbPlaylist> =
         playlists.selectLocalPlaylists().executeAsList().map(::toPlaylist)
 
-    fun importedPlaylists(): List<DbPlaylist> =
+    override fun importedPlaylists(): List<DbPlaylist> =
         playlists.selectImportedPlaylists().executeAsList().map(::toPlaylist)
 
-    fun playlist(id: String): DbPlaylist? =
+    override fun playlist(id: String): DbPlaylist? =
         playlists.selectPlaylist(id).executeAsOneOrNull()?.let(::toPlaylist)
 
-    fun tracks(playlistId: String): List<DbTrack> =
+    override fun tracks(playlistId: String): List<DbTrack> =
         playlists.selectPlaylistTracks(playlistId).executeAsList().map(::toTrack)
 
-    fun createLocal(name: String): DbPlaylist {
+    override fun createLocal(name: String): DbPlaylist {
         val now = Clock.System.now().toEpochMilliseconds()
         val id = "local-${now.toString(16)}-${Random.nextLong().toULong().toString(16)}"
         playlists.createPlaylist(id, name, TrackSource.LOCAL.name, null, now, now)
         return DbPlaylist(id, name, TrackSource.LOCAL, null, emptyList())
     }
 
-    fun renameLocal(id: String, name: String) {
+    override fun renameLocal(id: String, name: String) {
         requireEditable(id)
         playlists.renamePlaylist(name, Clock.System.now().toEpochMilliseconds(), id)
     }
 
-    fun deleteLocal(id: String) {
+    override fun deleteLocal(id: String) {
         requireEditable(id)
         deletePlaylistRecord(id)
     }
 
     /** 取消导入/删除本地记录；不改变提供方歌单。 */
-    fun deletePlaylistRecord(id: String) {
+    override fun deletePlaylistRecord(id: String) {
         db.transaction {
             playlists.deletePlaylistTracks(id)
             playlists.deletePlaylist(id)
         }
     }
 
-    fun addTrack(playlistId: String, track: DbTrack) {
+    override fun addTrack(playlistId: String, track: DbTrack) {
         requireEditable(playlistId)
         if (tracks(playlistId).any { it.id == track.id }) return
         val now = Clock.System.now().toEpochMilliseconds()
@@ -82,13 +82,13 @@ class DbPlaylistRepository(
         }
     }
 
-    fun removeTrack(playlistId: String, trackId: String) {
+    override fun removeTrack(playlistId: String, trackId: String) {
         requireEditable(playlistId)
         playlists.deletePlaylistTrack(playlistId, trackId)
         compactPositions(playlistId)
     }
 
-    fun moveTrack(playlistId: String, from: Int, to: Int) {
+    override fun moveTrack(playlistId: String, from: Int, to: Int) {
         requireEditable(playlistId)
         val current = tracks(playlistId).toMutableList()
         if (from !in current.indices || to !in current.indices) return
@@ -102,7 +102,7 @@ class DbPlaylistRepository(
     }
 
     /** 导入/同步提供方歌单：按 (source, external_id) upsert，整体替换曲目。 */
-    fun importPlaylist(
+    override fun importPlaylist(
         source: TrackSource,
         externalId: String,
         name: String,

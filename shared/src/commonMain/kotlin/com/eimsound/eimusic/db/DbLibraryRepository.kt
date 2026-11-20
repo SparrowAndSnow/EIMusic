@@ -5,14 +5,14 @@ import kotlin.time.Clock
 
 class DbLibraryRepository(
     private val db: EIMusicDatabase,
-) {
+) : LibraryRepository {
     private val recent get() = db.recentQueries
     private val tracks get() = db.trackQueries
 
-    fun recentTracks(limit: Int = 12): List<DbTrack> =
+    override fun recentTracks(limit: Int): List<DbTrack> =
         recent.selectRecent(limit.toLong()).executeAsList().map(::toTrack)
 
-    fun recordRecent(track: DbTrack) {
+    override fun recordRecent(track: DbTrack) {
         db.transaction {
             tracks.upsertTrack(
                 id = track.id,
@@ -29,10 +29,10 @@ class DbLibraryRepository(
         }
     }
 
-    fun recentSearches(limit: Int = 8): List<String> =
+    override fun recentSearches(limit: Int): List<String> =
         recent.selectSearches(limit.toLong()).executeAsList()
 
-    fun recordSearch(query: String) {
+    override fun recordSearch(query: String) {
         recent.upsertSearch(query, Clock.System.now().toEpochMilliseconds())
     }
 

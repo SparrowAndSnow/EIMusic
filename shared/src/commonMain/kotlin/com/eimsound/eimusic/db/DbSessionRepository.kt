@@ -10,11 +10,11 @@ data class DbSession(
 
 class DbSessionRepository(
     private val db: EIMusicDatabase,
-) {
+) : SessionRepository {
     private val session get() = db.sessionQueries
     private val tracks get() = db.trackQueries
 
-    fun load(): DbSession {
+    override fun load(): DbSession {
         val row = session.selectSession().executeAsOneOrNull()
         return DbSession(
             lastTab = row?.last_tab?.toInt() ?: 0,
@@ -23,12 +23,12 @@ class DbSessionRepository(
         )
     }
 
-    fun saveTab(lastTab: Int) {
+    override fun saveTab(lastTab: Int) {
         val currentTrackId = session.selectSession().executeAsOneOrNull()?.current_track_id
         session.upsertSession(lastTab.toLong(), currentTrackId)
     }
 
-    fun savePlayback(queue: List<DbTrack>, currentTrackId: String?) {
+    override fun savePlayback(queue: List<DbTrack>, currentTrackId: String?) {
         val existingTab = session.selectSession().executeAsOneOrNull()?.last_tab?.toInt() ?: 0
         db.transaction {
             queue.forEach { track ->

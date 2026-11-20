@@ -7,9 +7,9 @@
 | 平台/组件 | 状态 | 说明 |
 | --- | --- | --- |
 | Android | ✅ | `:androidApp:assembleDebug` 通过；CI 构建 debug APK，Release 使用签名 release APK |
-| iOS | 🚧 | 代码/目标已接入，未在本机编译验证 |
+| iOS | 🚧 | Kotlin 模拟器目标编译通过，Xcode 链接和运行待验证 |
 | Desktop | ✅ | 开发用目标；不发布 Desktop 发行包 |
-| Web（wasmJs） | ❌ | 当前编译失败，暂不可用 |
+| Web（wasmJs） | 🚧 | Kotlin 编译通过，浏览器运行待验证 |
 | Terminal Linux | ✅ | Release 二进制已构建；Debug 链接已加入 CI |
 | Terminal Windows | ✅ | Release workflow 曾成功构建；MSYS2 shell 下 Debug/Release 链接路径待新 workflow 实际运行验证 |
 | Terminal macOS | 🚧 | Apple Silicon Debug/Release 链接已加入 CI/Release workflow，待 CI 实际运行验证 |
@@ -42,7 +42,6 @@
 - terminalApp 按需下载 miniaudio 0.11.25 头文件、AnyAscii 固定提交的 C 源码/头文件，以及 Windows 所需的 SQLite 3.54.1 amalgamation。下载文件通过 SHA-256 校验并缓存到 Gradle 用户目录。
 - 可先联网执行 `./gradlew :terminalApp:prepareMiniaudioSources :terminalApp:prepareAnyasciiSources` 预热缓存。构建 Windows 可执行文件时，还可运行 `./gradlew :terminalApp:prepareSqliteSources`。缓存有效后可用 `--offline` 构建。
 
-- Web（wasmJs）当前不可用。
 - Release 的 Android 签名依赖仓库 Secrets：`ANDROID_KEYSTORE_BASE64`、`ANDROID_KEYSTORE_PASSWORD`、`ANDROID_KEY_ALIAS`、`ANDROID_KEY_PASSWORD`；未配置时 release workflow 会直接失败。
   - `ANDROID_KEYSTORE_BASE64` 可用 `base64 -w0 release.keystore` 生成；keystore 生成后请离线备份，不要提交到仓库。
 
@@ -117,7 +116,7 @@ Web 开发中：
 
 ## 已知限制
 
-- Web（wasmJs）当前不可用。
+- Web（wasmJs）的设置、歌单、历史和播放会话暂存内存，刷新页面会清空。
 - 已发布 [v0.1.0 测试 Release](https://github.com/SparrowAndSnow/EIMusic/releases/tag/v0.1.0)；客户端版本检查可直接读取 GitHub Releases。
 - terminal Release 资产名为 `eimusic-linux-x64.kexe`、`eimusic-windows-x64.exe` 和 `eimusic-macos-arm64.kexe`；更新器优先按平台精确匹配新名称，并兼容旧版 `eimusic.kexe` / `eimusic.exe`，缺少对应资产时回退到 Release 页面。
 - server 没有测试；composeApp/terminalApp 缺少平台级测试（shared 已有 JVM 测试）。

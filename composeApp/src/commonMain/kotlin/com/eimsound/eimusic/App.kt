@@ -14,10 +14,14 @@ import androidx.compose.ui.Modifier
 import androidx.savedstate.compose.serialization.serializers.SnapshotStateListSerializer
 import com.eimsound.eimusic.auth.AuthStore
 import com.eimsound.eimusic.data.Storage
+import com.eimsound.eimusic.data.InMemoryRepositories
 import com.eimsound.eimusic.data.createEIMusicDatabase
 import com.eimsound.eimusic.db.DbLibraryRepository
 import com.eimsound.eimusic.db.DbPlaylistRepository
 import com.eimsound.eimusic.db.DbSessionRepository
+import com.eimsound.eimusic.db.LibraryRepository
+import com.eimsound.eimusic.db.PlaylistRepository
+import com.eimsound.eimusic.db.SessionRepository
 import com.eimsound.eimusic.lang.Locale
 import com.eimsound.eimusic.layout.BottomBar
 import com.eimsound.eimusic.layout.DefaultLayout
@@ -61,6 +65,8 @@ import com.eimsound.eimusic.factory.ShareLinkResolverFactory
 import com.eimsound.eimusic.factory.TrackRepositoryFactory
 import com.eimsound.eimusic.util.Toast
 import com.eimsound.eimusic.util.ToastMessage
+import com.eimsound.eimusic.PlatformType
+import com.eimsound.eimusic.getPlatform
 import com.eimsound.eimusic.factory.TrackUriResolverFactory
 import com.eimsound.eimusic.playback.IMediaPlayerController
 import com.eimsound.eimusic.playback.PlaybackStore
@@ -114,7 +120,7 @@ fun App(
             val sideBarState by defaultLayoutViewModel.sideBarState.collectAsState()
             val navigationDrawerState by defaultLayoutViewModel.navigationDrawerState.collectAsState()
             val showFullScreenPlayer by defaultLayoutViewModel.fullScreenPlayerState.collectAsState()
-            val sessionRepository = koinInject<DbSessionRepository>()
+            val sessionRepository = koinInject<SessionRepository>()
             val backStack: MutableList<Route> = rememberSerializable(serializer = SnapshotStateListSerializer()) {
                 mutableStateListOf(routes.getOrNull(sessionRepository.load().lastTab) ?: WelcomeRoute)
             }
@@ -210,10 +216,22 @@ fun AppEnvironment(content: @Composable () -> Unit) {
 val systemModule = module {
     single<IStorage>(createdAtStart = true) { Storage() }
 
-    single(createdAtStart = true) { createEIMusicDatabase() }
-    single { DbPlaylistRepository(get()) }
-    single { DbLibraryRepository(get()) }
-    single { DbSessionRepository(get()) }
+    // Avoid constructing SQLDelight on wasm: its platform has no configured driver.
+    // Browser repositories intentionally live for the page session; other targets
+    // retain their existing SQLDelight repositories and schema behavior.
+    if (getPlatform().type == PlatformType.WASM) {
+        single<PlaylistRepository> { InMemoryRepositories.playlist }
+        single<LibraryRepository> { InMemoryRepositories.library }
+        single<SessionRepository> { InMemoryRepositories.session }
+    } else {
+        single(createdAtStart = true) { createEIMusicDatabase() }
+        single { DbPlaylistRepository(get()) }
+        single { DbLibraryRepository(get()) }
+        single { DbSessionRepository(get()) }
+        single<PlaylistRepository> { get<DbPlaylistRepository>() }
+        single<LibraryRepository> { get<DbLibraryRepository>() }
+        single<SessionRepository> { get<DbSessionRepository>() }
+    }
 
     single<AppConfig> { get<IStorage>().get(AppConfig()) }
 

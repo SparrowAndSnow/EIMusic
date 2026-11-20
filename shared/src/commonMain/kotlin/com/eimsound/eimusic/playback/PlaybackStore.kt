@@ -1,7 +1,7 @@
 package com.eimsound.eimusic.playback
 
-import com.eimsound.eimusic.db.DbLibraryRepository
-import com.eimsound.eimusic.db.DbSessionRepository
+import com.eimsound.eimusic.db.LibraryRepository
+import com.eimsound.eimusic.db.SessionRepository
 import com.eimsound.eimusic.db.toDbTrack
 import com.eimsound.eimusic.db.toTrack
 import com.eimsound.eimusic.events.EventBus
@@ -46,8 +46,8 @@ import kotlin.time.Duration.Companion.milliseconds
 class PlaybackStore(
     private val controller: IMediaPlayerController,
     private val storage: IStorage,
-    private val library: DbLibraryRepository,
-    private val session: DbSessionRepository,
+    private val library: LibraryRepository,
+    private val session: SessionRepository,
     private val togetherStore: TogetherStore,
     dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {

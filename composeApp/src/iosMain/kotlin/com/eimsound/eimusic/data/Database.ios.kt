@@ -2,9 +2,11 @@ package com.eimsound.eimusic.data
 
 import app.cash.sqldelight.driver.native.NativeSqliteDriver
 import com.eimsound.eimusic.db.EIMusicDatabase
+import kotlinx.cinterop.ExperimentalForeignApi
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSHomeDirectory
 
+@OptIn(ExperimentalForeignApi::class)
 actual fun createEIMusicDatabase(): EIMusicDatabase {
     val dir = "${NSHomeDirectory()}/.config/eimusic"
     NSFileManager.defaultManager.createDirectoryAtPath(dir, true, null, null)
